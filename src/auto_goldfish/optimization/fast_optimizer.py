@@ -197,14 +197,21 @@ class FastDeckOptimizer:
         from auto_goldfish.metrics.reporter import result_to_dict
 
         results: list[tuple[DeckConfig, Any]] = []
+        total_eval_sims = len(eval_pool) * final_sims
         for j, config in enumerate(eval_pool):
             apply_config(self.goldfisher, config, self.candidates, self.swap_mode)
-            result = self.goldfisher.simulate()
+
+            # Sub-progress: report per-sim within each config evaluation
+            sub_cb = None
+            if eval_progress is not None:
+                offset = j * final_sims
+
+                def sub_cb(current: int, total: int, _offset: int = offset) -> None:
+                    eval_progress(_offset + current, total_eval_sims)
+
+            result = self.goldfisher.simulate(progress_callback=sub_cb)
             result_dict = result_to_dict(result)
             results.append((config, result_dict))
-
-            if eval_progress is not None:
-                eval_progress(j + 1, len(eval_pool))
 
         self.goldfisher.sims = original_sims
 
@@ -281,8 +288,8 @@ class FastDeckOptimizer:
                 mana_lists[cfg].extend(batch_values)
                 done_sims += self.batch_size
 
-            if progress is not None:
-                progress(done_sims, total_budget_est)
+                if progress is not None:
+                    progress(done_sims, total_budget_est)
 
             # Only start eliminating after min_games
             n_games = (round_idx + 1) * self.batch_size
