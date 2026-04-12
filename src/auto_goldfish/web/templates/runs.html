@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% block title %}Auto Goldfish - Simulation Runs{% endblock %}
+{% block content %}
+
+<h1>Simulation Runs</h1>
+
+{% if not runs %}
+<p class="empty-state">No simulation runs found in the database.</p>
+{% else %}
+
+<p style="color:#64748b; margin-bottom:1rem;">{{ runs|length }} run{{ 's' if runs|length != 1 else '' }} found. Click column headers to sort.</p>
+
+<div class="table-scroll">
+<table class="results-table sortable-table" id="runs-table">
+    <thead>
+        <tr>
+            <th data-sort="string" class="sortable">Deck</th>
+            <th data-sort="string" class="sortable">Date</th>
+            <th data-sort="number" class="sortable">Turns</th>
+            <th data-sort="number" class="sortable">Sims</th>
+            <th data-sort="number" class="sortable">Optimal Lands</th>
+            <th data-sort="number" class="sortable sort-desc">Mean Mana</th>
+            <th data-sort="number" class="sortable">Consistency</th>
+            <th data-sort="number" class="sortable">Mean Draws</th>
+            <th data-sort="number" class="sortable">Bad Turns</th>
+            <th data-sort="number" class="sortable">Spells Cast</th>
+            <th data-sort="number" class="sortable">Mulligans</th>
+            <th>Chart</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for run in runs %}
+        <tr data-run-idx="{{ loop.index0 }}">
+            <td>{{ run.deck_name }}</td>
+            <td>{{ run.created_at }}</td>
+            <td>{{ run.turns }}</td>
+            <td>{{ run.sims }}</td>
+            <td>{{ run.optimal_land_count if run.optimal_land_count is not none else '—' }}</td>
+            <td>{{ run.mean_mana if run.mean_mana is not none else '—' }}</td>
+            <td>{{ '%0.1f'|format(run.consistency * 100) + '%' if run.consistency is not none else '—' }}</td>
+            <td>{{ run.mean_draws if run.mean_draws is not none else '—' }}</td>
+            <td>{{ run.mean_bad_turns if run.mean_bad_turns is not none else '—' }}</td>
+            <td>{{ run.mean_spells_cast if run.mean_spells_cast is not none else '—' }}</td>
+            <td>{{ run.mean_mulls if run.mean_mulls is not none else '—' }}</td>
+            <td><button class="btn btn-secondary btn-sm" onclick="toggleRunChart({{ loop.index0 }})">Show</button></td>
+        </tr>
+        <tr class="chart-row" id="chart-row-{{ loop.index0 }}" style="display:none;">
+            <td colspan="12">
+                <div class="run-charts">
+                    <div class="run-chart-container">
+                        <canvas id="mana-chart-{{ loop.index0 }}"></canvas>
+                    </div>
+                    <div class="run-chart-container">
+                        <canvas id="consistency-chart-{{ loop.index0 }}"></canvas>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<!-- Multi-run comparison charts -->
+<h2 style="margin-top:2rem;">Comparison Charts</h2>
+<p style="color:#64748b; margin-bottom:1rem;">All runs overlaid for comparison.</p>
+<div class="run-charts">
+    <div class="run-chart-container">
+        <canvas id="compare-mana"></canvas>
+    </div>
+    <div class="run-chart-container">
+        <canvas id="compare-consistency"></canvas>
+    </div>
+</div>
+
+<script>
+var RUNS_DATA = {{ runs | tojson }};
+var runCharts = {};
+
+// ── Sortable table ──────────────────────────────────────────────────
+(function() {
+    var table = document.getElementById('runs-table');
+    var headers = table.querySelectorAll('th.sortable');
+    var currentSort = {col: -1, asc: true};
+
+    headers.forEach(function(th, colIdx) {
+        th.style.cursor = 'pointer';
+        th.addEventListener('click', function() {
+            var type = th.getAttribute('data-sort');
+            var asc = (currentSort.col === colIdx) ? !currentSort.asc : (type === 'string');
+            currentSort = {col: colIdx, asc: asc};
+
+            // Update header indicators
+            headers.forEach(function(h) {
+                h.classList.remove('sort-asc', 'sort-desc');
+            });
+            th.classList.add(asc ? 'sort-asc' : 'sort-desc');
+
+            sortTable(table, colIdx, type, asc);
+        });
+    });
+
+    // Apply initial sort (Mean Mana descending)
+    var defaultCol = Array.from(headers).findIndex(function(th) {
+        return th.classList.contains('sort-desc');
+    });
+    if (defaultCol >= 0) {
+        sortTable(table, defaultCol, 'number', false);
+    }
+})();
+
+function sortTable(table, colIdx, type, asc) {
+    var tbody = table.querySelector('tbody');
+    // Collect data rows (skip chart rows)
+    var dataRows = [];
+    var chartRows = {};
+    var rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.forEach(function(tr) {
+        if (tr.classList.contains('chart-row')) {
+            var idx = tr.id.replace('chart-row-', '');
+            chartRows[idx] = tr;
+        } else {
+            dataRows.push(tr);
+        }
+    });
+
+    dataRows.sort(function(a, b) {
+        var aText = a.cells[colIdx].textContent.trim().replace('%', '');
+        var bText = b.cells[colIdx].textContent.trim().replace('%', '');
+
+        if (aText === '—') aText = '';
+        if (bText === '—') bText = '';
+
+        var aVal, bVal;
+        if (type === 'number') {
+            aVal = aText === '' ? -Infinity : parseFloat(aText);
+            bVal = bText === '' ? -Infinity : parseFloat(bText);
+        } else {
+            aVal = aText.toLowerCase();
+            bVal = bText.toLowerCase();
+        }
+
+        if (aVal < bVal) return asc ? -1 : 1;
+        if (aVal > bVal) return asc ? 1 : -1;
+        return 0;
+    });
+
+    // Re-append in sorted order (data row + its chart row)
+    dataRows.forEach(function(tr) {
+        var idx = tr.getAttribute('data-run-idx');
+        tbody.appendChild(tr);
+        if (chartRows[idx]) {
+            tbody.appendChild(chartRows[idx]);
+        }
+    });
+}
+
+// ── Per-run chart toggle ────────────────────────────────────────────
+function toggleRunChart(idx) {
+    var row = document.getElementById('chart-row-' + idx);
+    if (row.style.display === 'none') {
+        row.style.display = '';
+        if (!runCharts[idx]) {
+            createRunCharts(idx);
+        }
+    } else {
+        row.style.display = 'none';
+    }
+}
+
+function createRunCharts(idx) {
+    var run = RUNS_DATA[idx];
+    var labels = run.results.map(function(r) { return r.land_count; });
+    var manaData = run.results.map(function(r) { return r.mean_mana; });
+    var consData = run.results.map(function(r) { return r.consistency; });
+
+    runCharts[idx] = {
+        mana: new Chart(document.getElementById('mana-chart-' + idx), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Mean Mana',
+                    data: manaData,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37,99,235,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                }],
+            },
+            options: chartOpts('Mean Mana Spent', 'Land Count', 'Mana'),
+        }),
+        consistency: new Chart(document.getElementById('consistency-chart-' + idx), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Consistency',
+                    data: consData,
+                    borderColor: '#16a34a',
+                    backgroundColor: 'rgba(22,163,74,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                }],
+            },
+            options: chartOpts('Consistency', 'Land Count', 'Consistency'),
+        }),
+    };
+}
+
+function chartOpts(title, xLabel, yLabel) {
+    return {
+        responsive: true,
+        plugins: {
+            title: {display: true, text: title},
+            legend: {display: false},
+        },
+        scales: {
+            x: {title: {display: true, text: xLabel}},
+            y: {title: {display: true, text: yLabel}},
+        },
+    };
+}
+
+// ── Comparison charts ───────────────────────────────────────────────
+(function() {
+    var colors = [
+        '#2563eb', '#dc2626', '#16a34a', '#9333ea', '#ea580c',
+        '#0891b2', '#d946ef', '#65a30d', '#e11d48', '#0d9488',
+    ];
+
+    var manaDatasets = [];
+    var consDatasets = [];
+    var allLabels = new Set();
+
+    RUNS_DATA.forEach(function(run, i) {
+        run.results.forEach(function(r) { allLabels.add(r.land_count); });
+    });
+    var labels = Array.from(allLabels).sort(function(a, b) { return a - b; });
+
+    RUNS_DATA.forEach(function(run, i) {
+        var color = colors[i % colors.length];
+        var resultMap = {};
+        run.results.forEach(function(r) { resultMap[r.land_count] = r; });
+
+        var runLabel = run.deck_name + ' (' + run.created_at.split(' ')[0] + ')';
+        manaDatasets.push({
+            label: runLabel,
+            data: labels.map(function(lc) { return resultMap[lc] ? resultMap[lc].mean_mana : null; }),
+            borderColor: color,
+            backgroundColor: color,
+            fill: false,
+            tension: 0.3,
+            spanGaps: true,
+        });
+        consDatasets.push({
+            label: runLabel,
+            data: labels.map(function(lc) { return resultMap[lc] ? resultMap[lc].consistency : null; }),
+            borderColor: color,
+            backgroundColor: color,
+            fill: false,
+            tension: 0.3,
+            spanGaps: true,
+        });
+    });
+
+    if (RUNS_DATA.length > 0) {
+        new Chart(document.getElementById('compare-mana'), {
+            type: 'line',
+            data: {labels: labels, datasets: manaDatasets},
+            options: chartOpts('Mean Mana Comparison', 'Land Count', 'Mana'),
+        });
+        new Chart(document.getElementById('compare-consistency'), {
+            type: 'line',
+            data: {labels: labels, datasets: consDatasets},
+            options: chartOpts('Consistency Comparison', 'Land Count', 'Consistency'),
+        });
+    }
+})();
+</script>
+{% endif %}
+{% endblock %}

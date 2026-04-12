@@ -1026,3 +1026,47 @@ h2 { font-size: 1.15rem; margin-bottom: 0.75rem; }
     width: 2rem;
     text-align: center;
 }
+
+/* Sortable table headers */
+.sortable-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-right: 1.25rem;
+}
+.sortable-table th.sortable::after {
+    content: '\2195';
+    position: absolute;
+    right: 0.25rem;
+    opacity: 0.3;
+    font-size: 0.75rem;
+}
+.sortable-table th.sort-asc::after {
+    content: '\2191';
+    opacity: 0.8;
+}
+.sortable-table th.sort-desc::after {
+    content: '\2193';
+    opacity: 0.8;
+}
+.sortable-table th.sortable:hover {
+    background: rgba(37, 99, 235, 0.08);
+}
+
+/* Run detail charts */
+.run-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 0.5rem;
+}
+.run-chart-container {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+}
+.chart-row td {
+    padding: 0.75rem 1rem;
+    background: #f1f5f9;
+}
