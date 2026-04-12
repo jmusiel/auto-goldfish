@@ -37,6 +37,43 @@ def _make_deck_json():
     return lands + spells
 
 
+class TestManaModelPage:
+    def test_page_get_renders(self, client):
+        """GET /mana-model/<deck> should render the mana model template."""
+        deck_name = "__test_mana_page__"
+        deck_data = _make_deck_json()
+
+        with patch("auto_goldfish.web.routes.mana_model.load_decklist", return_value=deck_data):
+            with patch("auto_goldfish.web.routes.mana_model.get_deckpath") as mock_path:
+                with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
+                    f.write(b"[]")
+                    mock_path.return_value = f.name
+                try:
+                    resp = client.get(f"/mana-model/{deck_name}")
+                finally:
+                    os.unlink(f.name)
+
+        assert resp.status_code == 200
+        assert b"Mana Model" in resp.data
+
+    def test_page_post_renders_local(self, client):
+        """POST /mana-model/<deck> should render for localStorage decks."""
+        deck_data = _make_deck_json()
+        resp = client.post(
+            "/mana-model/local_deck",
+            data=json.dumps({"cards": deck_data}),
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        assert b"Mana Model" in resp.data
+        assert b"Go to Simulator" in resp.data
+
+    def test_page_404_for_missing_deck(self, client):
+        with patch("auto_goldfish.web.routes.mana_model.get_deckpath", return_value="/nonexistent/path.json"):
+            resp = client.get("/mana-model/no_such_deck")
+        assert resp.status_code == 404
+
+
 class TestAnalysisEndpoint:
     def test_analysis_returns_json(self, client):
         """GET /mana-model/api/<deck>/analysis should return JSON with expected keys."""

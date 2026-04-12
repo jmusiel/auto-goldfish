@@ -248,6 +248,24 @@ async function navigateToSim(deckName) {
 }
 
 /**
+ * Navigate to the mana model page for a local deck.
+ * POSTs deck data as JSON, replaces the page with the response.
+ */
+async function navigateToManaModel(deckName) {
+    var deck = DeckStore.getDeck(deckName);
+    if (!deck) { alert('Deck not found in local storage'); return; }
+    var resp = await fetch('/mana-model/' + encodeURIComponent(deckName), {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({cards: deck.cards, overrides: deck.overrides})
+    });
+    if (!resp.ok) { alert('Failed to load mana model page'); return; }
+    var html = await resp.text();
+    document.open(); document.write(html); document.close();
+    history.pushState(null, '', '/mana-model/' + encodeURIComponent(deckName));
+}
+
+/**
  * Navigate to the deck view page for a local deck.
  * POSTs deck data as JSON, replaces the page with the response.
  */

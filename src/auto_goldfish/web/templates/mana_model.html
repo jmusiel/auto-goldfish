@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Mana Model: {{ deck_name }} - Auto Goldfish{% endblock %}
+{% block content %}
+<h1>Mana Model: {{ deck_name }}</h1>
+
+<div style="margin-bottom:1.5rem;">
+    {% if is_local is defined and is_local %}
+    <button class="btn btn-primary" onclick="navigateToSim('{{ deck_name }}')">Go to Simulator</button>
+    {% else %}
+    <a href="{{ url_for('simulation.config', deck_name=deck_name) }}" class="btn btn-primary">Go to Simulator</a>
+    {% endif %}
+</div>
+
+<div id="mana-model-loading" class="hint">Loading mana model analysis...</div>
+<div id="mana-model-content" style="display:none;">
+    <div id="mana-model-recommendation" style="margin-bottom:1.5rem;"></div>
+
+    <div style="display:flex; gap:2rem; flex-wrap:wrap;">
+        <div>
+            <h3>Expected Mana by Turn</h3>
+            <table class="mana-table" id="mana-model-table">
+                <thead>
+                    <tr>
+                        <th>Turn</th>
+                        <th>Expected Mana</th>
+                        <th>On Curve %</th>
+                        <th>Screw %</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div>
+            <h3>Land Count Comparison</h3>
+            <table class="mana-table" id="mana-model-comparison">
+                <thead><tr id="mana-comparison-header"></tr></thead>
+                <tbody id="mana-comparison-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="mana-model-mulligan" style="margin-top:1.5rem;"></div>
+
+    <div style="margin-top:1.5rem;">
+        <h3>What-If Calculator</h3>
+        <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+            <label>Lands: <input type="number" id="whatif-lands" value="{{ land_count }}" min="10" max="60" style="width:4rem;"></label>
+            <label>Deck Size: <input type="number" id="whatif-decksize" value="{{ deck_size }}" min="40" max="120" style="width:4rem;"></label>
+            <button type="button" class="btn btn-secondary btn-sm" id="whatif-btn">Calculate</button>
+        </div>
+        <div id="whatif-result" style="margin-top:0.5rem;"></div>
+    </div>
+</div>
+
+<script>
+(function() {
+    var deckName = {{ deck_name | tojson }};
+    var isLocal = {{ 'true' if is_local is defined and is_local else 'false' }};
+
+    function loadManaModel() {
+        var url = '/mana-model/api/' + encodeURIComponent(deckName) + '/analysis';
+        var fetchOpts = {};
+
+        if (isLocal) {
+            var storedDeck = DeckStore.getDeck(deckName);
+            if (storedDeck && storedDeck.cards) {
+                fetchOpts = {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        cards: storedDeck.cards,
+                        overrides: storedDeck.overrides || {},
+                    }),
+                };
+            }
+        }
+
+        fetch(url, fetchOpts)
+            .then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+            .then(renderManaModel)
+            .catch(function(err) {
+                document.getElementById('mana-model-loading').textContent =
+                    'Mana model unavailable: ' + err.message;
+            });
+    }
+
+    function renderManaModel(data) {
+        document.getElementById('mana-model-loading').style.display = 'none';
+        document.getElementById('mana-model-content').style.display = 'block';
+
+        var rec = data.recommendation;
+        var comp = data.composition;
+        var recDiv = document.getElementById('mana-model-recommendation');
+        var delta = rec.recommended_lands - comp.land_count;
+        var deltaStr = delta > 0 ? '+' + delta : delta === 0 ? 'no change' : '' + delta;
+        recDiv.innerHTML =
+            '<strong>Recommendation:</strong> ' + rec.recommended_lands + ' lands'
+            + ' (currently ' + comp.land_count + ', ' + deltaStr + ')'
+            + '<br><small>Avg CMC: ' + comp.avg_cmc + ' | Ramp: ' + comp.ramp_cards + ' | Draw: ' + comp.draw_cards
+            + (comp.commander_name ? ' | Commander: ' + comp.commander_name + ' (CMC ' + comp.commander_cmc + ')' : '')
+            + '</small>';
+
+        var tbody = document.querySelector('#mana-model-table tbody');
+        tbody.innerHTML = '';
+        data.current_mana_table.forEach(function(row) {
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td>' + row.turn + '</td><td>' + row.expected_mana + '</td>'
+                + '<td>' + (row.prob_on_curve * 100).toFixed(1) + '%</td>'
+                + '<td>' + (row.prob_screw * 100).toFixed(1) + '%</td>';
+            tbody.appendChild(tr);
+        });
+
+        var headerRow = document.getElementById('mana-comparison-header');
+        var compBody = document.getElementById('mana-comparison-body');
+        headerRow.innerHTML = '<th>Turn</th>';
+        data.comparison.forEach(function(c) {
+            var th = document.createElement('th');
+            th.textContent = c.land_count + ' lands';
+            if (c.land_count === rec.recommended_lands) th.style.fontWeight = 'bold';
+            headerRow.appendChild(th);
+        });
+
+        var maxTurns = data.comparison[0].mana_table.length;
+        compBody.innerHTML = '';
+        for (var t = 0; t < maxTurns; t++) {
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td>' + (t + 1) + '</td>';
+            data.comparison.forEach(function(c) {
+                var td = document.createElement('td');
+                td.textContent = c.mana_table[t].expected_mana;
+                tr.appendChild(td);
+            });
+            compBody.appendChild(tr);
+        }
+
+        var mullDiv = document.getElementById('mana-model-mulligan');
+        mullDiv.innerHTML = '<strong>Mulligan Rate:</strong> '
+            + 'Current (' + comp.land_count + ' lands): ' + (data.mulligan.current_rate * 100).toFixed(1) + '%'
+            + ' | Recommended (' + rec.recommended_lands + ' lands): ' + (data.mulligan.recommended_rate * 100).toFixed(1) + '%';
+
+        document.getElementById('whatif-lands').value = comp.land_count;
+        document.getElementById('whatif-decksize').value = comp.deck_size;
+    }
+
+    document.getElementById('whatif-btn').addEventListener('click', function() {
+        var lands = parseInt(document.getElementById('whatif-lands').value);
+        var deckSize = parseInt(document.getElementById('whatif-decksize').value);
+        fetch('/mana-model/api/calculate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({deck_size: deckSize, land_count: lands}),
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var html = '<strong>Mulligan rate:</strong> ' + (data.mulligan_rate * 100).toFixed(1) + '%<br>';
+            html += '<table class="mana-table"><thead><tr><th>Turn</th><th>Expected Mana</th><th>On Curve</th><th>Screw</th></tr></thead><tbody>';
+            data.mana_table.forEach(function(row) {
+                html += '<tr><td>' + row.turn + '</td><td>' + row.expected_mana + '</td>'
+                    + '<td>' + (row.prob_on_curve * 100).toFixed(1) + '%</td>'
+                    + '<td>' + (row.prob_screw * 100).toFixed(1) + '%</td></tr>';
+            });
+            html += '</tbody></table>';
+            document.getElementById('whatif-result').innerHTML = html;
+        })
+        .catch(function(err) {
+            document.getElementById('whatif-result').textContent = 'Error: ' + err.message;
+        });
+    });
+
+    loadManaModel();
+})();
+</script>
+{% endblock %}

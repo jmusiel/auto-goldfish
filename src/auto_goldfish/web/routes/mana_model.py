@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 
-from flask import Blueprint, abort, jsonify, request
+from flask import Blueprint, abort, jsonify, render_template, request
 
 from auto_goldfish.decklist.loader import get_deckpath, load_decklist, load_overrides
 from auto_goldfish.effects.card_database import DEFAULT_REGISTRY
@@ -17,6 +17,41 @@ from auto_goldfish.optimization.mana_model import (
 )
 
 bp = Blueprint("mana_model", __name__, url_prefix="/mana-model")
+
+
+@bp.route("/<deck_name>", methods=["GET", "POST"])
+def page(deck_name: str):
+    """Render the mana model page.
+
+    GET: loads deck from disk (saved decks).
+    POST: accepts {cards, overrides} in the request body (localStorage decks).
+    """
+    if request.method == "POST":
+        try:
+            body = request.get_json(force=True)
+        except Exception:
+            abort(400)
+        deck_list = body.get("cards", [])
+        is_local = True
+    else:
+        path = get_deckpath(deck_name)
+        if not os.path.isfile(path):
+            abort(404)
+        deck_list = load_decklist(deck_name)
+        is_local = False
+
+    land_count = sum(
+        c.get("quantity", 1) for c in deck_list if "Land" in c.get("types", [])
+    )
+    deck_size = sum(c.get("quantity", 1) for c in deck_list)
+
+    return render_template(
+        "mana_model.html",
+        deck_name=deck_name,
+        land_count=land_count,
+        deck_size=deck_size,
+        is_local=is_local,
+    )
 
 
 @bp.route("/api/<deck_name>/analysis", methods=["GET", "POST"])
