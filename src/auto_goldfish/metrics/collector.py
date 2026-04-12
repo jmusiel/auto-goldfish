@@ -14,6 +14,7 @@ class GameRecord:
     mana_value: int = 0
     mana_draw: int = 0
     mana_ramp: int = 0
+    ecms: int = 0
     hand_sum: int = 0
     lands_played: int = 0
     mulligans: int = 0

@@ -101,6 +101,16 @@ def test_set_lands():
     assert gf.land_count == original + 2
 
 
+def test_simulate_single_game_ecms():
+    """simulate_single_game with ecms=True returns compounded mana."""
+    deck = _simple_deck()
+    gf = Goldfisher(deck, turns=5, sims=10, record_results="quartile", seed=42)
+    normal = gf.simulate_single_game(42)
+    ecms = gf.simulate_single_game(42, ecms=True)
+    # ECMS compounds mana forward, so it should be >= normal primary mana
+    assert ecms >= normal
+
+
 def test_seed_reproducibility():
     """Same seed produces identical results."""
     deck = _simple_deck()

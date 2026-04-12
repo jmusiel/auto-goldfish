@@ -282,8 +282,9 @@ class FastDeckOptimizer:
             # Evaluate all active configs on this batch
             for cfg in list(active):
                 apply_config(self.goldfisher, cfg, self.candidates, self.swap_mode)
+                use_ecms = self.optimize_for == "karsten_ecms"
                 batch_values = [
-                    self.goldfisher.simulate_single_game(s) for s in seeds
+                    self.goldfisher.simulate_single_game(s, ecms=use_ecms) for s in seeds
                 ]
                 mana_lists[cfg].extend(batch_values)
                 done_sims += self.batch_size
@@ -475,4 +476,6 @@ class FastDeckOptimizer:
             return result_dict.get("mean_mana_total", 0.0)
         if self.optimize_for == "mean_spells_cast":
             return result_dict.get("mean_spells_cast", 0.0)
+        if self.optimize_for == "karsten_ecms":
+            return result_dict.get("mean_ecms", 0.0)
         return result_dict.get("mean_mana", 0.0)

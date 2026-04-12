@@ -372,3 +372,38 @@ def test_optimizer_floor_performance_target():
     # Top results should be sorted by threshold_mana descending
     scores = [r[1]["threshold_mana"] for r in top_results]
     assert scores == sorted(scores, reverse=True)
+
+
+def test_optimizer_karsten_ecms_target():
+    """DeckOptimizer can optimize for karsten_ecms."""
+    deck = _simple_deck()
+    gf = Goldfisher(deck, turns=5, sims=50, seed=42, record_results="quartile")
+    enabled = {
+        cid: c for cid, c in ALL_CANDIDATES.items()
+        if cid in ("draw_2cmc_2", "ramp_2cmc_1")
+    }
+
+    optimizer = DeckOptimizer(
+        goldfisher=gf,
+        candidates=enabled,
+        swap_mode=False,
+        max_draw=1,
+        max_ramp=1,
+        land_range=1,
+        optimize_for="karsten_ecms",
+        hyperband_max_sims=50,
+    )
+
+    results = optimizer.run(final_sims=50, final_top_k=3)
+    top_results = [r for r in results if r[1].get("opt_baseline_rank") is None]
+    assert len(top_results) > 0
+    assert len(top_results) <= 3
+
+    for config, result_dict in results:
+        assert isinstance(config, DeckConfig)
+        assert "mean_ecms" in result_dict
+        assert result_dict["mean_ecms"] >= 0
+
+    # Top results should be sorted by mean_ecms descending
+    scores = [r[1]["mean_ecms"] for r in top_results]
+    assert scores == sorted(scores, reverse=True)

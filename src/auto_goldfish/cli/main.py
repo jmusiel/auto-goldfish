@@ -25,7 +25,7 @@ def get_parser() -> argparse.ArgumentParser:
         type=str,
         default="https://archidekt.com/decks/19226307/vrens_murine_marauders",
     )
-    parser.add_argument("--turns", type=int, default=10)
+    parser.add_argument("--turns", type=int, default=8)
     parser.add_argument("--sims", type=int, default=10000)
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--min_lands", type=int, default=36)

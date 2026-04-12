@@ -151,6 +151,10 @@ class TestExtractScoreFromDict:
         opt = self._make_optimizer("mean_spells_cast")
         assert opt._extract_score_from_dict({"mean_spells_cast": 7.5}) == 7.5
 
+    def test_karsten_ecms(self):
+        opt = self._make_optimizer("karsten_ecms")
+        assert opt._extract_score_from_dict({"mean_ecms": 150.0}) == 150.0
+
     def test_missing_key_returns_zero(self):
         opt = self._make_optimizer("consistency")
         assert opt._extract_score_from_dict({}) == 0.0

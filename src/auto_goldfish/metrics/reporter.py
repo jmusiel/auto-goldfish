@@ -121,6 +121,7 @@ def result_to_dict(result: SimulationResult) -> Dict[str, Any]:
         "mean_mulls": result.mean_mulls,
         "mean_draws": result.mean_draws,
         "mean_spells_cast": result.mean_spells_cast,
+        "mean_ecms": result.mean_ecms,
         "percentile_25": result.percentile_25,
         "percentile_50": result.percentile_50,
         "percentile_75": result.percentile_75,

@@ -113,6 +113,14 @@ class TestCoreMetrics:
         assert r.mean_mana_ramp == 0
         assert r.mean_mana == pytest.approx(r.mean_mana_value, abs=0.01)
 
+    def test_mean_ecms_nonnegative(self, sequential_result):
+        assert sequential_result.mean_ecms >= 0
+
+    def test_mean_ecms_at_least_mean_mana_value(self, sequential_result):
+        """ECMS compounds mana forward, so it should always be >= mean_mana_value."""
+        r = sequential_result
+        assert r.mean_ecms >= r.mean_mana_value
+
     def test_mean_lands_positive(self, sequential_result):
         assert sequential_result.mean_lands > 0
 
@@ -362,6 +370,9 @@ class TestParallelParity:
 
     def test_mean_mana_total_matches(self, sequential_result, parallel_result):
         assert sequential_result.mean_mana_total == parallel_result.mean_mana_total
+
+    def test_mean_ecms_matches(self, sequential_result, parallel_result):
+        assert sequential_result.mean_ecms == parallel_result.mean_ecms
 
     def test_mean_hand_sum_matches(self, sequential_result, parallel_result):
         assert sequential_result.mean_hand_sum == parallel_result.mean_hand_sum
