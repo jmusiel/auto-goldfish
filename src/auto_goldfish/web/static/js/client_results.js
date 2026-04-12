@@ -81,6 +81,85 @@ const ClientResults = (function() {
 
     // -- Section renderers --
 
+    function renderDeckScore(results) {
+        // Use the last result (highest land count) for the score
+        const r = results[results.length - 1];
+        const score = r.deck_score;
+        if (!score) return '';
+
+        const stats = [
+            {name: 'Speed', key: 'speed', color: '#ef4444', desc: 'Early-game mana deployment'},
+            {name: 'Power', key: 'power', color: '#f97316', desc: 'Peak mana output and ceiling'},
+            {name: 'Consistency', key: 'consistency', color: '#eab308', desc: 'How rarely the deck bricks'},
+            {name: 'Resilience', key: 'resilience', color: '#22c55e', desc: 'Recovery from mulligans'},
+            {name: 'Efficiency', key: 'efficiency', color: '#3b82f6', desc: 'Mana utilization per turn'},
+            {name: 'Momentum', key: 'momentum', color: '#8b5cf6', desc: 'Late-game acceleration'},
+        ];
+
+        let html = '<div class="deck-score-section"><h2>Deck Stats</h2>';
+        html += '<div class="deck-score-grid">';
+        // Radar chart canvas
+        html += '<div class="deck-score-radar"><canvas id="deckScoreRadar"></canvas></div>';
+        // Stat bars
+        html += '<div class="deck-score-bars">';
+        for (const s of stats) {
+            const val = score[s.key] || 0;
+            const pct = (val / 20 * 100).toFixed(0);
+            html += '<div class="deck-stat-row">';
+            html += '<div class="deck-stat-label" title="' + s.desc + '">' + s.name + '</div>';
+            html += '<div class="deck-stat-bar-track">';
+            html += '<div class="deck-stat-bar-fill" style="width:' + pct + '%;background:' + s.color + '"></div>';
+            html += '</div>';
+            html += '<div class="deck-stat-value">' + val + '</div>';
+            html += '</div>';
+        }
+        html += '</div></div></div>';
+        return html;
+    }
+
+    function renderDeckScoreChart(results) {
+        const r = results[results.length - 1];
+        const score = r.deck_score;
+        if (!score) return;
+
+        const canvas = document.getElementById('deckScoreRadar');
+        if (!canvas) return;
+
+        const labels = ['Speed', 'Power', 'Consistency', 'Resilience', 'Efficiency', 'Momentum'];
+        const values = [score.speed, score.power, score.consistency, score.resilience, score.efficiency, score.momentum];
+
+        new Chart(canvas, {
+            type: 'radar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Deck Stats',
+                    data: values,
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#3b82f6',
+                    pointRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    r: {
+                        min: 0,
+                        max: 20,
+                        ticks: { stepSize: 5, display: true },
+                        pointLabels: { font: { size: 13, weight: 'bold' } },
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                }
+            }
+        });
+    }
+
     function renderSummaryTable(results, isOptimization) {
         let html = '<h2>' + (isOptimization ? 'Optimization Results' : 'Summary Statistics') + '</h2>';
         if (isOptimization) {
@@ -615,6 +694,7 @@ const ClientResults = (function() {
         if (isOptimization) {
             html += renderFeatureAnalysis(results);
         }
+        html += renderDeckScore(results);
         html += renderSummaryTable(results, isOptimization);
         html += renderCardPerformance(results);
         if (!isOptimization) {
@@ -626,6 +706,7 @@ const ClientResults = (function() {
         container.innerHTML = html;
 
         // Render interactive components after DOM is updated
+        renderDeckScoreChart(results);
         if (!isOptimization) {
             renderCharts(results);
         }
