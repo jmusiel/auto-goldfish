@@ -1483,7 +1483,7 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
         const minLands = parseInt(document.getElementById('min_lands').value) || 36;
         const maxLands = parseInt(document.getElementById('max_lands').value) || 39;
         const landCounts = maxLands - minLands + 1;
-        const msPerSim = 3; // ~3ms per sim on modern hardware
+        const msPerSim = 6; // ~6ms per sim in Pyodide/WASM
 
         // Count enabled candidates
         var drawCount = 0, rampCount = 0;
@@ -1509,12 +1509,18 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
         var totalConfigs = landCounts * drawCombos * rampCombos;
         var finalTopK = 5;
 
-        var enumSeconds = Math.ceil((fp.hyperband_max_sims * totalConfigs * msPerSim) / 1000);
-        var evalSeconds = Math.ceil((fp.sims * finalTopK * msPerSim) / 1000);
+        // Racing eliminates configs early, so budget is ~total_configs * max_sims_per_config
+        // but actual work is much less. Use a rough 40% factor for early elimination savings.
+        var racingMaxSims = fp.hyperband_max_sims <= 200 ? 300 : 500;
+        var enumSims = Math.round(totalConfigs * racingMaxSims * 0.4);
+        var evalSims = fp.sims * finalTopK;
+        var enumSeconds = Math.ceil((enumSims * msPerSim) / 1000);
+        var evalSeconds = Math.ceil((evalSims * msPerSim) / 1000);
+        var totalSeconds = enumSeconds + evalSeconds;
         document.getElementById('local-sim-estimate').textContent =
-            'Estimated time: ~' + (enumSeconds + evalSeconds) + 's ('
-            + totalConfigs + ' configs x ' + fp.hyperband_max_sims + ' sims + '
-            + finalTopK + ' top x ' + fp.sims + ' sims).';
+            'Estimated time: ~' + formatTime(totalSeconds) + ' ('
+            + totalConfigs + ' configs, racing + '
+            + finalTopK + ' top x ' + fp.sims + ' eval sims). Live timer shown during run.';
     }
 
     async function initWorker() {
@@ -1539,6 +1545,26 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
         worker.postMessage({type: 'init', wheelUrl: resolvedWheelUrl});
     }
 
+    // Live timer state for progress tracking
+    var simStartTime = null;
+    var lastProgressUpdate = 0;
+    var lastProgressPhase = null;
+
+    function formatTime(seconds) {
+        if (seconds < 60) return Math.ceil(seconds) + 's';
+        var m = Math.floor(seconds / 60);
+        var s = Math.ceil(seconds % 60);
+        return m + 'm ' + s + 's';
+    }
+
+    function timeInfo(current, total) {
+        if (!simStartTime || current <= 0) return '';
+        var elapsed = (performance.now() - simStartTime) / 1000;
+        var rate = current / elapsed;
+        var remaining = rate > 0 ? (total - current) / rate : 0;
+        return ' — ' + formatTime(elapsed) + ' elapsed, ~' + formatTime(remaining) + ' remaining';
+    }
+
     function handleWorkerMessage(e) {
         const msg = e.data;
 
@@ -1554,12 +1580,24 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
                 }
             }, 2000);
         } else if (msg.type === 'progress') {
-            const pct = Math.round((msg.current / msg.total) * 100);
+            // Throttle DOM updates to ~20fps to avoid excessive repaints
+            var now = performance.now();
+            if (now - lastProgressUpdate < 50 && msg.current < msg.total) return;
+            lastProgressUpdate = now;
+
+            const pct = Math.min((msg.current / msg.total) * 100, 100).toFixed(1);
             var phase = msg.phase || 'eval';
+
+            // Reset timer on phase transition (enum -> eval)
+            if (phase !== lastProgressPhase) {
+                simStartTime = performance.now();
+                lastProgressPhase = phase;
+            }
+            var timer = timeInfo(msg.current, msg.total);
             var html = '<div class="job-status">';
             if (phase === 'enum') {
                 // Enumeration phase: show enum bar active, eval bar empty
-                html += '<p>Enumerating configurations... ' + pct + '% (' + msg.current + '/' + msg.total + ')</p>'
+                html += '<p>Enumerating configurations... ' + pct + '%' + timer + '</p>'
                     + '<div class="progress-bar-container">'
                     + '<div class="progress-bar" style="width: ' + pct + '%"></div>'
                     + '</div>'
@@ -1573,7 +1611,7 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
                     + '<div class="progress-bar-container">'
                     + '<div class="progress-bar" style="width: 100%"></div>'
                     + '</div>'
-                    + '<p>Evaluating top configurations... ' + pct + '% (' + msg.current + '/' + msg.total + ')</p>'
+                    + '<p>Evaluating top configurations... ' + pct + '%' + timer + '</p>'
                     + '<div class="progress-bar-container">'
                     + '<div class="progress-bar" style="width: ' + pct + '%"></div>'
                     + '</div>';
@@ -1582,7 +1620,7 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
                 html += '<div class="progress-bar-container">'
                     + '<div class="progress-bar" style="width: ' + pct + '%"></div>'
                     + '</div>'
-                    + '<p>Simulating... ' + pct + '% (' + msg.current + '/' + msg.total + ')</p>';
+                    + '<p>Simulating... ' + pct + '%' + timer + '</p>';
             }
             html += '</div>';
             jobStatus.innerHTML = html;
@@ -1702,6 +1740,8 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
             const workerType = 'run_optimization';
 
             lastConfig = config;
+            simStartTime = performance.now();
+            lastProgressUpdate = 0;
             jobStatus.innerHTML = '<div class="job-status"><p>Starting optimization...</p></div>';
             worker.postMessage({
                 type: workerType,
