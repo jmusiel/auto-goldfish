@@ -381,6 +381,48 @@
 <div id="job-status"></div>
 <div id="local-results"></div>
 
+<!-- Mana Model Analysis (loads instantly via AJAX) -->
+<details id="mana-model-section" open>
+    <summary><strong>Mana Model (Hypergeometric)</strong></summary>
+    <div id="mana-model-loading" class="hint">Loading mana model analysis...</div>
+    <div id="mana-model-content" style="display:none;">
+        <div id="mana-model-recommendation" style="margin-bottom:1rem;"></div>
+        <div style="display:flex; gap:2rem; flex-wrap:wrap;">
+            <div>
+                <h3>Expected Mana by Turn</h3>
+                <table class="mana-table" id="mana-model-table">
+                    <thead>
+                        <tr>
+                            <th>Turn</th>
+                            <th>Expected Mana</th>
+                            <th>On Curve %</th>
+                            <th>Screw %</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div>
+                <h3>Land Count Comparison</h3>
+                <table class="mana-table" id="mana-model-comparison">
+                    <thead><tr id="mana-comparison-header"></tr></thead>
+                    <tbody id="mana-comparison-body"></tbody>
+                </table>
+            </div>
+        </div>
+        <div id="mana-model-mulligan" style="margin-top:1rem;"></div>
+        <div style="margin-top:1rem;">
+            <h3>What-If Calculator</h3>
+            <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+                <label>Lands: <input type="number" id="whatif-lands" value="{{ land_count }}" min="10" max="60" style="width:4rem;"></label>
+                <label>Deck Size: <input type="number" id="whatif-decksize" value="99" min="40" max="120" style="width:4rem;"></label>
+                <button type="button" class="btn btn-secondary btn-sm" id="whatif-btn">Calculate</button>
+            </div>
+            <div id="whatif-result" style="margin-top:0.5rem;"></div>
+        </div>
+    </div>
+</details>
+
 <script>
 (function() {
     const MAX_SWEEP = {{ max_land_sweep }};
@@ -1843,6 +1885,113 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
     // Initialize Pyodide on page load
     updateEstimate();
     initWorker();
+})();
+</script>
+<script>
+// Mana Model AJAX loader
+(function() {
+    const deckName = {{ deck_name | tojson }};
+
+    function loadManaModel() {
+        fetch(`/mana-model/api/${encodeURIComponent(deckName)}/analysis`)
+            .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+            .then(renderManaModel)
+            .catch(err => {
+                document.getElementById('mana-model-loading').textContent =
+                    'Mana model unavailable: ' + err.message;
+            });
+    }
+
+    function renderManaModel(data) {
+        document.getElementById('mana-model-loading').style.display = 'none';
+        document.getElementById('mana-model-content').style.display = 'block';
+
+        // Recommendation
+        const rec = data.recommendation;
+        const comp = data.composition;
+        const recDiv = document.getElementById('mana-model-recommendation');
+        const delta = rec.recommended_lands - comp.land_count;
+        const deltaStr = delta > 0 ? `+${delta}` : delta === 0 ? 'no change' : `${delta}`;
+        recDiv.innerHTML = `
+            <strong>Recommendation:</strong> ${rec.recommended_lands} lands
+            (currently ${comp.land_count}, ${deltaStr})
+            <br><small>Avg CMC: ${comp.avg_cmc} | Ramp: ${comp.ramp_cards} | Draw: ${comp.draw_cards}
+            ${comp.commander_name ? ' | Commander: ' + comp.commander_name + ' (CMC ' + comp.commander_cmc + ')' : ''}</small>
+        `;
+
+        // Mana table
+        const tbody = document.querySelector('#mana-model-table tbody');
+        tbody.innerHTML = '';
+        data.current_mana_table.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${row.turn}</td><td>${row.expected_mana}</td>`
+                + `<td>${(row.prob_on_curve * 100).toFixed(1)}%</td>`
+                + `<td>${(row.prob_screw * 100).toFixed(1)}%</td>`;
+            tbody.appendChild(tr);
+        });
+
+        // Comparison table
+        const headerRow = document.getElementById('mana-comparison-header');
+        const compBody = document.getElementById('mana-comparison-body');
+        headerRow.innerHTML = '<th>Turn</th>';
+        data.comparison.forEach(c => {
+            const th = document.createElement('th');
+            th.textContent = `${c.land_count} lands`;
+            if (c.land_count === rec.recommended_lands) th.style.fontWeight = 'bold';
+            headerRow.appendChild(th);
+        });
+
+        // Build rows by turn
+        const maxTurns = data.comparison[0].mana_table.length;
+        compBody.innerHTML = '';
+        for (let t = 0; t < maxTurns; t++) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${t + 1}</td>`;
+            data.comparison.forEach(c => {
+                const td = document.createElement('td');
+                td.textContent = c.mana_table[t].expected_mana;
+                tr.appendChild(td);
+            });
+            compBody.appendChild(tr);
+        }
+
+        // Mulligan stats
+        const mullDiv = document.getElementById('mana-model-mulligan');
+        mullDiv.innerHTML = `<strong>Mulligan Rate:</strong> `
+            + `Current (${comp.land_count} lands): ${(data.mulligan.current_rate * 100).toFixed(1)}%`
+            + ` | Recommended (${rec.recommended_lands} lands): ${(data.mulligan.recommended_rate * 100).toFixed(1)}%`;
+
+        // What-if calculator
+        document.getElementById('whatif-lands').value = comp.land_count;
+        document.getElementById('whatif-decksize').value = comp.deck_size;
+    }
+
+    document.getElementById('whatif-btn').addEventListener('click', function() {
+        const lands = parseInt(document.getElementById('whatif-lands').value);
+        const deckSize = parseInt(document.getElementById('whatif-decksize').value);
+        fetch('/mana-model/api/calculate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({deck_size: deckSize, land_count: lands}),
+        })
+        .then(r => r.json())
+        .then(data => {
+            let html = `<strong>Mulligan rate:</strong> ${(data.mulligan_rate * 100).toFixed(1)}%<br>`;
+            html += '<table class="mana-table"><thead><tr><th>Turn</th><th>Expected Mana</th><th>On Curve</th><th>Screw</th></tr></thead><tbody>';
+            data.mana_table.forEach(row => {
+                html += `<tr><td>${row.turn}</td><td>${row.expected_mana}</td>`
+                    + `<td>${(row.prob_on_curve * 100).toFixed(1)}%</td>`
+                    + `<td>${(row.prob_screw * 100).toFixed(1)}%</td></tr>`;
+            });
+            html += '</tbody></table>';
+            document.getElementById('whatif-result').innerHTML = html;
+        })
+        .catch(err => {
+            document.getElementById('whatif-result').textContent = 'Error: ' + err.message;
+        });
+    });
+
+    loadManaModel();
 })();
 </script>
 {% endblock %}
