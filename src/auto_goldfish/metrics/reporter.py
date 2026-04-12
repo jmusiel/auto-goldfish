@@ -104,9 +104,12 @@ def save_report(
                 f.write("\n")
 
 
-def result_to_dict(result: SimulationResult) -> Dict[str, Any]:
+def result_to_dict(result: SimulationResult, turns: int = 10) -> Dict[str, Any]:
     """Convert SimulationResult to a JSON-serializable dict."""
+    from auto_goldfish.metrics.deck_score import compute_deck_score
+    score = compute_deck_score(result, turns=turns)
     return {
+        "deck_score": score.as_dict(),
         "land_count": result.land_count,
         "mean_mana": result.mean_mana,
         "mean_mana_value": result.mean_mana_value,
@@ -140,4 +143,10 @@ def result_to_dict(result: SimulationResult) -> Dict[str, Any]:
         "ci_mean_mana": list(result.ci_mean_mana),
         "ci_consistency": list(result.ci_consistency),
         "ci_mean_bad_turns": list(result.ci_mean_bad_turns),
+        "mean_mana_per_turn": result.mean_mana_per_turn,
+        "mean_spells_per_turn": result.mean_spells_per_turn,
+        "std_mana": result.std_mana,
+        "mull_rate": result.mull_rate,
+        "mean_mana_with_mull": result.mean_mana_with_mull,
+        "mean_mana_no_mull": result.mean_mana_no_mull,
     }

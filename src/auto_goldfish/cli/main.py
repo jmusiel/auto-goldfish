@@ -49,6 +49,8 @@ def get_parser() -> argparse.ArgumentParser:
                         help="Deprioritize ramp after this turn (0 = always play ramp)")
     parser.add_argument("--min_cost_floor", type=int, default=1, choices=[0, 1],
                         help="Minimum spell cost after reductions (0 or 1)")
+    parser.add_argument("--score", action="store_true",
+                        help="Print D&D-style deck stat block after simulation")
     return parser
 
 
@@ -58,6 +60,7 @@ def run(config: dict) -> None:
     from auto_goldfish.engine.mulligan import CurveAwareMulligan
     if config.get("workers", 1) == 0:
         config["workers"] = os.cpu_count() or 1
+    show_score = config.pop("score", False)
     if config.pop("mulligan", "default") == "curve_aware":
         config["mulligan_strategy"] = CurveAwareMulligan()
     pp.pprint(config)
@@ -142,6 +145,12 @@ def run(config: dict) -> None:
             tablefmt="simple",
         )
     )
+
+    if show_score:
+        from auto_goldfish.metrics.deck_score import compute_deck_score
+        print(f"\nDeck Score (last land count = {result.land_count}):")
+        score = compute_deck_score(result, turns=config.get("turns", 10))
+        print(score.format_block())
 
 
 def main() -> None:

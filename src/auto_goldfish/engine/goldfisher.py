@@ -77,6 +77,16 @@ class SimulationResult:
     game_records: Dict[str, Dict[str, list]] = field(default_factory=dict)
     replay_data: Dict[str, Any] = field(default_factory=dict)
 
+    # Per-turn averages (index 0 = turn 1)
+    mean_mana_per_turn: List[float] = field(default_factory=list)
+    mean_spells_per_turn: List[float] = field(default_factory=list)
+
+    # Extra aggregates for deck scoring
+    std_mana: float = 0.0
+    mull_rate: float = 0.0
+    mean_mana_with_mull: float = 0.0
+    mean_mana_no_mull: float = 0.0
+
     # 95% CI half-widths (z * std / sqrt(n))
     ci_mana_value: float = 0.0
     ci_mana_draw: float = 0.0
@@ -222,6 +232,10 @@ def _worker_run_batch(
     played_cards_per_game: list[set] = []
     drawn_cards_per_game: list[set] = []
 
+    # Per-turn accumulators (index = turn number)
+    mana_per_turn_sum = [0] * turns
+    spells_per_turn_sum = [0] * turns
+
     # Unclassified replay snapshots: list of (total_mana, replay_dict)
     raw_replays: list[tuple[int, dict]] = []
     # Start capturing after the first 10% of games to get some variance
@@ -292,6 +306,8 @@ def _worker_run_batch(
             game_ecms += turn_ecms_mana * (turns - i)
             game_hand_sum += min(len(state.hand), 7)
             game_spells_cast += spells_played
+            mana_per_turn_sum[i] += turn_mana
+            spells_per_turn_sum[i] += spells_played
             if spells_played == 0 and state.deck:
                 game_bad += 1
             if spells_played < 2 and state.deck and turn_mana < i + 1:
@@ -372,6 +388,9 @@ def _worker_run_batch(
         "card_mana_spent_list": card_mana_spent_list,
         "played_cards_per_game": played_cards_per_game,
         "drawn_cards_per_game": drawn_cards_per_game,
+        "mana_per_turn_sum": mana_per_turn_sum,
+        "spells_per_turn_sum": spells_per_turn_sum,
+        "n_games": n_games,
     }
     if capture_replays:
         result["raw_replays"] = raw_replays
@@ -1045,6 +1064,8 @@ class Goldfisher:
         card_cast_turns: list[list] = [[] for _ in self.decklist]
         card_mana_spent: list[list] = [[] for _ in self.decklist]
         all_raw_replays: list[tuple[int, dict]] = []
+        mana_per_turn_sum = [0] * self.turns
+        spells_per_turn_sum = [0] * self.turns
 
         for future in futures:
             batch = future.result()
@@ -1059,9 +1080,14 @@ class Goldfisher:
             merged["played_cards_per_game"].extend(batch["played_cards_per_game"])
             merged["drawn_cards_per_game"].extend(batch["drawn_cards_per_game"])
             all_raw_replays.extend(batch.get("raw_replays", []))
+            for t in range(self.turns):
+                mana_per_turn_sum[t] += batch["mana_per_turn_sum"][t]
+                spells_per_turn_sum[t] += batch["spells_per_turn_sum"][t]
 
         merged["card_cast_turns"] = card_cast_turns
         merged["card_mana_spent_list"] = card_mana_spent
+        merged["mana_per_turn_sum"] = mana_per_turn_sum
+        merged["spells_per_turn_sum"] = spells_per_turn_sum
 
         # Classify pooled replays using the primary mana distribution
         replay_buckets: dict[str, list] = {"top": [], "mid": [], "low": []}
@@ -1235,6 +1261,21 @@ class Goldfisher:
 
         replay_data = raw.get("replay_data", {})
 
+        # Per-turn averages
+        mana_per_turn_sum = raw.get("mana_per_turn_sum", [0] * self.turns)
+        spells_per_turn_sum = raw.get("spells_per_turn_sum", [0] * self.turns)
+        mean_mana_per_turn = [s / n for s in mana_per_turn_sum] if n > 0 else []
+        mean_spells_per_turn = [s / n for s in spells_per_turn_sum] if n > 0 else []
+
+        # Scoring aggregates
+        std_mana = float(np.std(mana_spent_list, ddof=1)) if n > 1 else 0.0
+        mulls_arr = np.array(mulls_list)
+        mana_arr_full = np.array(mana_spent_list)
+        mull_mask = mulls_arr > 0
+        mull_rate = float(np.mean(mull_mask))
+        mean_mana_with_mull = float(np.mean(mana_arr_full[mull_mask])) if mull_mask.any() else mean_mana
+        mean_mana_no_mull = float(np.mean(mana_arr_full[~mull_mask])) if (~mull_mask).any() else mean_mana
+
         return SimulationResult(
             land_count=self.land_count,
             mean_mana=mean_mana,
@@ -1259,6 +1300,12 @@ class Goldfisher:
             ceiling_mana=ceiling_mana,
             quartile_mana=quartile_mana,
             con_threshold=con_threshold,
+            mean_mana_per_turn=mean_mana_per_turn,
+            mean_spells_per_turn=mean_spells_per_turn,
+            std_mana=std_mana,
+            mull_rate=mull_rate,
+            mean_mana_with_mull=mean_mana_with_mull,
+            mean_mana_no_mull=mean_mana_no_mull,
             ci_mana_value=ci_mana_value,
             ci_mana_draw=ci_mana_draw,
             ci_mana_ramp=ci_mana_ramp,
@@ -1306,6 +1353,8 @@ class Goldfisher:
         spells_cast_list = []
         bad_turns_list = []
         mid_turns_list = []
+        mana_per_turn_sum = [0] * self.turns
+        spells_per_turn_sum = [0] * self.turns
         card_cast_turn_list: list[list] = [[] for _ in self.decklist]
         card_mana_spent_list: list[list] = [[] for _ in self.decklist]
         played_cards_per_game: list[set] = []
@@ -1384,6 +1433,8 @@ class Goldfisher:
                 game_ecms += turn_ecms_mana * (self.turns - i)
                 game_hand_sum += min(len(state.hand), 7)
                 total_spells_cast += spells_played
+                mana_per_turn_sum[i] += mana_spent
+                spells_per_turn_sum[i] += spells_played
                 if spells_played == 0 and state.deck:
                     bad_turns += 1
                 if spells_played < 2 and state.deck and mana_spent < i + 1:
@@ -1652,6 +1703,19 @@ class Goldfisher:
             card_mana_spent_list=card_mana_spent_list,
         )
 
+        # Per-turn averages
+        mean_mana_per_turn = [s / n for s in mana_per_turn_sum] if n > 0 else []
+        mean_spells_per_turn = [s / n for s in spells_per_turn_sum] if n > 0 else []
+
+        # Scoring aggregates
+        std_mana = float(np.std(mana_spent_list, ddof=1)) if n > 1 else 0.0
+        mulls_arr = np.array(mulls_list)
+        mana_arr_full = np.array(mana_spent_list)
+        mull_mask = mulls_arr > 0
+        mull_rate = float(np.mean(mull_mask))
+        mean_mana_with_mull = float(np.mean(mana_arr_full[mull_mask])) if mull_mask.any() else mean_mana
+        mean_mana_no_mull = float(np.mean(mana_arr_full[~mull_mask])) if (~mull_mask).any() else mean_mana
+
         return SimulationResult(
             land_count=self.land_count,
             mean_mana=mean_mana,
@@ -1676,6 +1740,12 @@ class Goldfisher:
             ceiling_mana=ceiling_mana,
             quartile_mana=quartile_mana,
             con_threshold=con_threshold,
+            mean_mana_per_turn=mean_mana_per_turn,
+            mean_spells_per_turn=mean_spells_per_turn,
+            std_mana=std_mana,
+            mull_rate=mull_rate,
+            mean_mana_with_mull=mean_mana_with_mull,
+            mean_mana_no_mull=mean_mana_no_mull,
             ci_mana_value=ci_mana_value,
             ci_mana_draw=ci_mana_draw,
             ci_mana_ramp=ci_mana_ramp,
