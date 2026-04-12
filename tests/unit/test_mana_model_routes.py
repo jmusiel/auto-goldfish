@@ -69,6 +69,20 @@ class TestAnalysisEndpoint:
             resp = client.get("/mana-model/api/no_such_deck/analysis")
         assert resp.status_code == 404
 
+    def test_analysis_post_with_card_data(self, client):
+        """POST /mana-model/api/<deck>/analysis should accept cards in body (localStorage decks)."""
+        deck_data = _make_deck_json()
+        resp = client.post(
+            "/mana-model/api/local_deck/analysis",
+            data=json.dumps({"cards": deck_data, "overrides": {}}),
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert "recommendation" in data
+        assert data["composition"]["land_count"] == 36
+        assert data["composition"]["deck_size"] == 99
+
 
 class TestCalculateEndpoint:
     def test_calculate_returns_json(self, client):

@@ -1893,7 +1893,25 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
     const deckName = {{ deck_name | tojson }};
 
     function loadManaModel() {
-        fetch(`/mana-model/api/${encodeURIComponent(deckName)}/analysis`)
+        var url = `/mana-model/api/${encodeURIComponent(deckName)}/analysis`;
+        var fetchOpts = {};
+
+        if (IS_LOCAL_DECK) {
+            // Deck is in localStorage, not on disk — POST the card data
+            var storedDeck = DeckStore.getDeck(DECK_NAME_FOR_STORE);
+            if (storedDeck && storedDeck.cards) {
+                fetchOpts = {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        cards: storedDeck.cards,
+                        overrides: storedDeck.overrides || {},
+                    }),
+                };
+            }
+        }
+
+        fetch(url, fetchOpts)
             .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
             .then(renderManaModel)
             .catch(err => {

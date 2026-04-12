@@ -19,15 +19,27 @@ from auto_goldfish.optimization.mana_model import (
 bp = Blueprint("mana_model", __name__, url_prefix="/mana-model")
 
 
-@bp.route("/api/<deck_name>/analysis")
+@bp.route("/api/<deck_name>/analysis", methods=["GET", "POST"])
 def analysis(deck_name: str):
-    """Instant JSON analysis with recommendation, mana table, comparison, mulligan stats."""
-    path = get_deckpath(deck_name)
-    if not os.path.isfile(path):
-        abort(404)
+    """Instant JSON analysis with recommendation, mana table, comparison, mulligan stats.
 
-    deck_list = load_decklist(deck_name)
-    overrides = load_overrides(deck_name)
+    GET: loads deck from disk (saved decks).
+    POST: accepts {cards, overrides} in the request body (localStorage decks).
+    """
+    if request.method == "POST":
+        try:
+            body = request.get_json(force=True)
+        except Exception:
+            abort(400)
+        deck_list = body.get("cards", [])
+        overrides = body.get("overrides", {})
+    else:
+        path = get_deckpath(deck_name)
+        if not os.path.isfile(path):
+            abort(404)
+        deck_list = load_decklist(deck_name)
+        overrides = load_overrides(deck_name)
+
     comp = analyze_deck_composition(deck_list, DEFAULT_REGISTRY, overrides)
 
     # Get recommendation
