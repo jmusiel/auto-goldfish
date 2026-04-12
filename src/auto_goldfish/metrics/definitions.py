@@ -29,6 +29,10 @@ def mean_mana_total(records: List[GameRecord]) -> float:
     return float(np.mean([r.mana_value + r.mana_draw + r.mana_ramp for r in records]))
 
 
+def mean_ecms(records: List[GameRecord]) -> float:
+    return float(np.mean([r.ecms for r in records]))
+
+
 def mean_hand_sum(records: List[GameRecord]) -> float:
     return float(np.mean([r.hand_sum for r in records]))
 

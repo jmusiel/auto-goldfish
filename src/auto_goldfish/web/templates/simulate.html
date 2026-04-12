@@ -137,15 +137,16 @@
     <div class="form-row">
         <div class="form-group">
             <label for="turns">Turns (max {{ max_turns }}) <span class="info-tip" data-tip="Number of turns to simulate each game. More turns means longer games but slower simulations.">i</span></label>
-            <input type="number" id="turns" name="turns" value="10" min="1" max="{{ max_turns }}">
+            <input type="number" id="turns" name="turns" value="8" min="1" max="{{ max_turns }}">
         </div>
         <div class="form-group">
-            <label for="optimize-target">Optimize for <span class="info-tip" data-tip="The metric used to rank land counts and card candidates. Floor Performance maximizes average mana spent in the worst 25% of games; Mana maximizes total mana spent; Consistency maximizes worst-case reliability (left-tail ratio); Spells Cast maximizes spells played per game.">i</span></label>
+            <label for="optimize-target">Optimize for <span class="info-tip" data-tip="The metric used to rank land counts and card candidates. Floor Performance maximizes average mana spent in the worst 25% of games; Mana maximizes total mana spent; Consistency maximizes worst-case reliability (left-tail ratio); Spells Cast maximizes spells played per game; Karsten-ECMS compounds mana spent forward through remaining turns.">i</span></label>
             <select id="optimize-target" name="optimize_target">
                 <option value="floor_performance" selected>Floor performance (worst 25% of games)</option>
                 <option value="mana">Total mana spent</option>
                 <option value="consistency">Consistency (left-tail ratio)</option>
                 <option value="spells_cast">Number of spells cast</option>
+                <option value="karsten_ecms">Karsten-ECMS (compounded mana spent)</option>
             </select>
         </div>
     </div>
@@ -1718,7 +1719,7 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
 
             const fp = getFidelityParams();
             const config = {
-                turns: parseInt(document.getElementById('turns').value) || 10,
+                turns: parseInt(document.getElementById('turns').value) || 8,
                 sims: fp.sims,
                 min_lands: parseInt(document.getElementById('min_lands').value),
                 max_lands: parseInt(document.getElementById('max_lands').value),
@@ -1793,6 +1794,8 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
             optimize_for = 'consistency';
         } else if (optimizeTarget === 'spells_cast') {
             optimize_for = 'mean_spells_cast';
+        } else if (optimizeTarget === 'karsten_ecms') {
+            optimize_for = 'karsten_ecms';
         } else {
             optimize_for = manaMode === 'value' ? 'mean_mana_value'
                          : manaMode === 'value_draw' ? 'mean_mana'

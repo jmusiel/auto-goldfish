@@ -3,6 +3,7 @@
 from auto_goldfish.metrics.collector import GameRecord, MetricsCollector
 from auto_goldfish.metrics.definitions import (
     consistency,
+    mean_ecms,
     mean_hand_sum,
     mean_mana_draw,
     mean_mana_ramp,
@@ -75,6 +76,15 @@ def test_consistency_range():
     records = _make_records([1, 2, 3, 4, 5, 6, 7, 8, 9, 100])
     c = consistency(records)
     assert 0 < c <= 1.0
+
+
+def test_mean_ecms():
+    records = [
+        GameRecord(ecms=100),
+        GameRecord(ecms=200),
+        GameRecord(ecms=300),
+    ]
+    assert mean_ecms(records) == 200.0
 
 
 def test_collector_custom_metric():

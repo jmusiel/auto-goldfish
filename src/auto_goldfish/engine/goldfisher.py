@@ -63,6 +63,7 @@ class SimulationResult:
     mean_mulls: float = 0.0
     mean_draws: float = 0.0
     mean_spells_cast: float = 0.0
+    mean_ecms: float = 0.0
     percentile_25: float = 0.0
     percentile_50: float = 0.0
     percentile_75: float = 0.0
@@ -208,6 +209,7 @@ def _worker_run_batch(
     mana_value = []
     mana_draw = []
     mana_ramp = []
+    ecms = []
     hand_sum = []
     mulls = []
     lands_played = []
@@ -216,6 +218,7 @@ def _worker_run_batch(
     bad_turns = []
     mid_turns = []
     card_cast_turns: list[list] = [[] for _ in gf.decklist]
+    card_mana_spent_list: list[list] = [[] for _ in gf.decklist]
     played_cards_per_game: list[set] = []
     drawn_cards_per_game: list[set] = []
 
@@ -235,6 +238,7 @@ def _worker_run_batch(
         game_mana_value = 0
         game_mana_draw = 0
         game_mana_ramp = 0
+        game_ecms = 0
         game_hand_sum = 0
         game_lands = 0
         game_bad = 0
@@ -278,6 +282,14 @@ def _worker_run_batch(
             game_mana_value += turn_mana_value
             game_mana_draw += turn_mana_draw
             game_mana_ramp += turn_mana_ramp
+            # ECMS: compound mana forward for remaining turns
+            if gf.mana_mode == "value":
+                turn_ecms_mana = turn_mana_value
+            elif gf.mana_mode == "value_draw":
+                turn_ecms_mana = turn_mana_value + turn_mana_draw
+            else:
+                turn_ecms_mana = turn_mana_value + turn_mana_draw + turn_mana_ramp
+            game_ecms += turn_ecms_mana * (turns - i)
             game_hand_sum += min(len(state.hand), 7)
             game_spells_cast += spells_played
             if spells_played == 0 and state.deck:
@@ -311,6 +323,7 @@ def _worker_run_batch(
         mana_value.append(game_mana_value)
         mana_draw.append(game_mana_draw)
         mana_ramp.append(game_mana_ramp)
+        ecms.append(game_ecms)
         hand_sum.append(game_hand_sum)
         lands_played.append(game_lands)
         mulls.append(mulligans)
@@ -323,6 +336,7 @@ def _worker_run_batch(
         for k, turn in enumerate(state.card_cast_turn):
             if turn is not None and not gf.decklist[k].land:
                 card_cast_turns[k].append(turn)
+                card_mana_spent_list[k].append(gf.decklist[k].mana_spent_when_played)
                 if gf.decklist[k].spell:
                     game_played.add(k)
         played_cards_per_game.append(game_played)
@@ -346,6 +360,7 @@ def _worker_run_batch(
         "mana_value": mana_value,
         "mana_draw": mana_draw,
         "mana_ramp": mana_ramp,
+        "ecms": ecms,
         "hand_sum": hand_sum,
         "mulls": mulls,
         "lands_played": lands_played,
@@ -354,6 +369,7 @@ def _worker_run_batch(
         "bad_turns": bad_turns,
         "mid_turns": mid_turns,
         "card_cast_turns": card_cast_turns,
+        "card_mana_spent_list": card_mana_spent_list,
         "played_cards_per_game": played_cards_per_game,
         "drawn_cards_per_game": drawn_cards_per_game,
     }
@@ -914,6 +930,7 @@ class Goldfisher:
         mana_spent_list: list,
         played_cards_per_game: list[set],
         drawn_cards_per_game: list[set] | None = None,
+        card_mana_spent_list: list[list] | None = None,
     ) -> Dict[str, Any]:
         """Measure each card's causal impact on game quality.
 
@@ -951,9 +968,14 @@ class Goldfisher:
             if card._cached_effects:
                 effects_desc = card._cached_effects.describe_effects()
 
+            # Use average mana actually spent when cast (accounts for discounts)
+            avg_cost = card.cmc
+            if card_mana_spent_list and card_mana_spent_list[k]:
+                avg_cost = round(float(np.mean(card_mana_spent_list[k])), 1)
+
             scores.append({
                 "name": card.name,
-                "cost": card.cost,
+                "cost": avg_cost,
                 "cmc": card.cmc,
                 "effects": effects_desc,
                 "mean_with": round(mean_with, 2),
@@ -985,6 +1007,7 @@ class Goldfisher:
             "mana_efficiency": self.mana_efficiency,
             "ramp_cutoff_turn": self.ramp_cutoff_turn,
             "min_cost_floor": self.min_cost_floor,
+            "mana_mode": self.mana_mode,
         }
 
     def _run_parallel(self) -> dict:
@@ -1013,27 +1036,32 @@ class Goldfisher:
         # Merge results from all workers
         merged = {
             "mana_spent": [], "mana_value": [], "mana_draw": [], "mana_ramp": [],
+            "ecms": [],
             "hand_sum": [], "mulls": [], "lands_played": [],
             "cards_drawn": [], "spells_cast": [], "bad_turns": [], "mid_turns": [],
             "played_cards_per_game": [],
             "drawn_cards_per_game": [],
         }
         card_cast_turns: list[list] = [[] for _ in self.decklist]
+        card_mana_spent: list[list] = [[] for _ in self.decklist]
         all_raw_replays: list[tuple[int, dict]] = []
 
         for future in futures:
             batch = future.result()
             for key in ["mana_spent", "mana_value", "mana_draw", "mana_ramp",
-                        "hand_sum", "mulls", "lands_played",
+                        "ecms", "hand_sum", "mulls", "lands_played",
                         "cards_drawn", "spells_cast", "bad_turns", "mid_turns"]:
                 merged[key].extend(batch[key])
             for k, turns_list in enumerate(batch["card_cast_turns"]):
                 card_cast_turns[k].extend(turns_list)
+            for k, spent_list in enumerate(batch["card_mana_spent_list"]):
+                card_mana_spent[k].extend(spent_list)
             merged["played_cards_per_game"].extend(batch["played_cards_per_game"])
             merged["drawn_cards_per_game"].extend(batch["drawn_cards_per_game"])
             all_raw_replays.extend(batch.get("raw_replays", []))
 
         merged["card_cast_turns"] = card_cast_turns
+        merged["card_mana_spent_list"] = card_mana_spent
 
         # Classify pooled replays using the primary mana distribution
         replay_buckets: dict[str, list] = {"top": [], "mid": [], "low": []}
@@ -1085,6 +1113,7 @@ class Goldfisher:
         spells_cast_list = raw["spells_cast"]
         bad_turns_list = raw["bad_turns"]
         mid_turns_list = raw["mid_turns"]
+        ecms_list = raw["ecms"]
 
         primary_list = self._get_primary_mana(mana_value_list, mana_draw_list, mana_ramp_list, mana_spent_list)
 
@@ -1092,6 +1121,7 @@ class Goldfisher:
         mean_mana_value = float(np.mean(mana_value_list))
         mean_mana_draw = float(np.mean(mana_draw_list))
         mean_mana_ramp = float(np.mean(mana_ramp_list))
+        mean_ecms = float(np.mean(ecms_list))
         mean_mana_total = float(np.mean([v + d + r for v, d, r in zip(mana_value_list, mana_draw_list, mana_ramp_list)]))
         mean_hand_sum = float(np.mean(hand_sum_list))
         mean_lands = float(np.mean(lands_played_list))
@@ -1197,8 +1227,10 @@ class Goldfisher:
         # Compute card performance
         played_cards_per_game = raw.get("played_cards_per_game", [])
         drawn_cards_per_game = raw.get("drawn_cards_per_game", [])
+        card_mana_spent_raw = raw.get("card_mana_spent_list")
         card_performance = self._compute_card_performance(
             primary_list, played_cards_per_game, drawn_cards_per_game,
+            card_mana_spent_list=card_mana_spent_raw,
         )
 
         replay_data = raw.get("replay_data", {})
@@ -1218,6 +1250,7 @@ class Goldfisher:
             mean_mulls=mean_mulls,
             mean_draws=mean_draws,
             mean_spells_cast=mean_spells_cast,
+            mean_ecms=mean_ecms,
             percentile_25=percentile_25,
             percentile_50=percentile_50,
             percentile_75=percentile_75,
@@ -1264,6 +1297,7 @@ class Goldfisher:
         mana_value_list = []
         mana_draw_list = []
         mana_ramp_list = []
+        ecms_list = []
         primary_list = []
         hand_sum_list = []
         mulls_list = []
@@ -1273,6 +1307,7 @@ class Goldfisher:
         bad_turns_list = []
         mid_turns_list = []
         card_cast_turn_list: list[list] = [[] for _ in self.decklist]
+        card_mana_spent_list: list[list] = [[] for _ in self.decklist]
         played_cards_per_game: list[set] = []
         drawn_cards_per_game: list[set] = []
         replay_buckets: dict[str, list] = {"top": [], "mid": [], "low": []}
@@ -1293,6 +1328,7 @@ class Goldfisher:
             game_mana_value = 0
             game_mana_draw = 0
             game_mana_ramp = 0
+            game_ecms = 0
             game_hand_sum = 0
             lands_played = 0
             bad_turns = 0
@@ -1338,6 +1374,14 @@ class Goldfisher:
                 game_mana_value += turn_mana_value
                 game_mana_draw += turn_mana_draw
                 game_mana_ramp += turn_mana_ramp
+                # ECMS: compound mana forward for remaining turns
+                if self.mana_mode == "value":
+                    turn_ecms_mana = turn_mana_value
+                elif self.mana_mode == "value_draw":
+                    turn_ecms_mana = turn_mana_value + turn_mana_draw
+                else:
+                    turn_ecms_mana = turn_mana_value + turn_mana_draw + turn_mana_ramp
+                game_ecms += turn_ecms_mana * (self.turns - i)
                 game_hand_sum += min(len(state.hand), 7)
                 total_spells_cast += spells_played
                 if spells_played == 0 and state.deck:
@@ -1371,6 +1415,7 @@ class Goldfisher:
             mana_value_list.append(game_mana_value)
             mana_draw_list.append(game_mana_draw)
             mana_ramp_list.append(game_mana_ramp)
+            ecms_list.append(game_ecms)
 
             if self.mana_mode == "value":
                 game_primary = game_mana_value
@@ -1391,6 +1436,7 @@ class Goldfisher:
             for k, turn in enumerate(state.card_cast_turn):
                 if turn is not None and not self.decklist[k].land:
                     card_cast_turn_list[k].append(turn)
+                    card_mana_spent_list[k].append(self.decklist[k].mana_spent_when_played)
                     if self.decklist[k].spell:
                         game_played.add(k)
             played_cards_per_game.append(game_played)
@@ -1500,6 +1546,7 @@ class Goldfisher:
         mean_mana_draw = float(np.mean(mana_draw_list))
         mean_mana_ramp = float(np.mean(mana_ramp_list))
         mean_mana_total = float(np.mean([v + d + r for v, d, r in zip(mana_value_list, mana_draw_list, mana_ramp_list)]))
+        mean_ecms = float(np.mean(ecms_list))
         mean_hand_sum = float(np.mean(hand_sum_list))
         mean_lands = float(np.mean(lands_played_list))
         mean_mulls = float(np.mean(mulls_list))
@@ -1602,6 +1649,7 @@ class Goldfisher:
         distribution_stats = self._compute_distribution_stats(primary_list)
         card_performance = self._compute_card_performance(
             primary_list, played_cards_per_game, drawn_cards_per_game,
+            card_mana_spent_list=card_mana_spent_list,
         )
 
         return SimulationResult(
@@ -1619,6 +1667,7 @@ class Goldfisher:
             mean_mulls=mean_mulls,
             mean_draws=mean_draws,
             mean_spells_cast=mean_spells_cast,
+            mean_ecms=mean_ecms,
             percentile_25=percentile_25,
             percentile_50=percentile_50,
             percentile_75=percentile_75,
@@ -1641,7 +1690,7 @@ class Goldfisher:
             ci_mean_bad_turns=ci_mean_bad_turns,
         )
 
-    def simulate_single_game(self, seed: int) -> float:
+    def simulate_single_game(self, seed: int, ecms: bool = False) -> float:
         """Run one game with a specific seed, return the primary mana value.
 
         Lightweight path for optimization — skips recording, logging,
@@ -1650,9 +1699,12 @@ class Goldfisher:
 
         Args:
             seed: Random seed for this game.
+            ecms: If True, return the Karsten-ECMS value instead of
+                primary mana.
 
         Returns:
-            The primary mana value (depends on ``self.mana_mode``).
+            The primary mana value (depends on ``self.mana_mode``),
+            or the ECMS value if *ecms* is True.
         """
         random.seed(seed)
         state = self._reset()
@@ -1661,18 +1713,36 @@ class Goldfisher:
         game_mana_value = 0
         game_mana_draw = 0
         game_mana_ramp = 0
+        game_ecms = 0
 
-        for _turn in range(self.turns):
+        for turn_idx in range(self.turns):
             played = self._take_turn(state)
+            turn_mana_value = 0
+            turn_mana_draw = 0
+            turn_mana_ramp = 0
             for card in played:
                 if card.spell:
                     cost = card.mana_spent_when_played
                     if card.draw:
-                        game_mana_draw += cost
+                        turn_mana_draw += cost
                     elif card.ramp:
-                        game_mana_ramp += cost
+                        turn_mana_ramp += cost
                     else:
-                        game_mana_value += cost
+                        turn_mana_value += cost
+            game_mana_value += turn_mana_value
+            game_mana_draw += turn_mana_draw
+            game_mana_ramp += turn_mana_ramp
+            if ecms:
+                if self.mana_mode == "value":
+                    turn_ecms_mana = turn_mana_value
+                elif self.mana_mode == "value_draw":
+                    turn_ecms_mana = turn_mana_value + turn_mana_draw
+                else:
+                    turn_ecms_mana = turn_mana_value + turn_mana_draw + turn_mana_ramp
+                game_ecms += turn_ecms_mana * (self.turns - turn_idx)
+
+        if ecms:
+            return float(game_ecms)
 
         if self.mana_mode == "value":
             return float(game_mana_value)

@@ -129,7 +129,7 @@ def save_simulation_run(
     run = SimulationRunRow(
         job_id=job_id,
         deck_id=deck.id,
-        turns=config.get("turns", 10),
+        turns=config.get("turns", 8),
         sims=config.get("sims", 1000),
         min_lands=config.get("min_lands", 36),
         max_lands=config.get("max_lands", 39),

@@ -45,7 +45,7 @@ def run_simulation(
     deck_list: List[Dict[str, Any]] = json.loads(deck_json)
     config: Dict[str, Any] = json.loads(config_json)
 
-    turns = config.get("turns", 10)
+    turns = config.get("turns", 8)
     sims = config.get("sims", 1000)
     min_lands = config.get("min_lands")
     max_lands = config.get("max_lands")
@@ -153,7 +153,7 @@ def run_optimization(
     deck_list: List[Dict[str, Any]] = json.loads(deck_json)
     config: Dict[str, Any] = json.loads(config_json)
 
-    turns = config.get("turns", 10)
+    turns = config.get("turns", 8)
     sims = config.get("sims", 500)
     seed = config.get("seed")
     record_results = config.get("record_results", "quartile")

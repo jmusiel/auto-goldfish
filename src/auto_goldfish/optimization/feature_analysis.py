@@ -353,6 +353,7 @@ def synthesize_recommendations(
         "floor_performance": "floor performance",
         "consistency": "consistency",
         "mean_spells_cast": "spells cast",
+        "karsten_ecms": "Karsten-ECMS",
     }
     metric_label = metric_labels.get(optimize_for, optimize_for)
 

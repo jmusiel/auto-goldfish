@@ -413,6 +413,8 @@ class DeckOptimizer:
             return result.mean_mana_total
         if self.optimize_for == "mean_spells_cast":
             return result.mean_spells_cast
+        if self.optimize_for == "karsten_ecms":
+            return result.mean_ecms
         return result.mean_mana
 
     def _extract_score_from_dict(self, result_dict: dict) -> float:
@@ -427,4 +429,6 @@ class DeckOptimizer:
             return result_dict.get("mean_mana_total", 0.0)
         if self.optimize_for == "mean_spells_cast":
             return result_dict.get("mean_spells_cast", 0.0)
+        if self.optimize_for == "karsten_ecms":
+            return result_dict.get("mean_ecms", 0.0)
         return result_dict.get("mean_mana", 0.0)

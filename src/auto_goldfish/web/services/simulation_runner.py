@@ -103,7 +103,7 @@ class SimulationRunner:
 
             goldfisher = Goldfisher(
                 deck_list,
-                turns=job.config.get("turns", 10),
+                turns=job.config.get("turns", 8),
                 sims=job.config.get("sims", 1000),
                 verbose=False,
                 record_results=job.config.get("record_results", "quartile"),

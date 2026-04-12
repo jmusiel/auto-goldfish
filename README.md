@@ -39,8 +39,8 @@ uv pip install -e ".[dev]"
 # Run with a saved deck JSON
 .venv/bin/python -m auto_goldfish.cli.main --deck_name vren --deck_url https://archidekt.com/decks/19226307/vrens_murine_marauders
 
-# Sweep land counts 36-39, 10 turns, 10k sims
-.venv/bin/python -m auto_goldfish.cli.main --deck_name vren --min_lands 36 --max_lands 39 --turns 10 --sims 10000
+# Sweep land counts 36-39, 8 turns, 10k sims
+.venv/bin/python -m auto_goldfish.cli.main --deck_name vren --min_lands 36 --max_lands 39 --turns 8 --sims 10000
 
 # See all options
 .venv/bin/python -m auto_goldfish.cli.main --help
@@ -91,7 +91,7 @@ from auto_goldfish.decklist.loader import load_decklist
 from auto_goldfish.engine.goldfisher import Goldfisher
 
 deck = load_decklist("vren")
-gf = Goldfisher(deck, turns=10, sims=1000)
+gf = Goldfisher(deck, turns=8, sims=1000)
 result = gf.simulate()
 
 print(f"Mean mana spent: {result.mean_mana:.1f}")
@@ -148,7 +148,7 @@ tests/
 |------|---------|-------------|
 | `--deck_name` | `vren` | Name used for saving/loading deck JSON |
 | `--deck_url` | — | Archidekt deck URL (fetches and caches) |
-| `--turns` | `10` | Turns per simulated game |
+| `--turns` | `8` | Turns per simulated game |
 | `--sims` | `10000` | Number of games to simulate |
 | `--min_lands` | `36` | Start of land count sweep |
 | `--max_lands` | `39` | End of land count sweep |
