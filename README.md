@@ -10,7 +10,7 @@ Runs "goldfishing" simulations (playing games without an opponent) to evaluate d
 - **Parallel simulation** -- uses multiple CPU cores via `ProcessPoolExecutor` for fast results (configurable `workers` parameter, defaults to all CPUs)
 - **Data-driven card effects** -- ~4,750 cards with special abilities (ramp, draw, cost reduction) defined as composable effects in `card_effects.json`. 109 hand-curated + ~4,640 auto-labeled via LLM (Gemini/Ollama/Claude)
 - **Archidekt integration** -- pull decklists directly from Archidekt URLs via the API
-- **Draw/ramp optimization** -- uses Hyperband to enumerate generic draw and ramp card additions across land counts, finding optimal configurations. Set max draw/ramp additions to 0 for a simple land-only sweep
+- **Draw/ramp optimization** -- three algorithms for finding optimal deck configurations (land count, draw, ramp cards): Hyperband successive halving, CRN-paired racing, and factored evaluation with adaptive sampling. Set max draw/ramp additions to 0 for a simple land-only sweep
 - **Card performance analysis** -- identifies which cards are overrepresented in high- vs low-performing games
 - **Game replay viewer** -- interactive turn-by-turn replay of sample games from top/mid/low quartiles, showing hand state, played cards, board state, and mana production (works in both sequential and parallel modes)
 - **Web UI** -- Flask-based dashboard for importing decks, running simulations, and viewing inline results with charts and replay viewer. Card effects editor lets you override effects before running, with overrides persisted across sessions. Results appear inline below the form for an iterative tweak-and-rerun workflow
@@ -128,6 +128,7 @@ src/auto_goldfish/
 ├── models/          # Card dataclass, GameState dataclass
 ├── effects/         # Effect protocols, registry, builtin effects, card database
 ├── engine/          # Goldfisher simulation, mana calculation, mulligan strategy
+├── optimization/    # Deck optimization (Hyperband, CRN racing, factored adaptive)
 ├── metrics/         # MetricsCollector, built-in metrics, aggregation, reporting
 ├── decklist/        # JSON loader, Archidekt API, deck builder
 ├── autocard/        # LLM-powered card effect labeling pipeline (Gemini/Ollama/Claude)

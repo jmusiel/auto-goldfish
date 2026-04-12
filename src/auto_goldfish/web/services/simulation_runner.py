@@ -155,6 +155,7 @@ class SimulationRunner:
             ALL_CANDIDATES,
             make_custom_candidate,
         )
+        from auto_goldfish.optimization.factored_optimizer import FactoredOptimizer
         from auto_goldfish.optimization.fast_optimizer import FastDeckOptimizer
         from auto_goldfish.optimization.optimizer import DeckOptimizer
 
@@ -205,7 +206,18 @@ class SimulationRunner:
         max_draw = config.get("max_draw_additions", 2)
         max_ramp = config.get("max_ramp_additions", 2)
 
-        if algorithm == "racing":
+        if algorithm == "factored":
+            optimizer = FactoredOptimizer(
+                goldfisher=goldfisher,
+                candidates=candidates,
+                swap_mode=swap_mode,
+                max_draw=max_draw,
+                max_ramp=max_ramp,
+                land_delta_min=land_delta_min,
+                land_delta_max=land_delta_max,
+                optimize_for=optimize_for,
+            )
+        elif algorithm == "racing":
             optimizer = FastDeckOptimizer(
                 goldfisher=goldfisher,
                 candidates=candidates,
