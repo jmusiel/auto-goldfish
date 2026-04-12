@@ -276,9 +276,10 @@ def api_effects(deck_name: str):
 def _find_dist_dir():
     """Locate the dist/ directory containing the wheel file.
 
-    Checks two locations:
+    Checks three locations:
     1. Relative to __file__ (works when running from source tree)
-    2. Current working directory (works when installed, e.g. Docker with WORKDIR /app)
+    2. Current working directory (works when installed)
+    3. public/dist/ in CWD (works on Vercel where build copies wheel there)
     """
     # Source-tree relative path (5 levels up from web/routes/simulation.py)
     source_root = os.path.dirname(
@@ -288,10 +289,15 @@ def _find_dist_dir():
     if os.path.isdir(source_dist):
         return source_dist
 
-    # CWD-based (e.g. Docker WORKDIR /app)
+    # CWD-based
     cwd_dist = os.path.join(os.getcwd(), "dist")
     if os.path.isdir(cwd_dist):
         return cwd_dist
+
+    # Vercel: public/dist/ in project root
+    public_dist = os.path.join(os.getcwd(), "public", "dist")
+    if os.path.isdir(public_dist):
+        return public_dist
 
     return None
 

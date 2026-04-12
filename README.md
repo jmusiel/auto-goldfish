@@ -57,6 +57,22 @@ Then open http://127.0.0.1:5000 to import decks, run simulations, and explore re
 
 Simulations run client-side via Pyodide (WebAssembly) -- the Flask server serves deck data and the UI, but all simulation compute happens in the browser. The first run takes ~10s to load the engine; subsequent runs are fast. Build the wheel first with `uv build --wheel` so the endpoint can serve it.
 
+### Deploying to Vercel
+
+The app deploys to Vercel as a serverless Flask function with static assets served from the CDN. Simulations run client-side via Pyodide — Vercel only handles the thin data layer (deck imports, DB persistence, template rendering).
+
+1. Install the [Vercel CLI](https://vercel.com/docs/cli) or connect your GitHub repo in the Vercel dashboard
+2. Set environment variables in Vercel project settings:
+   - `DATABASE_URL` (optional) — Neon Postgres connection string
+   - `SECRET_KEY` — Flask secret key for sessions
+3. Deploy:
+
+```bash
+vercel
+```
+
+The build script (`scripts/vercel_build.sh`) automatically builds the Pyodide wheel and copies static assets to `public/` for CDN serving. The `vercel.json` config routes static files directly and everything else to the Flask serverless function.
+
 ### Database Persistence (optional)
 
 Simulation results and deck card labels can be persisted to a Neon Postgres database. Install the `db` extra and set `DATABASE_URL`:

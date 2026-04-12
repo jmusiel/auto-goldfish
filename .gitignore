@@ -16,3 +16,4 @@ src/auto_goldfish/autocard/data/*.json
 decks/**/*.json
 .env
 scripts/**/*.png
+public/
