@@ -37,6 +37,25 @@ def _migrate(engine) -> None:
                 conn.execute(text("ALTER TABLE card_annotations ADD COLUMN session_id TEXT"))
             logger.info("Migrated card_annotations: added session_id column")
 
+    if "simulation_results" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("simulation_results")}
+        if "mean_spells_cast" not in cols:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "ALTER TABLE simulation_results ADD COLUMN mean_spells_cast FLOAT NOT NULL DEFAULT 0.0"
+                ))
+            logger.info("Migrated simulation_results: added mean_spells_cast column")
+        score_cols = [
+            "score_speed", "score_power", "score_consistency",
+            "score_resilience", "score_efficiency", "score_momentum",
+        ]
+        missing = [c for c in score_cols if c not in cols]
+        if missing:
+            with engine.begin() as conn:
+                for col in missing:
+                    conn.execute(text(f"ALTER TABLE simulation_results ADD COLUMN {col} INTEGER"))
+            logger.info("Migrated simulation_results: added deck score columns")
+
 
 @contextmanager
 def get_session() -> Generator[Session, None, None]:
