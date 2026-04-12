@@ -88,11 +88,14 @@ def _mana_starved_deck() -> list[dict]:
 
 
 def _overlanded_cantrip_deck() -> list[dict]:
-    """45 lands, 54 spells all CMC 1. Already flooded, changes don't matter.
+    """45 lands, 54 spells all CMC 1. Severely over-landed.
 
-    Targets: negligible effect for all changes.
-    With 45 lands and all 1-CMC spells, the deck has near-perfect
-    consistency. Adding draw/ramp or changing land count barely matters.
+    Targets: significant negative effect for adding lands, significant
+    positive effect for cutting lands.
+    With 45 lands and all 1-CMC spells, the deck draws too many lands
+    and not enough spells. Cutting a land is strictly better (trade an
+    unneeded land for a castable spell). Adding draw/ramp is unhelpful
+    since spells cost 1 and mana is abundant.
     """
     deck = []
     deck.append({
@@ -117,6 +120,45 @@ def _overlanded_cantrip_deck() -> list[dict]:
             "name": f"Creature {i}",
             "cmc": 1,
             "cost": "{1}",
+            "text": "",
+            "types": ["Creature"],
+            "commander": False,
+        })
+    return deck
+
+
+def _equilibrium_deck() -> list[dict]:
+    """37 lands, 62 spells all CMC 2. At equilibrium, changes are negligible.
+
+    Targets: negligible effect for all changes.
+    With 37 lands and uniform CMC 2, the deck is already near-optimal.
+    You always have enough mana to cast your 2-drops, and +/-1 land
+    doesn't meaningfully change outcomes. Adding draw/ramp (CMC 2+)
+    doesn't help since you're already casting everything you draw.
+    """
+    deck = []
+    deck.append({
+        "name": "Test Commander",
+        "cmc": 2,
+        "cost": "{1}{U}",
+        "text": "",
+        "types": ["Creature"],
+        "commander": True,
+    })
+    for i in range(37):
+        deck.append({
+            "name": f"Island {i}",
+            "cmc": 0,
+            "cost": "",
+            "text": "",
+            "types": ["Land"],
+            "commander": False,
+        })
+    for i in range(62):
+        deck.append({
+            "name": f"Creature {i}",
+            "cmc": 2,
+            "cost": "{2}",
             "text": "",
             "types": ["Creature"],
             "commander": False,
@@ -339,9 +381,38 @@ class TestAdaptiveSamplingCases:
             f"Expected positive effect, got {plus_2.effect_size:.3f}"
         )
 
-    def test_negligible_effect_detected(self):
-        """Over-landed cantrip deck: land changes don't matter."""
+    def test_overlanded_cut_lands_is_positive(self):
+        """Over-landed cantrip deck: cutting lands should be clearly beneficial."""
         deck = _overlanded_cantrip_deck()
+        gf = Goldfisher(
+            deck, turns=8, sims=50, seed=42, record_results="quartile",
+        )
+
+        optimizer = FactoredOptimizer(
+            goldfisher=gf, candidates={},
+            max_draw=0, max_ramp=0, land_range=2,
+            optimize_for="mean_mana",
+            base_games=200, max_games=800,
+        )
+
+        optimizer.run(final_sims=50, final_top_k=3)
+
+        land_marginals = [
+            m for m in optimizer.marginal_results if m.dimension == "land"
+        ]
+        # Cutting lands should show a positive effect (fewer dead draws)
+        minus_2 = next(
+            (m for m in land_marginals if m.config.land_delta == -2), None
+        )
+        assert minus_2 is not None, "Expected -2 land marginal"
+        assert minus_2.effect_size > 0, (
+            f"Cutting 2 lands should improve mana spent, "
+            f"got effect={minus_2.effect_size:.3f}"
+        )
+
+    def test_negligible_effect_detected(self):
+        """Equilibrium deck: +/-1 land on a well-tuned deck is negligible."""
+        deck = _equilibrium_deck()
         gf = Goldfisher(
             deck, turns=8, sims=50, seed=42, record_results="quartile",
         )
