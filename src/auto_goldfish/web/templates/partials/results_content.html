@@ -21,7 +21,7 @@
         <div class="deck-stat-row">
             <div class="deck-stat-label" title="{{ desc }}">{{ name }}</div>
             <div class="deck-stat-bar-track">
-                <div class="deck-stat-bar-fill" style="width:{{ (val / 20 * 100)|int }}%;background:{{ color }}"></div>
+                <div class="deck-stat-bar-fill" style="width:{{ (val / 10 * 100)|int }}%;background:{{ color }}"></div>
             </div>
             <div class="deck-stat-value">{{ val }}</div>
         </div>
@@ -419,8 +419,8 @@
                         scales: {
                             r: {
                                 min: 0,
-                                max: 20,
-                                ticks: { stepSize: 5, display: true },
+                                max: 10,
+                                ticks: { stepSize: 2, display: true },
                                 pointLabels: { font: { size: 13, weight: 'bold' } },
                             }
                         },

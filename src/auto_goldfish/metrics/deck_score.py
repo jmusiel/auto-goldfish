@@ -1,6 +1,6 @@
 """D&D-style stat block for Commander decks.
 
-Computes six stats (1--20 scale) from simulation results:
+Computes six stats (1--10 scale) from simulation results:
 
 - **Speed**: How quickly the deck deploys mana in early turns.
 - **Power**: Peak mana output and ceiling performance.
@@ -20,7 +20,7 @@ from auto_goldfish.engine.goldfisher import SimulationResult
 
 @dataclass
 class DeckScore:
-    """Six-stat profile for a deck, each on a 1--20 scale."""
+    """Six-stat profile for a deck, each on a 1--10 scale."""
 
     speed: int
     power: int
@@ -41,29 +41,29 @@ class DeckScore:
 
     def format_block(self) -> str:
         """Return an ASCII stat block suitable for terminal output."""
-        bar_width = 20
+        bar_width = 10
         lines = []
-        lines.append("+" + "-" * 34 + "+")
-        lines.append("|       DECK STAT BLOCK            |")
-        lines.append("+" + "-" * 34 + "+")
+        lines.append("+" + "-" * 26 + "+")
+        lines.append("|     DECK STAT BLOCK      |")
+        lines.append("+" + "-" * 26 + "+")
         for name, value in self.as_dict().items():
             filled = "█" * value + "░" * (bar_width - value)
             lines.append(f"| {name.upper():<13} {value:>2} {filled} |")
-        lines.append("+" + "-" * 34 + "+")
+        lines.append("+" + "-" * 26 + "+")
         return "\n".join(lines)
 
 
-def _clamp(value: float, lo: float = 1.0, hi: float = 20.0) -> int:
+def _clamp(value: float, lo: float = 1.0, hi: float = 10.0) -> int:
     """Clamp and round a float to an integer in [lo, hi]."""
     return int(max(lo, min(hi, round(value))))
 
 
 def _scale(raw: float, raw_min: float, raw_max: float) -> int:
-    """Linearly map *raw* from [raw_min, raw_max] to [1, 20]."""
+    """Linearly map *raw* from [raw_min, raw_max] to [1, 10]."""
     if raw_max <= raw_min:
-        return 10
+        return 5
     normalized = (raw - raw_min) / (raw_max - raw_min)
-    return _clamp(1 + 19 * normalized)
+    return _clamp(1 + 9 * normalized)
 
 
 def compute_deck_score(result: SimulationResult, turns: int = 10) -> DeckScore:
@@ -166,7 +166,7 @@ def _compute_resilience(result: SimulationResult) -> int:
     to mulligan are implicitly resilient.
     """
     if result.mean_mana == 0:
-        return 10
+        return 5
 
     # Mull performance ratio: 1.0 = no penalty, lower = worse
     mull_ratio = result.mean_mana_with_mull / result.mean_mana if result.mean_mana > 0 else 1.0
@@ -219,18 +219,18 @@ def _compute_momentum(result: SimulationResult, turns: int) -> int:
     """
     mpt = result.mean_mana_per_turn
     if len(mpt) < 4:
-        return 10
+        return 5
 
     # Split into early (turns 1-4) and late (turns 5+)
     early_end = min(4, len(mpt))
     early_avg = sum(mpt[:early_end]) / early_end
     late_turns = mpt[early_end:]
     if not late_turns:
-        return 10
+        return 5
     late_avg = sum(late_turns) / len(late_turns)
 
     if early_avg <= 0:
-        return 10
+        return 5
 
     # Acceleration ratio: how much more mana per turn in late game vs early
     # A ratio of 1.0 = flat (no acceleration). 3.0+ = strong ramp payoff.

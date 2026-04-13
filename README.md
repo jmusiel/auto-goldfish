@@ -15,7 +15,7 @@ Runs "goldfishing" simulations (playing games without an opponent) to evaluate d
 - **Game replay viewer** -- interactive turn-by-turn replay of sample games from top/mid/low quartiles, showing hand state, played cards, board state, and mana production (works in both sequential and parallel modes)
 - **Web UI** -- Flask-based dashboard for importing decks, running simulations, and viewing inline results with charts and replay viewer. Card effects editor lets you override effects before running, with overrides persisted across sessions. Results appear inline below the form for an iterative tweak-and-rerun workflow
 - **Client-side simulation** -- simulations run entirely in-browser via Pyodide (CPython compiled to WebAssembly). The Flask server is a thin data layer; all compute happens on the user's hardware with a progress bar and full results rendering
-- **Deck scoring** -- D&D-style stat block (Speed, Power, Consistency, Resilience, Efficiency, Momentum) on a 1-20 scale, derived from simulation metrics. Use `--score` in the CLI or call `compute_deck_score()` programmatically
+- **Deck scoring** -- D&D-style stat block (Speed, Power, Consistency, Resilience, Efficiency, Momentum) on a 1-10 scale, derived from simulation metrics. Use `--score` in the CLI or call `compute_deck_score()` programmatically
 - **Reports** -- generates text reports with per-bucket game stats and mana curve scatter plots (PNG)
 
 ## Setup

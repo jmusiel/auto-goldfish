@@ -94,12 +94,12 @@ class TestDeckScoreFromSimulation:
     def test_sequential_score_all_in_range(self, sequential_result):
         score = compute_deck_score(sequential_result, turns=10)
         for name, value in score.as_dict().items():
-            assert 1 <= value <= 20, f"{name}={value} out of range"
+            assert 1 <= value <= 10, f"{name}={value} out of range"
 
     def test_parallel_score_all_in_range(self, parallel_result):
         score = compute_deck_score(parallel_result, turns=10)
         for name, value in score.as_dict().items():
-            assert 1 <= value <= 20, f"{name}={value} out of range"
+            assert 1 <= value <= 10, f"{name}={value} out of range"
 
     def test_score_format_block_renders(self, sequential_result):
         score = compute_deck_score(sequential_result, turns=10)

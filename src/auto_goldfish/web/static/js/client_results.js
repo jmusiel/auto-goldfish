@@ -104,7 +104,7 @@ const ClientResults = (function() {
         html += '<div class="deck-score-bars">';
         for (const s of stats) {
             const val = score[s.key] || 0;
-            const pct = (val / 20 * 100).toFixed(0);
+            const pct = (val / 10 * 100).toFixed(0);
             html += '<div class="deck-stat-row">';
             html += '<div class="deck-stat-label" title="' + s.desc + '">' + s.name + '</div>';
             html += '<div class="deck-stat-bar-track">';
@@ -148,8 +148,8 @@ const ClientResults = (function() {
                 scales: {
                     r: {
                         min: 0,
-                        max: 20,
-                        ticks: { stepSize: 5, display: true },
+                        max: 10,
+                        ticks: { stepSize: 2, display: true },
                         pointLabels: { font: { size: 13, weight: 'bold' } },
                     }
                 },
@@ -691,10 +691,10 @@ const ClientResults = (function() {
         let html = '<div class="results-content">';
         html += '<h1>Results: ' + escapeHtml(deckName) + '</h1>';
 
+        html += renderDeckScore(results);
         if (isOptimization) {
             html += renderFeatureAnalysis(results);
         }
-        html += renderDeckScore(results);
         html += renderSummaryTable(results, isOptimization);
         html += renderCardPerformance(results);
         if (!isOptimization) {
