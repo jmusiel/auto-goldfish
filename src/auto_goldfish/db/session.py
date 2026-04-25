@@ -46,25 +46,48 @@ def _migrate(engine) -> None:
                 ))
             logger.info("Migrated simulation_results: added mean_spells_cast column")
         # Rename CASTER score columns from old names if present (idempotent).
-        # Multiple historical names map onto current ones; the S stat went
-        # momentum -> surge -> snowball, so handle both legacy hops.
+        # The Snowball stat went through two renames (momentum -> surge ->
+        # snowball); some production DBs ended up with *both* legacy
+        # columns. We plan operations against a tracked column set so the
+        # second rename to the same target turns into a DROP of the
+        # redundant legacy column instead of a duplicate-column error.
+        # Order matters: the most recent legacy name wins the rename
+        # (preserving its data) and older legacy duplicates get dropped.
         column_renames = [
             ("score_speed", "score_acceleration"),
             ("score_power", "score_reach"),
             ("score_resilience", "score_toughness"),
-            ("score_momentum", "score_snowball"),
             ("score_surge", "score_snowball"),
+            ("score_momentum", "score_snowball"),
             ("raw_surge", "raw_snowball"),
         ]
-        pending = [(o, n) for (o, n) in column_renames if o in cols and n not in cols]
-        if pending:
+        live_cols = set(cols)
+        ops: list[tuple] = []
+        for old, new in column_renames:
+            if old not in live_cols:
+                continue
+            if new in live_cols:
+                ops.append(("drop", old))
+                live_cols.discard(old)
+            else:
+                ops.append(("rename", old, new))
+                live_cols.discard(old)
+                live_cols.add(new)
+        if ops:
             with engine.begin() as conn:
-                for old, new in pending:
-                    conn.execute(text(
-                        f"ALTER TABLE simulation_results RENAME COLUMN {old} TO {new}"
-                    ))
-            logger.info("Migrated simulation_results: renamed columns %s", pending)
-            cols = {c["name"] for c in inspect(engine).get_columns("simulation_results")}
+                for op in ops:
+                    if op[0] == "rename":
+                        _, old, new = op
+                        conn.execute(text(
+                            f"ALTER TABLE simulation_results RENAME COLUMN {old} TO {new}"
+                        ))
+                    else:
+                        _, old = op
+                        conn.execute(text(
+                            f"ALTER TABLE simulation_results DROP COLUMN {old}"
+                        ))
+            logger.info("Migrated simulation_results: applied %s", ops)
+            cols = live_cols
 
         score_cols = [
             "score_consistency", "score_acceleration", "score_snowball",
