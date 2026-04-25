@@ -74,7 +74,14 @@ class DeckRawStats:
     snowball_late_avg_norm: float  # turn-factor-normalized late-game avg
 
     def as_dict(self) -> Dict[str, float]:
-        """Return only the six top-level raw values (DB persistence shape)."""
+        """Return all raw inputs needed to re-score with new anchors.
+
+        The six top-level CASTER raws plus the secondary snowball input.
+        Only the six top-level fields are currently persisted as DB
+        columns; the secondary rides along on the per-result dict so
+        server-side persist-time re-scoring can recompute snowball
+        accurately against active anchors.
+        """
         return {
             "consistency": self.consistency,
             "acceleration": self.acceleration,
@@ -82,6 +89,7 @@ class DeckRawStats:
             "toughness": self.toughness,
             "efficiency": self.efficiency,
             "reach": self.reach,
+            "snowball_late_avg_norm": self.snowball_late_avg_norm,
         }
 
 

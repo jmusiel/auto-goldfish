@@ -16,7 +16,7 @@ Runs "goldfishing" simulations (playing games without an opponent) to evaluate d
 - **Game replay viewer** -- interactive turn-by-turn replay of sample games from top/mid/low quartiles, showing hand state, played cards, board state, and mana production (works in both sequential and parallel modes)
 - **Web UI** -- Flask-based dashboard for importing decks, running simulations, and viewing inline results with charts and replay viewer. Card effects editor lets you override effects before running, with overrides persisted across sessions. Results appear inline below the form for an iterative tweak-and-rerun workflow
 - **Client-side simulation** -- simulations run entirely in-browser via Pyodide (CPython compiled to WebAssembly). The Flask server is a thin data layer; all compute happens on the user's hardware with a progress bar and full results rendering
-- **Deck scoring** -- D&D-style stat block (the **CASTER** profile: Consistency, Acceleration, Snowball, Toughness, Efficiency, Reach) on a 1-10 scale, derived from simulation metrics and decklist structure. Use `--score` in the CLI or call `compute_deck_score()` programmatically
+- **Deck scoring** -- D&D-style stat block (the **CASTER** profile: Consistency, Acceleration, Snowball, Toughness, Efficiency, Reach) on a 1-10 scale, derived from simulation metrics and decklist structure. Use `--score` in the CLI or call `compute_deck_score()` programmatically. The 1-10 anchors are calibrated on-the-fly from previously-persisted simulations (Bayesian-shrunk toward defaults so cold-start is sane); set `AUTO_GOLDFISH_CALIBRATE=0` to fall back to defaults
 - **Reports** -- generates text reports with per-bucket game stats and mana curve scatter plots (PNG)
 
 ## Setup
@@ -79,6 +79,7 @@ The app deploys to Vercel as a serverless Flask function with static assets serv
 2. Set environment variables in Vercel project settings:
    - `DATABASE_URL` (optional) — Neon Postgres connection string
    - `SECRET_KEY` — Flask secret key for sessions
+   - `AUTO_GOLDFISH_CALIBRATE` (optional, defaults to enabled) — set to `0` to disable on-the-fly scoring anchor calibration and use built-in defaults instead
 3. Deploy:
 
 ```bash

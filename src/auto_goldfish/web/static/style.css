@@ -1091,6 +1091,63 @@ h2 { font-size: 1.15rem; margin-bottom: 0.75rem; }
     text-align: center;
 }
 
+/* Calibration banner */
+.calibration-banner {
+    margin-bottom: 1rem;
+}
+.calibration-badge {
+    display: inline-block;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid;
+}
+.calibration-badge-on {
+    background: #ecfeff;
+    color: #0e7490;
+    border-color: #a5f3fc;
+}
+.calibration-badge-off {
+    background: #f1f5f9;
+    color: #64748b;
+    border-color: #cbd5e1;
+}
+.calibration-details {
+    margin-top: 0.5rem;
+    font-size: 0.82rem;
+}
+.calibration-details summary {
+    cursor: pointer;
+    color: #64748b;
+    user-select: none;
+}
+.calibration-details summary:hover { color: #0e7490; }
+.calibration-meta {
+    color: #64748b;
+    margin: 0.5rem 0;
+}
+.calibration-meta code {
+    background: #f1f5f9;
+    padding: 0.05rem 0.3rem;
+    border-radius: 3px;
+}
+.calibration-table {
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.calibration-table th,
+.calibration-table td {
+    padding: 0.25rem 0.7rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+.calibration-table th {
+    color: #64748b;
+    font-weight: 600;
+}
+
 /* Runs table */
 .runs-table {
     width: 100%;

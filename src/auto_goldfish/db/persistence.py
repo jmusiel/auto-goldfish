@@ -149,12 +149,42 @@ def save_simulation_run(
         if lc not in deduped:
             deduped[lc] = r
 
+    # The DB is the canonical source of calibrated scores: re-score every
+    # row from its raw_* values using the currently-active anchors. This
+    # ensures stored scores are consistent regardless of whether the
+    # caller (Pyodide, server, CLI) had DB access at score time.
+    from auto_goldfish.metrics.calibration import get_active_anchors
+    from auto_goldfish.metrics.deck_score import (
+        DeckRawStats,
+        score_from_raw,
+    )
+
+    active_anchors, _ = get_active_anchors(session)
+
     # Save per-land-count results
     for r in deduped.values():
         ci_mana = r.get("ci_mean_mana", [0.0, 0.0])
         ci_con = r.get("ci_consistency", [0.0, 0.0])
         deck_score = r.get("deck_score", {})
         deck_raw = r.get("deck_raw", {})
+        if all(deck_raw.get(k) is not None for k in (
+            "consistency", "acceleration", "snowball",
+            "toughness", "efficiency", "reach",
+        )):
+            raw_obj = DeckRawStats(
+                consistency=deck_raw["consistency"],
+                acceleration=deck_raw["acceleration"],
+                snowball=deck_raw["snowball"],
+                toughness=deck_raw["toughness"],
+                efficiency=deck_raw["efficiency"],
+                reach=deck_raw["reach"],
+                # Secondary snowball input ships in the dict (not the DB)
+                # so we can re-score snowball against active anchors.
+                # Falls back to 0.0 (forces neutral 5) only on legacy dicts
+                # that predate this field.
+                snowball_late_avg_norm=deck_raw.get("snowball_late_avg_norm", 0.0),
+            )
+            deck_score = score_from_raw(raw_obj, active_anchors).as_dict()
         session.add(SimulationResultRow(
             run_id=run.id,
             land_count=r.get("land_count", 0),

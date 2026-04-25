@@ -2,6 +2,45 @@
 {% block title %}Simulation Runs — Auto Goldfish{% endblock %}
 {% block content %}
 <h1>Simulation Runs</h1>
+
+<div class="calibration-banner">
+    {% if calibration %}
+    <span class="calibration-badge calibration-badge-on" title="Stat anchors are tuned from persisted simulations">
+        Calibrated · N={{ calibration.n_rows }} from {{ calibration.n_decks }} deck{{ 's' if calibration.n_decks != 1 }}
+    </span>
+    <details class="calibration-details">
+        <summary>active anchors</summary>
+        <p class="calibration-meta">
+            Bayesian shrinkage with pseudo_count={{ calibration.pseudo_count }};
+            empirical bounds taken at p{{ calibration.low_pct|int }} / p{{ calibration.high_pct|int }}.
+            Set <code>AUTO_GOLDFISH_CALIBRATE=0</code> to disable.
+        </p>
+        <table class="calibration-table">
+            <thead>
+                <tr>
+                    <th>Stat</th>
+                    <th>Default (low, high)</th>
+                    <th>Active (low, high)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in calibration.anchors %}
+                <tr>
+                    <td>{{ a.name }}</td>
+                    <td>({{ '%.3f'|format(a.default[0]) }}, {{ '%.3f'|format(a.default[1]) }})</td>
+                    <td>({{ '%.3f'|format(a.active[0]) }}, {{ '%.3f'|format(a.active[1]) }})</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </details>
+    {% else %}
+    <span class="calibration-badge calibration-badge-off" title="Using built-in default anchors">
+        Default anchors
+    </span>
+    {% endif %}
+</div>
+
 {% if runs %}
 <p style="color:#64748b; margin-bottom:1rem;">{{ runs|length }} run{{ 's' if runs|length != 1 }} found. Click column headers to sort.</p>
 

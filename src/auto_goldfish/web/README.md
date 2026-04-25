@@ -10,7 +10,9 @@ web/
 ├── routes/
 │   ├── dashboard.py         # GET / -- deck listing
 │   ├── decks.py             # Deck import (Archidekt) and card view
-│   └── simulation.py        # Simulation config page and JSON APIs
+│   ├── simulation.py        # Simulation config page and JSON APIs
+│   ├── mana_model.py        # Hypergeometric land count recommender
+│   └── runs.py              # /runs page: persisted simulation runs + calibration badge
 ├── services/
 │   └── simulation_runner.py # SimJob + SimulationRunner (background threads)
 ├── templates/
@@ -58,3 +60,4 @@ All simulation runs client-side via Pyodide (CPython in WebAssembly):
 
 - `SECRET_KEY` env var (defaults to `"dev"`)
 - `DATABASE_URL` env var -- if set, enables Postgres persistence via `db/` module
+- `AUTO_GOLDFISH_CALIBRATE` env var -- defaults to enabled. When the DB is reachable and contains persisted raw composite stats, the `/runs` page tunes the 1-10 score anchors against the empirical distribution (Bayesian-shrunk toward defaults). Set to `0` to fall back to built-in default anchors. The `/runs` page shows a "Calibrated" or "Default anchors" badge with the active values.
