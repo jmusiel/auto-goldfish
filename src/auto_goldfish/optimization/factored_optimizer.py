@@ -55,9 +55,13 @@ def _classify_config(config: DeckConfig) -> str:
 
         card_id = config.added_cards[0]
         candidate = ALL_CANDIDATES.get(card_id)
-        if candidate and candidate.card_type == "draw":
+        if candidate is None:
+            return "unknown"
+        if candidate.card_type == "draw":
             return "draw"
-        return "ramp"
+        if candidate.card_type == "ramp":
+            return "ramp"
+        return "unknown"
     return "land"
 
 
@@ -217,7 +221,7 @@ class FactoredOptimizer:
         for j, config in enumerate(eval_configs):
             apply_config(self.goldfisher, config, self.candidates, self.swap_mode)
             result = self.goldfisher.simulate()
-            result_dict = result_to_dict(result)
+            result_dict = result_to_dict(result, turns=self.goldfisher.turns)
             results.append((config, result_dict))
             if eval_progress is not None:
                 eval_progress(j + 1, len(eval_configs))
@@ -310,15 +314,20 @@ class FactoredOptimizer:
             bl_arr = np.array(baseline_values[:n_games])
             cfg_arr = np.array(config_values)
 
-            # Compute paired statistics
+            # Compute paired statistics for the chosen metric. Significance
+            # is computed on the same metric so adaptive sampling stops based
+            # on the user's actual target, not just raw mean mana.
             if self.optimize_for == "consistency":
                 effect, se = self._bootstrap_paired_consistency(cfg_arr, bl_arr)
+                p_value = _paired_p_value(cfg_arr - bl_arr)
+            elif self.optimize_for == "floor_performance":
+                effect, se = self._bootstrap_paired_floor(cfg_arr, bl_arr)
+                p_value = _paired_p_value(cfg_arr - bl_arr)
             else:
                 diffs = cfg_arr - bl_arr
                 effect = float(diffs.mean())
                 se = float(diffs.std(ddof=1) / np.sqrt(len(diffs)))
-
-            p_value = _paired_p_value(cfg_arr - bl_arr)
+                p_value = _paired_p_value(diffs)
 
             # Check stopping criteria
             if se < 1e-15:
@@ -430,6 +439,32 @@ class FactoredOptimizer:
         cfg_con = _consistency(cfg_boot)
         bl_con = _consistency(bl_boot)
         diffs = cfg_con - bl_con
+
+        return float(diffs.mean()), float(diffs.std(ddof=1))
+
+    def _bootstrap_paired_floor(
+        self,
+        config_values: np.ndarray,
+        baseline_values: np.ndarray,
+        n_bootstrap: int = 200,
+        threshold: float = 0.25,
+    ) -> tuple[float, float]:
+        """Paired bootstrap of the bottom-quartile mean (floor performance).
+
+        Returns (effect_size, standard_error) of the difference in
+        bottom-`threshold` per-game means between config and baseline.
+        """
+        n = len(config_values)
+        rng = np.random.RandomState(42)
+
+        boot_idx = rng.randint(0, n, size=(n_bootstrap, n))
+        cfg_boot = config_values[boot_idx]
+        bl_boot = baseline_values[boot_idx]
+
+        cutoff = max(1, int(n * threshold))
+        cfg_floor = np.sort(cfg_boot, axis=1)[:, :cutoff].mean(axis=1)
+        bl_floor = np.sort(bl_boot, axis=1)[:, :cutoff].mean(axis=1)
+        diffs = cfg_floor - bl_floor
 
         return float(diffs.mean()), float(diffs.std(ddof=1))
 
@@ -550,6 +585,8 @@ class FactoredOptimizer:
             return 0.0
         if self.optimize_for == "consistency":
             return self._compute_consistency(mana_values)
+        if self.optimize_for == "floor_performance":
+            return self._compute_floor(mana_values)
         return float(mana_values.mean())
 
     @staticmethod
@@ -567,6 +604,18 @@ class FactoredOptimizer:
         if overall_mean == 0:
             return 1.0
         return tail_mean / overall_mean
+
+    @staticmethod
+    def _compute_floor(
+        mana_values: np.ndarray, threshold: float = 0.25,
+    ) -> float:
+        """Bottom-quartile mean (mirror of result.threshold_mana)."""
+        n = len(mana_values)
+        if n == 0:
+            return 0.0
+        sorted_vals = np.sort(mana_values)
+        cutoff = max(1, int(n * threshold))
+        return float(sorted_vals[:cutoff].mean())
 
     def _extract_score_from_dict(self, result_dict: dict) -> float:
         """Extract score from a result_to_dict output."""

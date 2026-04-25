@@ -58,6 +58,18 @@ Then open http://127.0.0.1:5000 to import decks, run simulations, and explore re
 
 Simulations run client-side via Pyodide (WebAssembly) -- the Flask server serves deck data and the UI, but all simulation compute happens in the browser. The first run takes ~10s to load the engine; subsequent runs are fast. Build the wheel first with `uv build --wheel` so the endpoint can serve it.
 
+#### Demo Decks
+
+The dashboard ships with three synthetic mono-black decks designed to exercise the optimizer's adaptive sampling. They appear at the top of the deck list in pedagogical order:
+
+| Deck | Composition | What it demonstrates |
+|------|-------------|----------------------|
+| `mana-starved-demo` | 18 lands, 81 spells at CMC 5–7 | Severely under-landed. The optimizer should strongly recommend adding lands; effects are large and detected after the first batch of paired games. |
+| `equilibrium-demo` | 37 lands, 62 spells at CMC 2 | Already near-optimal. Marginal changes have small effects; adaptive sampling typically classifies them as negligible or runs more games to resolve ambiguity. |
+| `overlanded-cantrips-demo` | 45 lands, 54 spells at CMC 1 | Way over-landed. The optimizer should recommend cutting lands; flat curve and excess mana make every change quickly detectable. |
+
+Pick one on the dashboard, run a simulation with the **Factored** algorithm, and observe how the recommendations and per-marginal `n_games` differ across the three decks.
+
 ### Deploying to Vercel
 
 The app deploys to Vercel as a serverless Flask function with static assets served from the CDN. Simulations run client-side via Pyodide — Vercel only handles the thin data layer (deck imports, DB persistence, template rendering).

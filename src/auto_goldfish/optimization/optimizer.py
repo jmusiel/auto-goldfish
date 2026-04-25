@@ -203,7 +203,7 @@ class DeckOptimizer:
                     eval_progress(_offset + current, total_eval_sims)
 
             result = self.goldfisher.simulate(progress_callback=sub_cb)
-            result_dict = result_to_dict(result)
+            result_dict = result_to_dict(result, turns=self.goldfisher.turns)
             if source is not None:
                 result_dict["opt_source"] = source
             results.append((config, result_dict))

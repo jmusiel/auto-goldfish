@@ -5,7 +5,7 @@
     "oracle_cmc": 1,
     "cmc": 1,
     "cost": "{B}",
-    "text": "Changeling. Cant be blocked.",
+    "text": "Changeling\nChangeling Outcast can't block and can't be blocked.",
     "types": [
       "Creature"
     ],
@@ -29,7 +29,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -53,7 +53,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -77,7 +77,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -101,7 +101,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -125,7 +125,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -149,7 +149,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -173,7 +173,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -197,7 +197,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -221,7 +221,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -245,7 +245,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -269,7 +269,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -293,7 +293,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -317,7 +317,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -341,7 +341,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -365,7 +365,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -389,7 +389,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -413,7 +413,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -437,7 +437,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -461,7 +461,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -485,7 +485,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -509,7 +509,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -533,7 +533,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -557,7 +557,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -581,7 +581,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -605,7 +605,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -629,7 +629,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -653,7 +653,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -677,7 +677,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -701,7 +701,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -725,7 +725,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -749,7 +749,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -773,7 +773,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -797,7 +797,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -821,7 +821,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -845,7 +845,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -869,7 +869,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -893,7 +893,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -917,7 +917,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -941,7 +941,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -965,7 +965,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -989,7 +989,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -1013,7 +1013,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -1037,7 +1037,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -1061,7 +1061,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -1085,7 +1085,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -1104,17 +1104,216 @@
     "commander": false
   },
   {
+    "name": "Carrion Feeder",
+    "quantity": 1,
+    "oracle_cmc": 1,
+    "cmc": 1,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Carrion Feeder (2)",
+    "quantity": 1,
+    "oracle_cmc": 1,
+    "cmc": 1,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Carrion Feeder (3)",
+    "quantity": 1,
+    "oracle_cmc": 1,
+    "cmc": 1,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Carrion Feeder (4)",
+    "quantity": 1,
+    "oracle_cmc": 1,
+    "cmc": 1,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Carrion Feeder (5)",
+    "quantity": 1,
+    "oracle_cmc": 1,
+    "cmc": 1,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Carrion Feeder (6)",
+    "quantity": 1,
+    "oracle_cmc": 1,
+    "cmc": 1,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Carrion Feeder (7)",
+    "quantity": 1,
+    "oracle_cmc": 1,
+    "cmc": 1,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Carrion Feeder (8)",
+    "quantity": 1,
+    "oracle_cmc": 1,
+    "cmc": 1,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Carrion Feeder (9)",
+    "quantity": 1,
+    "oracle_cmc": 1,
+    "cmc": 1,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
     "name": "Viscera Seer",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Sacrifice a creature: Scry 1.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1126,17 +1325,18 @@
     "commander": false
   },
   {
-    "name": "Typhoid Rats",
+    "name": "Viscera Seer (2)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Sacrifice a creature: Scry 1.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1148,17 +1348,18 @@
     "commander": false
   },
   {
-    "name": "Dread Wanderer",
+    "name": "Viscera Seer (3)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Sacrifice a creature: Scry 1.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1170,17 +1371,18 @@
     "commander": false
   },
   {
-    "name": "Gutterbones",
+    "name": "Viscera Seer (4)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Sacrifice a creature: Scry 1.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1192,17 +1394,18 @@
     "commander": false
   },
   {
-    "name": "Sanitarium Skeleton",
+    "name": "Viscera Seer (5)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Sacrifice a creature: Scry 1.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1214,17 +1417,18 @@
     "commander": false
   },
   {
-    "name": "Barrier of Bones",
+    "name": "Viscera Seer (6)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Sacrifice a creature: Scry 1.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1240,13 +1444,14 @@
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Sacrifice a creature: Scry 1.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1258,17 +1463,18 @@
     "commander": false
   },
   {
-    "name": "Typhoid Rats (8)",
+    "name": "Viscera Seer (8)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Sacrifice a creature: Scry 1.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1280,17 +1486,18 @@
     "commander": false
   },
   {
-    "name": "Dread Wanderer (9)",
+    "name": "Viscera Seer (9)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Sacrifice a creature: Scry 1.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1302,17 +1509,17 @@
     "commander": false
   },
   {
-    "name": "Gutterbones (10)",
+    "name": "Vampire Lacerator",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your upkeep, if an opponent has more than 10 life, you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire"
     ],
     "super_types": [],
     "identity": [
@@ -1324,17 +1531,17 @@
     "commander": false
   },
   {
-    "name": "Sanitarium Skeleton (11)",
+    "name": "Vampire Lacerator (2)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your upkeep, if an opponent has more than 10 life, you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire"
     ],
     "super_types": [],
     "identity": [
@@ -1346,17 +1553,17 @@
     "commander": false
   },
   {
-    "name": "Barrier of Bones (12)",
+    "name": "Vampire Lacerator (3)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your upkeep, if an opponent has more than 10 life, you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire"
     ],
     "super_types": [],
     "identity": [
@@ -1368,17 +1575,17 @@
     "commander": false
   },
   {
-    "name": "Viscera Seer (13)",
+    "name": "Vampire Lacerator (4)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your upkeep, if an opponent has more than 10 life, you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire"
     ],
     "super_types": [],
     "identity": [
@@ -1390,17 +1597,17 @@
     "commander": false
   },
   {
-    "name": "Typhoid Rats (14)",
+    "name": "Vampire Lacerator (5)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your upkeep, if an opponent has more than 10 life, you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire"
     ],
     "super_types": [],
     "identity": [
@@ -1412,17 +1619,17 @@
     "commander": false
   },
   {
-    "name": "Dread Wanderer (15)",
+    "name": "Vampire Lacerator (6)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your upkeep, if an opponent has more than 10 life, you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire"
     ],
     "super_types": [],
     "identity": [
@@ -1434,17 +1641,17 @@
     "commander": false
   },
   {
-    "name": "Gutterbones (16)",
+    "name": "Vampire Lacerator (7)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your upkeep, if an opponent has more than 10 life, you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire"
     ],
     "super_types": [],
     "identity": [
@@ -1456,17 +1663,17 @@
     "commander": false
   },
   {
-    "name": "Sanitarium Skeleton (17)",
+    "name": "Vampire Lacerator (8)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your upkeep, if an opponent has more than 10 life, you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire"
     ],
     "super_types": [],
     "identity": [
@@ -1478,17 +1685,17 @@
     "commander": false
   },
   {
-    "name": "Barrier of Bones (18)",
+    "name": "Vampire Lacerator (9)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your upkeep, if an opponent has more than 10 life, you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Vampire"
     ],
     "super_types": [],
     "identity": [
@@ -1500,17 +1707,18 @@
     "commander": false
   },
   {
-    "name": "Viscera Seer (19)",
+    "name": "Foulmire Knight",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Deathtouch\nAdventure -- Profane Insight: Sorcery -- {2}{B} -- You draw a card and you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Zombie",
+      "Knight"
     ],
     "super_types": [],
     "identity": [
@@ -1522,17 +1730,18 @@
     "commander": false
   },
   {
-    "name": "Typhoid Rats (20)",
+    "name": "Foulmire Knight (2)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Deathtouch\nAdventure -- Profane Insight: Sorcery -- {2}{B} -- You draw a card and you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Zombie",
+      "Knight"
     ],
     "super_types": [],
     "identity": [
@@ -1544,17 +1753,18 @@
     "commander": false
   },
   {
-    "name": "Dread Wanderer (21)",
+    "name": "Foulmire Knight (3)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Deathtouch\nAdventure -- Profane Insight: Sorcery -- {2}{B} -- You draw a card and you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Zombie",
+      "Knight"
     ],
     "super_types": [],
     "identity": [
@@ -1566,17 +1776,18 @@
     "commander": false
   },
   {
-    "name": "Gutterbones (22)",
+    "name": "Foulmire Knight (4)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Deathtouch\nAdventure -- Profane Insight: Sorcery -- {2}{B} -- You draw a card and you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Zombie",
+      "Knight"
     ],
     "super_types": [],
     "identity": [
@@ -1588,17 +1799,18 @@
     "commander": false
   },
   {
-    "name": "Sanitarium Skeleton (23)",
+    "name": "Foulmire Knight (5)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Deathtouch\nAdventure -- Profane Insight: Sorcery -- {2}{B} -- You draw a card and you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Zombie",
+      "Knight"
     ],
     "super_types": [],
     "identity": [
@@ -1610,17 +1822,18 @@
     "commander": false
   },
   {
-    "name": "Barrier of Bones (24)",
+    "name": "Foulmire Knight (6)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Deathtouch\nAdventure -- Profane Insight: Sorcery -- {2}{B} -- You draw a card and you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Zombie",
+      "Knight"
     ],
     "super_types": [],
     "identity": [
@@ -1632,17 +1845,18 @@
     "commander": false
   },
   {
-    "name": "Viscera Seer (25)",
+    "name": "Foulmire Knight (7)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Deathtouch\nAdventure -- Profane Insight: Sorcery -- {2}{B} -- You draw a card and you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Zombie",
+      "Knight"
     ],
     "super_types": [],
     "identity": [
@@ -1654,17 +1868,18 @@
     "commander": false
   },
   {
-    "name": "Typhoid Rats (26)",
+    "name": "Foulmire Knight (8)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Deathtouch\nAdventure -- Profane Insight: Sorcery -- {2}{B} -- You draw a card and you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Zombie",
+      "Knight"
     ],
     "super_types": [],
     "identity": [
@@ -1676,17 +1891,18 @@
     "commander": false
   },
   {
-    "name": "Dread Wanderer (27)",
+    "name": "Foulmire Knight (9)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Deathtouch\nAdventure -- Profane Insight: Sorcery -- {2}{B} -- You draw a card and you lose 1 life.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Zombie",
+      "Knight"
     ],
     "super_types": [],
     "identity": [
@@ -1698,17 +1914,18 @@
     "commander": false
   },
   {
-    "name": "Gutterbones (28)",
+    "name": "Cuombajj Witches",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "{T}: Cuombajj Witches deals 1 damage to any target and 1 damage to any target chosen by an opponent.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Human",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1720,17 +1937,18 @@
     "commander": false
   },
   {
-    "name": "Sanitarium Skeleton (29)",
+    "name": "Cuombajj Witches (2)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "{T}: Cuombajj Witches deals 1 damage to any target and 1 damage to any target chosen by an opponent.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Human",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1742,17 +1960,18 @@
     "commander": false
   },
   {
-    "name": "Barrier of Bones (30)",
+    "name": "Cuombajj Witches (3)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "{T}: Cuombajj Witches deals 1 damage to any target and 1 damage to any target chosen by an opponent.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Human",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1764,17 +1983,18 @@
     "commander": false
   },
   {
-    "name": "Viscera Seer (31)",
+    "name": "Cuombajj Witches (4)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "{T}: Cuombajj Witches deals 1 damage to any target and 1 damage to any target chosen by an opponent.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Human",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1786,17 +2006,18 @@
     "commander": false
   },
   {
-    "name": "Typhoid Rats (32)",
+    "name": "Cuombajj Witches (5)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "{T}: Cuombajj Witches deals 1 damage to any target and 1 damage to any target chosen by an opponent.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Human",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1808,17 +2029,18 @@
     "commander": false
   },
   {
-    "name": "Dread Wanderer (33)",
+    "name": "Cuombajj Witches (6)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "{T}: Cuombajj Witches deals 1 damage to any target and 1 damage to any target chosen by an opponent.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Human",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1830,17 +2052,18 @@
     "commander": false
   },
   {
-    "name": "Gutterbones (34)",
+    "name": "Cuombajj Witches (7)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "{T}: Cuombajj Witches deals 1 damage to any target and 1 damage to any target chosen by an opponent.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Human",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1852,17 +2075,18 @@
     "commander": false
   },
   {
-    "name": "Sanitarium Skeleton (35)",
+    "name": "Cuombajj Witches (8)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "{T}: Cuombajj Witches deals 1 damage to any target and 1 damage to any target chosen by an opponent.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Human",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1874,17 +2098,18 @@
     "commander": false
   },
   {
-    "name": "Barrier of Bones (36)",
+    "name": "Cuombajj Witches (9)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "{T}: Cuombajj Witches deals 1 damage to any target and 1 damage to any target chosen by an opponent.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Human",
+      "Wizard"
     ],
     "super_types": [],
     "identity": [
@@ -1896,19 +2121,22 @@
     "commander": false
   },
   {
-    "name": "Viscera Seer (37)",
+    "name": "Tinybones, Trinket Thief",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your end step, if an opponent has no cards in hand, you draw a card and lose 1 life.\n{4}{B}: Each opponent discards a card.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Skeleton",
+      "Rogue"
     ],
-    "super_types": [],
+    "super_types": [
+      "Legendary"
+    ],
     "identity": [
       "Black"
     ],
@@ -1918,19 +2146,22 @@
     "commander": false
   },
   {
-    "name": "Typhoid Rats (38)",
+    "name": "Tinybones, Trinket Thief (2)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your end step, if an opponent has no cards in hand, you draw a card and lose 1 life.\n{4}{B}: Each opponent discards a card.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Skeleton",
+      "Rogue"
     ],
-    "super_types": [],
+    "super_types": [
+      "Legendary"
+    ],
     "identity": [
       "Black"
     ],
@@ -1940,19 +2171,22 @@
     "commander": false
   },
   {
-    "name": "Dread Wanderer (39)",
+    "name": "Tinybones, Trinket Thief (3)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your end step, if an opponent has no cards in hand, you draw a card and lose 1 life.\n{4}{B}: Each opponent discards a card.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Skeleton",
+      "Rogue"
     ],
-    "super_types": [],
+    "super_types": [
+      "Legendary"
+    ],
     "identity": [
       "Black"
     ],
@@ -1962,19 +2196,22 @@
     "commander": false
   },
   {
-    "name": "Gutterbones (40)",
+    "name": "Tinybones, Trinket Thief (4)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your end step, if an opponent has no cards in hand, you draw a card and lose 1 life.\n{4}{B}: Each opponent discards a card.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Skeleton",
+      "Rogue"
     ],
-    "super_types": [],
+    "super_types": [
+      "Legendary"
+    ],
     "identity": [
       "Black"
     ],
@@ -1984,19 +2221,22 @@
     "commander": false
   },
   {
-    "name": "Sanitarium Skeleton (41)",
+    "name": "Tinybones, Trinket Thief (5)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your end step, if an opponent has no cards in hand, you draw a card and lose 1 life.\n{4}{B}: Each opponent discards a card.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Skeleton",
+      "Rogue"
     ],
-    "super_types": [],
+    "super_types": [
+      "Legendary"
+    ],
     "identity": [
       "Black"
     ],
@@ -2006,19 +2246,22 @@
     "commander": false
   },
   {
-    "name": "Barrier of Bones (42)",
+    "name": "Tinybones, Trinket Thief (6)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your end step, if an opponent has no cards in hand, you draw a card and lose 1 life.\n{4}{B}: Each opponent discards a card.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Skeleton",
+      "Rogue"
     ],
-    "super_types": [],
+    "super_types": [
+      "Legendary"
+    ],
     "identity": [
       "Black"
     ],
@@ -2028,19 +2271,22 @@
     "commander": false
   },
   {
-    "name": "Viscera Seer (43)",
+    "name": "Tinybones, Trinket Thief (7)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your end step, if an opponent has no cards in hand, you draw a card and lose 1 life.\n{4}{B}: Each opponent discards a card.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Skeleton",
+      "Rogue"
     ],
-    "super_types": [],
+    "super_types": [
+      "Legendary"
+    ],
     "identity": [
       "Black"
     ],
@@ -2050,19 +2296,22 @@
     "commander": false
   },
   {
-    "name": "Typhoid Rats (44)",
+    "name": "Tinybones, Trinket Thief (8)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your end step, if an opponent has no cards in hand, you draw a card and lose 1 life.\n{4}{B}: Each opponent discards a card.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Skeleton",
+      "Rogue"
     ],
-    "super_types": [],
+    "super_types": [
+      "Legendary"
+    ],
     "identity": [
       "Black"
     ],
@@ -2072,217 +2321,22 @@
     "commander": false
   },
   {
-    "name": "Dread Wanderer (45)",
+    "name": "Tinybones, Trinket Thief (9)",
     "quantity": 1,
     "oracle_cmc": 1,
     "cmc": 1,
-    "cost": "{1}",
-    "text": "",
+    "cost": "{B}",
+    "text": "At the beginning of your end step, if an opponent has no cards in hand, you draw a card and lose 1 life.\n{4}{B}: Each opponent discards a card.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Skeleton",
+      "Rogue"
     ],
-    "super_types": [],
-    "identity": [
-      "Black"
+    "super_types": [
+      "Legendary"
     ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Gutterbones (46)",
-    "quantity": 1,
-    "oracle_cmc": 1,
-    "cmc": 1,
-    "cost": "{1}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Sanitarium Skeleton (47)",
-    "quantity": 1,
-    "oracle_cmc": 1,
-    "cmc": 1,
-    "cost": "{1}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Barrier of Bones (48)",
-    "quantity": 1,
-    "oracle_cmc": 1,
-    "cmc": 1,
-    "cost": "{1}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Viscera Seer (49)",
-    "quantity": 1,
-    "oracle_cmc": 1,
-    "cmc": 1,
-    "cost": "{1}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Typhoid Rats (50)",
-    "quantity": 1,
-    "oracle_cmc": 1,
-    "cmc": 1,
-    "cost": "{1}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Dread Wanderer (51)",
-    "quantity": 1,
-    "oracle_cmc": 1,
-    "cmc": 1,
-    "cost": "{1}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Gutterbones (52)",
-    "quantity": 1,
-    "oracle_cmc": 1,
-    "cmc": 1,
-    "cost": "{1}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Sanitarium Skeleton (53)",
-    "quantity": 1,
-    "oracle_cmc": 1,
-    "cmc": 1,
-    "cost": "{1}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Barrier of Bones (54)",
-    "quantity": 1,
-    "oracle_cmc": 1,
-    "cmc": 1,
-    "cost": "{1}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
     "identity": [
       "Black"
     ],

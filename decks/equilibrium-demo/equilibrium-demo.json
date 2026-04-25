@@ -5,7 +5,7 @@
     "oracle_cmc": 2,
     "cmc": 2,
     "cost": "{1}{B}",
-    "text": "Deathtouch. When enters, mill two cards and gain 2 life.",
+    "text": "Deathtouch\nWhen Mire Triton enters, mill three cards. You gain 1 life for each creature card put into your graveyard this way.",
     "types": [
       "Creature"
     ],
@@ -30,7 +30,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -54,7 +54,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -78,7 +78,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -102,7 +102,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -126,7 +126,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -150,7 +150,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -174,7 +174,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -198,7 +198,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -222,7 +222,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -246,7 +246,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -270,7 +270,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -294,7 +294,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -318,7 +318,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -342,7 +342,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -366,7 +366,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -390,7 +390,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -414,7 +414,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -438,7 +438,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -462,7 +462,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -486,7 +486,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -510,7 +510,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -534,7 +534,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -558,7 +558,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -582,7 +582,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -606,7 +606,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -630,7 +630,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -654,7 +654,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -678,7 +678,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -702,7 +702,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -726,7 +726,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -750,7 +750,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -774,7 +774,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -798,7 +798,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -822,7 +822,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -846,7 +846,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -870,7 +870,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -894,7 +894,7 @@
     "oracle_cmc": 0,
     "cmc": 0,
     "cost": "",
-    "text": "",
+    "text": "({T}: Add {B}.)",
     "types": [
       "Land"
     ],
@@ -913,61 +913,18 @@
     "commander": false
   },
   {
-    "name": "Walking Corpse",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Reassembling Skeleton",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
     "name": "Black Cat",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Zombie",
+      "Cat"
     ],
     "super_types": [],
     "identity": [
@@ -979,17 +936,18 @@
     "commander": false
   },
   {
-    "name": "Burglar Rat",
+    "name": "Black Cat (2)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Zombie",
+      "Cat"
     ],
     "super_types": [],
     "identity": [
@@ -1001,17 +959,18 @@
     "commander": false
   },
   {
-    "name": "Carrier Thrall",
+    "name": "Black Cat (3)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Zombie",
+      "Cat"
     ],
     "super_types": [],
     "identity": [
@@ -1023,17 +982,18 @@
     "commander": false
   },
   {
-    "name": "Lazotep Reaver",
+    "name": "Black Cat (4)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Zombie",
+      "Cat"
     ],
     "super_types": [],
     "identity": [
@@ -1045,17 +1005,18 @@
     "commander": false
   },
   {
-    "name": "Walking Corpse (7)",
+    "name": "Black Cat (5)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Zombie",
+      "Cat"
     ],
     "super_types": [],
     "identity": [
@@ -1067,17 +1028,64 @@
     "commander": false
   },
   {
-    "name": "Reassembling Skeleton (8)",
+    "name": "Black Cat (6)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
     "types": [
       "Creature"
     ],
     "sub_types": [
-      "Zombie"
+      "Zombie",
+      "Cat"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Black Cat (7)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie",
+      "Cat"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Black Cat (8)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie",
+      "Cat"
     ],
     "super_types": [],
     "identity": [
@@ -1093,8 +1101,445 @@
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie",
+      "Cat"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton (2)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton (3)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton (4)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton (5)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton (6)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton (7)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton (8)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton (9)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion (2)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion (3)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion (4)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion (5)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion (6)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion (7)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion (8)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion (9)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Stitcher's Supplier",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
     "types": [
       "Creature"
     ],
@@ -1111,12 +1556,12 @@
     "commander": false
   },
   {
-    "name": "Burglar Rat (10)",
+    "name": "Stitcher's Supplier (2)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
     "types": [
       "Creature"
     ],
@@ -1133,12 +1578,12 @@
     "commander": false
   },
   {
-    "name": "Carrier Thrall (11)",
+    "name": "Stitcher's Supplier (3)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
     "types": [
       "Creature"
     ],
@@ -1155,12 +1600,12 @@
     "commander": false
   },
   {
-    "name": "Lazotep Reaver (12)",
+    "name": "Stitcher's Supplier (4)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
     "types": [
       "Creature"
     ],
@@ -1177,12 +1622,12 @@
     "commander": false
   },
   {
-    "name": "Walking Corpse (13)",
+    "name": "Stitcher's Supplier (5)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
     "types": [
       "Creature"
     ],
@@ -1199,12 +1644,12 @@
     "commander": false
   },
   {
-    "name": "Reassembling Skeleton (14)",
+    "name": "Stitcher's Supplier (6)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
     "types": [
       "Creature"
     ],
@@ -1221,12 +1666,12 @@
     "commander": false
   },
   {
-    "name": "Black Cat (15)",
+    "name": "Stitcher's Supplier (7)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
     "types": [
       "Creature"
     ],
@@ -1243,12 +1688,12 @@
     "commander": false
   },
   {
-    "name": "Burglar Rat (16)",
+    "name": "Stitcher's Supplier (8)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
     "types": [
       "Creature"
     ],
@@ -1265,12 +1710,12 @@
     "commander": false
   },
   {
-    "name": "Carrier Thrall (17)",
+    "name": "Stitcher's Supplier (9)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
     "types": [
       "Creature"
     ],
@@ -1287,12 +1732,417 @@
     "commander": false
   },
   {
-    "name": "Lazotep Reaver (18)",
+    "name": "Bloodghast",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodghast (2)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodghast (3)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodghast (4)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodghast (5)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodghast (6)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodghast (7)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodghast (8)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodghast (9)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker (2)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker (3)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker (4)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker (5)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker (6)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker (7)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker (8)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker (9)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Carrion Feeder",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
     "types": [
       "Creature"
     ],
@@ -1309,12 +2159,12 @@
     "commander": false
   },
   {
-    "name": "Walking Corpse (19)",
+    "name": "Carrion Feeder (2)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
     "types": [
       "Creature"
     ],
@@ -1331,12 +2181,12 @@
     "commander": false
   },
   {
-    "name": "Reassembling Skeleton (20)",
+    "name": "Carrion Feeder (3)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
     "types": [
       "Creature"
     ],
@@ -1353,12 +2203,12 @@
     "commander": false
   },
   {
-    "name": "Black Cat (21)",
+    "name": "Carrion Feeder (4)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
     "types": [
       "Creature"
     ],
@@ -1375,12 +2225,12 @@
     "commander": false
   },
   {
-    "name": "Burglar Rat (22)",
+    "name": "Carrion Feeder (5)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
     "types": [
       "Creature"
     ],
@@ -1397,12 +2247,12 @@
     "commander": false
   },
   {
-    "name": "Carrier Thrall (23)",
+    "name": "Carrion Feeder (6)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
     "types": [
       "Creature"
     ],
@@ -1419,12 +2269,12 @@
     "commander": false
   },
   {
-    "name": "Lazotep Reaver (24)",
+    "name": "Carrion Feeder (7)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
     "types": [
       "Creature"
     ],
@@ -1441,826 +2291,12 @@
     "commander": false
   },
   {
-    "name": "Walking Corpse (25)",
+    "name": "Carrion Feeder (8)",
     "quantity": 1,
     "oracle_cmc": 2,
     "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Reassembling Skeleton (26)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Black Cat (27)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Burglar Rat (28)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Carrier Thrall (29)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Lazotep Reaver (30)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Walking Corpse (31)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Reassembling Skeleton (32)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Black Cat (33)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Burglar Rat (34)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Carrier Thrall (35)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Lazotep Reaver (36)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Walking Corpse (37)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Reassembling Skeleton (38)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Black Cat (39)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Burglar Rat (40)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Carrier Thrall (41)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Lazotep Reaver (42)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Walking Corpse (43)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Reassembling Skeleton (44)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Black Cat (45)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Burglar Rat (46)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Carrier Thrall (47)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Lazotep Reaver (48)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Walking Corpse (49)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Reassembling Skeleton (50)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Black Cat (51)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Burglar Rat (52)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Carrier Thrall (53)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Lazotep Reaver (54)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Walking Corpse (55)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Reassembling Skeleton (56)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Black Cat (57)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Burglar Rat (58)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Carrier Thrall (59)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Lazotep Reaver (60)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Walking Corpse (61)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
-    "types": [
-      "Creature"
-    ],
-    "sub_types": [
-      "Zombie"
-    ],
-    "super_types": [],
-    "identity": [
-      "Black"
-    ],
-    "default_category": null,
-    "user_category": "Creature",
-    "tag": null,
-    "commander": false
-  },
-  {
-    "name": "Reassembling Skeleton (62)",
-    "quantity": 1,
-    "oracle_cmc": 2,
-    "cmc": 2,
-    "cost": "{2}",
-    "text": "",
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
     "types": [
       "Creature"
     ],
