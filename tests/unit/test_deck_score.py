@@ -4,7 +4,10 @@ import pytest
 
 from auto_goldfish.engine.goldfisher import SimulationResult
 from auto_goldfish.metrics.deck_score import (
+    DEFAULT_ANCHORS,
+    DeckRawStats,
     DeckScore,
+    StatAnchors,
     _clamp,
     _compute_acceleration,
     _compute_consistency,
@@ -14,6 +17,8 @@ from auto_goldfish.metrics.deck_score import (
     _compute_toughness,
     _scale,
     compute_deck_score,
+    compute_raw_stats,
+    score_from_raw,
 )
 
 
@@ -251,3 +256,99 @@ class TestEdgeCases:
         score = compute_deck_score(result, turns=1)
         for value in score.as_dict().values():
             assert 1 <= value <= 10
+
+
+# ---------------------------------------------------------------------------
+# StatAnchors and raw stats
+# ---------------------------------------------------------------------------
+
+class TestStatAnchors:
+    def test_default_anchors_match_historical_values(self):
+        assert DEFAULT_ANCHORS.consistency == (0.0, 1.0)
+        assert DEFAULT_ANCHORS.acceleration == (1.0, 14.0)
+        assert DEFAULT_ANCHORS.surge_ratio == (0.5, 4.0)
+        assert DEFAULT_ANCHORS.surge_late_avg_norm == (1.0, 8.0)
+        assert DEFAULT_ANCHORS.toughness == (0.55, 1.00)
+        assert DEFAULT_ANCHORS.efficiency == (0.0, 1.0)
+        assert DEFAULT_ANCHORS.reach_norm == (5.0, 45.0)
+
+    def test_anchors_are_immutable(self):
+        with pytest.raises(Exception):
+            DEFAULT_ANCHORS.consistency = (0.0, 2.0)
+
+
+class TestComputeRawStats:
+    def test_returns_six_top_level_fields(self):
+        raw = compute_raw_stats(_make_result(), turns=10)
+        assert isinstance(raw, DeckRawStats)
+        keys = set(raw.as_dict().keys())
+        assert keys == {
+            "consistency", "acceleration", "surge",
+            "toughness", "efficiency", "reach",
+        }
+
+    def test_raw_values_are_floats(self):
+        raw = compute_raw_stats(_make_result(), turns=10)
+        for value in raw.as_dict().values():
+            assert isinstance(value, float)
+
+    def test_raw_toughness_matches_formula(self):
+        result = _make_result(
+            mana_source_count=45, draw_count=15, early_count=30, avg_cmc=3.0,
+        )
+        raw = compute_raw_stats(result, turns=10)
+        # All structural inputs at their cap → composite = 0.4+0.3+0.2+0.1 = 1.0.
+        assert raw.toughness == pytest.approx(1.0)
+
+    def test_raw_acceleration_sums_first_four_turns(self):
+        result = _make_result(mean_mana_per_turn=[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])
+        raw = compute_raw_stats(result, turns=10)
+        assert raw.acceleration == pytest.approx(10.0)
+
+
+class TestScoreFromRaw:
+    def test_default_anchors_match_compute_deck_score(self):
+        result = _make_result()
+        raw = compute_raw_stats(result, turns=10)
+        from_raw = score_from_raw(raw, DEFAULT_ANCHORS)
+        direct = compute_deck_score(result, turns=10)
+        assert from_raw.as_dict() == direct.as_dict()
+
+    def test_custom_anchors_change_output(self):
+        """Tightening the toughness window should make a mid-deck score higher."""
+        result = _make_result(
+            mana_source_count=38, draw_count=10, early_count=22, avg_cmc=3.0,
+        )
+        raw = compute_raw_stats(result, turns=10)
+        # Default toughness window: (0.55, 1.00); a much wider window gives a
+        # lower scaled score (raw value lands further from raw_max).
+        wide = StatAnchors(toughness=(0.0, 2.0))
+        narrow = StatAnchors(toughness=(0.55, 1.00))  # default
+        wide_score = score_from_raw(raw, wide)
+        narrow_score = score_from_raw(raw, narrow)
+        assert wide_score.toughness < narrow_score.toughness
+
+    def test_custom_anchors_only_affect_specified_stat(self):
+        """Overriding one anchor leaves the other stats unchanged."""
+        result = _make_result()
+        raw = compute_raw_stats(result, turns=10)
+        custom = StatAnchors(consistency=(0.5, 0.6))  # tight
+        custom_score = score_from_raw(raw, custom)
+        default_score = score_from_raw(raw, DEFAULT_ANCHORS)
+        # Only consistency should differ.
+        for stat in ["acceleration", "surge", "toughness", "efficiency", "reach"]:
+            assert getattr(custom_score, stat) == getattr(default_score, stat)
+
+    def test_short_game_surge_returns_5(self):
+        """No late-game data => Surge falls back to neutral 5."""
+        result = _make_result(mean_mana_per_turn=[3.0, 4.0])
+        raw = compute_raw_stats(result, turns=2)
+        score = score_from_raw(raw)
+        assert score.surge == 5
+
+    def test_compute_deck_score_accepts_anchors_kwarg(self):
+        """compute_deck_score forwards the anchors arg to score_from_raw."""
+        result = _make_result()
+        custom = StatAnchors(reach_norm=(1.0, 2.0))  # very tight, easy 10
+        score = compute_deck_score(result, turns=10, anchors=custom)
+        assert score.reach == 10

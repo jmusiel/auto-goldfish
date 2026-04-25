@@ -1,7 +1,7 @@
 """Tests for DB models -- schema creation, unique constraints."""
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -15,6 +15,7 @@ from auto_goldfish.db.models import (
     SimulationResultRow,
     SimulationRunRow,
 )
+from auto_goldfish.db.session import _migrate
 
 
 @pytest.fixture
@@ -177,6 +178,54 @@ class TestSimulationResultRow:
         ))
         with pytest.raises(IntegrityError):
             db_session.commit()
+
+
+class TestMigration:
+    """Verify the idempotent _migrate() patches existing tables in place."""
+
+    def test_adds_raw_columns_to_legacy_table(self):
+        """A simulation_results table missing raw_* columns gets them added."""
+        engine = create_engine("sqlite:///:memory:")
+        # Create an old-shape simulation_results without the new raw_* columns.
+        with engine.begin() as conn:
+            conn.execute(text("""
+                CREATE TABLE simulation_results (
+                    id INTEGER PRIMARY KEY,
+                    run_id INTEGER NOT NULL,
+                    land_count INTEGER NOT NULL,
+                    mean_mana FLOAT NOT NULL,
+                    mean_draws FLOAT NOT NULL,
+                    mean_bad_turns FLOAT NOT NULL,
+                    mean_lands FLOAT NOT NULL,
+                    mean_mulls FLOAT NOT NULL,
+                    ci_mean_mana_low FLOAT NOT NULL,
+                    ci_mean_mana_high FLOAT NOT NULL,
+                    consistency FLOAT NOT NULL,
+                    ci_consistency_low FLOAT NOT NULL,
+                    ci_consistency_high FLOAT NOT NULL,
+                    percentile_25 FLOAT NOT NULL,
+                    percentile_50 FLOAT NOT NULL,
+                    percentile_75 FLOAT NOT NULL
+                )
+            """))
+
+        _migrate(engine)
+
+        cols = {c["name"] for c in inspect(engine).get_columns("simulation_results")}
+        for raw_col in [
+            "raw_consistency", "raw_acceleration", "raw_surge",
+            "raw_toughness", "raw_efficiency", "raw_reach",
+        ]:
+            assert raw_col in cols, f"{raw_col} not added by migration"
+
+    def test_migration_is_idempotent(self):
+        """Running _migrate() twice is safe (no duplicate-column error)."""
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        _migrate(engine)  # should be a no-op on a freshly-created schema
+        _migrate(engine)  # second call must also succeed
+        cols = {c["name"] for c in inspect(engine).get_columns("simulation_results")}
+        assert "raw_consistency" in cols
 
 
 class TestCardPerformanceRow:

@@ -11,14 +11,75 @@ profile:
   redundancy can absorb a missing piece without falling apart.
 - **Efficiency**: How well the deck uses available mana each turn.
 - **Reach**: Peak mana output and ceiling performance.
+
+The 1--10 mapping for each stat is governed by a :class:`StatAnchors`
+container of (raw_min, raw_max) tuples. Defaults are anchored to a 76-deck
+Archidekt sample; callers can pass tuned anchors to ``compute_deck_score``
+or ``score_from_raw`` to override (e.g. for on-the-fly DB calibration).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Tuple
 
 from auto_goldfish.engine.goldfisher import SimulationResult
+
+
+@dataclass(frozen=True)
+class StatAnchors:
+    """``(raw_min, raw_max)`` anchors for the 1--10 scaling of each stat.
+
+    Raw values feed ``_scale(raw, raw_min, raw_max)``: at/below ``raw_min``
+    they map to 1; at/above ``raw_max`` they map to 10. Anchors marked
+    ``_norm`` operate on turn-factor-normalized inputs (raw divided by
+    ``turns / 10``) so a single set of anchors works across game lengths.
+
+    Defaults derive from a 76-deck Archidekt calibration pool (see
+    ``scripts/calibrate_stat_ranges.py``).
+    """
+
+    consistency: Tuple[float, float] = (0.0, 1.0)
+    acceleration: Tuple[float, float] = (1.0, 14.0)
+    surge_ratio: Tuple[float, float] = (0.5, 4.0)
+    surge_late_avg_norm: Tuple[float, float] = (1.0, 8.0)
+    toughness: Tuple[float, float] = (0.55, 1.00)
+    efficiency: Tuple[float, float] = (0.0, 1.0)
+    reach_norm: Tuple[float, float] = (5.0, 45.0)
+
+
+DEFAULT_ANCHORS = StatAnchors()
+
+
+@dataclass
+class DeckRawStats:
+    """Unscaled composite values that feed each CASTER stat's _scale call.
+
+    Six floats are persistable to ``simulation_results`` for later
+    distribution analysis and on-the-fly anchor calibration. Surge has two
+    underlying inputs (a ratio and a late-game average); only the ratio
+    is exposed at the top level here. ``surge_late_avg_norm`` is kept on
+    the dataclass for completeness but is not currently persisted.
+    """
+
+    consistency: float
+    acceleration: float
+    surge: float                # late/early acceleration ratio
+    toughness: float
+    efficiency: float
+    reach: float                # turn-factor-normalized
+    surge_late_avg_norm: float  # turn-factor-normalized late-game avg
+
+    def as_dict(self) -> Dict[str, float]:
+        """Return only the six top-level raw values (DB persistence shape)."""
+        return {
+            "consistency": self.consistency,
+            "acceleration": self.acceleration,
+            "surge": self.surge,
+            "toughness": self.toughness,
+            "efficiency": self.efficiency,
+            "reach": self.reach,
+        }
 
 
 @dataclass
@@ -69,135 +130,182 @@ def _scale(raw: float, raw_min: float, raw_max: float) -> int:
     return _clamp(1 + 9 * normalized)
 
 
-def compute_deck_score(result: SimulationResult, turns: int = 10) -> DeckScore:
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+def compute_deck_score(
+    result: SimulationResult,
+    turns: int = 10,
+    anchors: StatAnchors = DEFAULT_ANCHORS,
+) -> DeckScore:
     """Derive a :class:`DeckScore` from simulation results."""
+    raw = compute_raw_stats(result, turns)
+    return score_from_raw(raw, anchors)
+
+
+def compute_raw_stats(result: SimulationResult, turns: int = 10) -> DeckRawStats:
+    """Compute the six raw composite values that feed the 1--10 scaling.
+
+    Independent of any anchor choice -- callers can later apply different
+    :class:`StatAnchors` via :func:`score_from_raw` without re-simulating.
+    """
+    return DeckRawStats(
+        consistency=_raw_consistency(result, turns),
+        acceleration=_raw_acceleration(result, turns),
+        surge=_raw_surge_ratio(result),
+        surge_late_avg_norm=_raw_surge_late_avg_norm(result, turns),
+        toughness=_raw_toughness(result),
+        efficiency=_raw_efficiency(result, turns),
+        reach=_raw_reach_norm(result, turns),
+    )
+
+
+def score_from_raw(raw: DeckRawStats, anchors: StatAnchors = DEFAULT_ANCHORS) -> DeckScore:
+    """Apply 1--10 scaling using the given anchors."""
+    if raw.surge_late_avg_norm <= 0.0:
+        # No late-game data (short game or all-mulligan); neutral score.
+        surge = 5
+    else:
+        accel_score = _scale(raw.surge, *anchors.surge_ratio)
+        late_power = _scale(raw.surge_late_avg_norm, *anchors.surge_late_avg_norm)
+        surge = _clamp(0.5 * accel_score + 0.5 * late_power)
     return DeckScore(
-        consistency=_compute_consistency(result, turns),
-        acceleration=_compute_acceleration(result, turns),
-        surge=_compute_surge(result, turns),
-        toughness=_compute_toughness(result),
-        efficiency=_compute_efficiency(result, turns),
-        reach=_compute_reach(result, turns),
+        consistency=_scale(raw.consistency, *anchors.consistency),
+        acceleration=_scale(raw.acceleration, *anchors.acceleration),
+        surge=surge,
+        toughness=_scale(raw.toughness, *anchors.toughness),
+        efficiency=_scale(raw.efficiency, *anchors.efficiency),
+        reach=_scale(raw.reach, *anchors.reach_norm),
     )
 
 
 # ---------------------------------------------------------------------------
-# Individual stat computations
+# Raw composite values (no scaling, no anchors)
 # ---------------------------------------------------------------------------
 
-def _compute_consistency(result: SimulationResult, turns: int) -> int:
-    """Consistency: how rarely the deck bricks.
-
-    Combines the left-tail ratio (bottom 25% vs mean), bad turn count,
-    and mana standard deviation into a single consistency score.
-    """
+def _raw_consistency(result: SimulationResult, turns: int) -> float:
+    """Composite of left-tail ratio, bad-turn count, and mana CV."""
     tail_score = result.consistency
-
     max_bad = max(turns * 0.6, 1)
     bad_score = max(0.0, 1.0 - result.mean_bad_turns / max_bad)
-
     if result.mean_mana > 0:
         cv = result.std_mana / result.mean_mana
         std_score = max(0.0, 1.0 - cv / 0.5)
     else:
         std_score = 0.0
+    return 0.4 * tail_score + 0.3 * bad_score + 0.3 * std_score
 
-    composite = 0.4 * tail_score + 0.3 * bad_score + 0.3 * std_score
-    return _scale(composite, 0.0, 1.0)
+
+def _raw_acceleration(result: SimulationResult, turns: int) -> float:
+    """Sum of mean mana spent across the first 4 turns."""
+    early_turns = min(4, turns, len(result.mean_mana_per_turn))
+    if early_turns == 0:
+        return 0.0
+    return float(sum(result.mean_mana_per_turn[:early_turns]))
+
+
+def _raw_surge_ratio(result: SimulationResult) -> float:
+    """Late-game / early-game mean-mana ratio (the acceleration term)."""
+    mpt = result.mean_mana_per_turn
+    if len(mpt) < 4:
+        return 1.0
+    early_end = min(4, len(mpt))
+    early_avg = sum(mpt[:early_end]) / early_end
+    late_turns = mpt[early_end:]
+    if not late_turns or early_avg <= 0:
+        return 1.0
+    late_avg = sum(late_turns) / len(late_turns)
+    return float(late_avg / early_avg)
+
+
+def _raw_surge_late_avg_norm(result: SimulationResult, turns: int) -> float:
+    """Mean mana per turn for late-game turns, normalized to a 10-turn game."""
+    mpt = result.mean_mana_per_turn
+    if len(mpt) < 4:
+        return 0.0
+    early_end = min(4, len(mpt))
+    late_turns = mpt[early_end:]
+    if not late_turns:
+        return 0.0
+    late_avg = sum(late_turns) / len(late_turns)
+    turn_factor = turns / 10.0
+    return float(late_avg / turn_factor) if turn_factor > 0 else float(late_avg)
+
+
+def _raw_toughness(result: SimulationResult) -> float:
+    """Structural-redundancy composite of the decklist."""
+    mana_norm = min(result.mana_source_count / 45.0, 1.0)
+    draw_norm = min(result.draw_count / 15.0, 1.0)
+    early_norm = min(result.early_count / 30.0, 1.0)
+    curve_norm = max(0.0, 1.0 - max(0.0, result.avg_cmc - 3.0) / 3.0)
+    return 0.4 * mana_norm + 0.3 * draw_norm + 0.2 * early_norm + 0.1 * curve_norm
+
+
+def _raw_efficiency(result: SimulationResult, turns: int) -> float:
+    """Composite of mana utilization and avoided mid-game stalls."""
+    land_count = result.mean_lands
+    theoretical_max = sum(min(i + 1, land_count) for i in range(turns))
+    if theoretical_max <= 0:
+        return 0.0
+    utilization = min(result.mean_mana / theoretical_max, 1.0)
+    max_mid = max(turns * 0.7, 1)
+    mid_score = max(0.0, 1.0 - result.mean_mid_turns / max_mid)
+    return 0.6 * utilization + 0.4 * mid_score
+
+
+def _raw_reach_norm(result: SimulationResult, turns: int) -> float:
+    """Weighted blend of mean and ceiling mana, normalized to a 10-turn game."""
+    raw = 0.4 * result.mean_mana + 0.6 * result.ceiling_mana
+    turn_factor = turns / 10.0
+    return float(raw / turn_factor) if turn_factor > 0 else float(raw)
+
+
+# ---------------------------------------------------------------------------
+# Per-stat scaled scores (kept for backward-compatible imports / tests)
+# ---------------------------------------------------------------------------
+
+def _compute_consistency(result: SimulationResult, turns: int) -> int:
+    return _scale(_raw_consistency(result, turns), *DEFAULT_ANCHORS.consistency)
 
 
 def _compute_acceleration(result: SimulationResult, turns: int) -> int:
-    """Acceleration: early-game mana deployment (turns 1-4).
-
-    Measures the average mana spent in the first 4 turns. A deck that
-    curves out Sol Ring -> Signet -> 3-drop -> 4-drop scores near 14.
-    """
     early_turns = min(4, turns, len(result.mean_mana_per_turn))
     if early_turns == 0:
         return 1
-    early_mana = sum(result.mean_mana_per_turn[:early_turns])
-    return _scale(early_mana, 1.0, 14.0)
+    return _scale(_raw_acceleration(result, turns), *DEFAULT_ANCHORS.acceleration)
 
 
 def _compute_surge(result: SimulationResult, turns: int) -> int:
-    """Surge: how well the deck accelerates over time.
-
-    Compares late-game mana per turn to early-game, blended with absolute
-    late-game output. Strong ramp payoff yields a higher surge score.
-    """
     mpt = result.mean_mana_per_turn
     if len(mpt) < 4:
         return 5
-
     early_end = min(4, len(mpt))
     early_avg = sum(mpt[:early_end]) / early_end
     late_turns = mpt[early_end:]
     if not late_turns:
         return 5
-    late_avg = sum(late_turns) / len(late_turns)
-
     if early_avg <= 0:
         return 5
 
-    acceleration = late_avg / early_avg
-
-    turn_factor = turns / 10.0
-    late_power = _scale(late_avg, 1.0 * turn_factor, 8.0 * turn_factor)
-    accel_score = _scale(acceleration, 0.5, 4.0)
-
-    composite = 0.5 * accel_score + 0.5 * late_power
-    return _clamp(composite)
+    accel_score = _scale(_raw_surge_ratio(result), *DEFAULT_ANCHORS.surge_ratio)
+    late_power = _scale(
+        _raw_surge_late_avg_norm(result, turns), *DEFAULT_ANCHORS.surge_late_avg_norm
+    )
+    return _clamp(0.5 * accel_score + 0.5 * late_power)
 
 
 def _compute_toughness(result: SimulationResult) -> int:
-    """Toughness: structural redundancy of the decklist.
-
-    Composite of:
-      - mana sources (lands + ramp), normalized to a 45-source baseline
-      - card-draw cards, normalized to a 15-card baseline
-      - low-cost (cmc <= 3) plays, normalized to a 30-card baseline
-      - a curve term that penalises avg_cmc above 3
-
-    A deck with broad redundancy absorbs a missing piece without
-    falling apart -- the structural notion of "toughness" (area under
-    the stress--strain curve, by analogy to materials science).
-    """
-    mana_norm = min(result.mana_source_count / 45.0, 1.0)
-    draw_norm = min(result.draw_count / 15.0, 1.0)
-    early_norm = min(result.early_count / 30.0, 1.0)
-    curve_norm = max(0.0, 1.0 - max(0.0, result.avg_cmc - 3.0) / 3.0)
-
-    composite = 0.4 * mana_norm + 0.3 * draw_norm + 0.2 * early_norm + 0.1 * curve_norm
-    # Anchored to a 76-deck Archidekt sample (codudeol + Tagazok + cached
-    # benchmarks): real-deck composite spans p10=0.70, p50=0.90, max=1.00.
-    # [0.55, 1.00] -> [1, 10] gives full 1-10 spread without saturating
-    # the median.
-    return _scale(composite, 0.55, 1.00)
+    return _scale(_raw_toughness(result), *DEFAULT_ANCHORS.toughness)
 
 
 def _compute_efficiency(result: SimulationResult, turns: int) -> int:
-    """Efficiency: how well the deck uses available mana each turn."""
     land_count = result.mean_lands
     theoretical_max = sum(min(i + 1, land_count) for i in range(turns))
-
     if theoretical_max <= 0:
         return 1
-
-    utilization = min(result.mean_mana / theoretical_max, 1.0)
-
-    max_mid = max(turns * 0.7, 1)
-    mid_score = max(0.0, 1.0 - result.mean_mid_turns / max_mid)
-
-    composite = 0.6 * utilization + 0.4 * mid_score
-    return _scale(composite, 0.0, 1.0)
+    return _scale(_raw_efficiency(result, turns), *DEFAULT_ANCHORS.efficiency)
 
 
 def _compute_reach(result: SimulationResult, turns: int) -> int:
-    """Reach: peak output and ceiling performance.
-
-    Combines mean mana spent with ceiling (top 25%) performance.
-    A high-reach deck generates lots of mana in its best games.
-    """
-    turn_factor = turns / 10.0
-    raw = 0.4 * result.mean_mana + 0.6 * result.ceiling_mana
-    return _scale(raw, 5.0 * turn_factor, 45.0 * turn_factor)
+    return _scale(_raw_reach_norm(result, turns), *DEFAULT_ANCHORS.reach_norm)

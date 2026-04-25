@@ -72,6 +72,18 @@ def _migrate(engine) -> None:
                 for col in missing:
                     conn.execute(text(f"ALTER TABLE simulation_results ADD COLUMN {col} INTEGER"))
             logger.info("Migrated simulation_results: added deck score columns")
+            cols = {c["name"] for c in inspect(engine).get_columns("simulation_results")}
+
+        raw_cols = [
+            "raw_consistency", "raw_acceleration", "raw_surge",
+            "raw_toughness", "raw_efficiency", "raw_reach",
+        ]
+        missing_raw = [c for c in raw_cols if c not in cols]
+        if missing_raw:
+            with engine.begin() as conn:
+                for col in missing_raw:
+                    conn.execute(text(f"ALTER TABLE simulation_results ADD COLUMN {col} FLOAT"))
+            logger.info("Migrated simulation_results: added raw stat columns")
 
     if "card_performance" in insp.get_table_names():
         cols = {c["name"] for c in insp.get_columns("card_performance")}

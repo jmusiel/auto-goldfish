@@ -106,6 +106,16 @@ class SimulationResultRow(Base):
     score_toughness: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     score_efficiency: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     score_reach: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    # Raw (unscaled) composite values for each CASTER stat. Persisted so
+    # the 1-10 anchors can be recalibrated against the empirical
+    # distribution without re-simulating. NULL on legacy rows written
+    # before the columns existed.
+    raw_consistency: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    raw_acceleration: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    raw_surge: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    raw_toughness: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    raw_efficiency: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    raw_reach: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
     __table_args__ = (
         UniqueConstraint("run_id", "land_count", name="uq_run_land"),
