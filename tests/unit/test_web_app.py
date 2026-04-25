@@ -571,7 +571,7 @@ class TestCardLabeler:
         self._mock_deck(monkeypatch, tmp_path)
         response = client.get("/sim/testdeck")
         assert b"label-cards-btn" in response.data
-        assert b"Label Cards" in response.data
+        assert b"Open Card Labeler" in response.data
 
     def test_all_nonland_cards_includes_all(self, client, tmp_path, monkeypatch):
         """ALL_NONLAND_CARDS should include all non-land cards (Sol Ring + Vren)."""
