@@ -104,5 +104,14 @@ class TestDeckScoreFromSimulation:
     def test_score_format_block_renders(self, sequential_result):
         score = compute_deck_score(sequential_result, turns=10)
         block = score.format_block()
-        assert "SPEED" in block
-        assert "POWER" in block
+        assert "ACCELERATION" in block
+        assert "REACH" in block
+
+
+class TestStructuralStatsPlumbed:
+    def test_structural_fields_populated(self, sequential_result):
+        # The simple_deck has 37 lands and 62 spells; mana_source_count
+        # should at least equal the land count (no ramp registered).
+        assert sequential_result.mana_source_count >= 37
+        assert sequential_result.early_count > 0
+        assert sequential_result.avg_cmc > 0

@@ -1,19 +1,24 @@
-"""Unit tests for the deck scoring module."""
+"""Unit tests for the deck scoring module (CASTER profile)."""
 
 import pytest
 
 from auto_goldfish.engine.goldfisher import SimulationResult
 from auto_goldfish.metrics.deck_score import (
+    DEFAULT_ANCHORS,
+    DeckRawStats,
     DeckScore,
+    StatAnchors,
     _clamp,
+    _compute_acceleration,
     _compute_consistency,
     _compute_efficiency,
-    _compute_momentum,
-    _compute_power,
-    _compute_resilience,
-    _compute_speed,
+    _compute_reach,
+    _compute_snowball,
+    _compute_toughness,
     _scale,
     compute_deck_score,
+    compute_raw_stats,
+    score_from_raw,
 )
 
 
@@ -44,6 +49,11 @@ def _make_result(**overrides) -> SimulationResult:
         "mull_rate": 0.25,
         "mean_mana_with_mull": 18.0,
         "mean_mana_no_mull": 21.0,
+        # Structural snapshot used by Toughness.
+        "mana_source_count": 38,
+        "draw_count": 10,
+        "early_count": 22,
+        "avg_cmc": 3.0,
     }
     defaults.update(overrides)
     return SimulationResult(**defaults)
@@ -92,41 +102,39 @@ class TestScale:
 # Individual stat computation
 # ---------------------------------------------------------------------------
 
-class TestSpeed:
+class TestAcceleration:
     def test_fast_deck_scores_high(self):
-        # 3+4+5+6 = 18 mana in first 4 turns (above 14 cap)
         result = _make_result(mean_mana_per_turn=[3.0, 4.0, 5.0, 6.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0])
-        assert _compute_speed(result, 10) >= 9
+        assert _compute_acceleration(result, 10) >= 9
 
     def test_slow_deck_scores_low(self):
-        # 0+0.5+0.5+0.5 = 1.5 mana in first 4 turns
         result = _make_result(mean_mana_per_turn=[0.0, 0.5, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
-        assert _compute_speed(result, 10) <= 2
+        assert _compute_acceleration(result, 10) <= 2
 
     def test_empty_per_turn_returns_1(self):
         result = _make_result(mean_mana_per_turn=[])
-        assert _compute_speed(result, 10) == 1
+        assert _compute_acceleration(result, 10) == 1
 
     def test_fewer_than_4_turns(self):
         result = _make_result(mean_mana_per_turn=[2.0, 3.0])
-        score = _compute_speed(result, 2)
+        score = _compute_acceleration(result, 2)
         assert 1 <= score <= 10
 
 
-class TestPower:
-    def test_high_power(self):
+class TestReach:
+    def test_high_reach(self):
         result = _make_result(mean_mana=40.0, ceiling_mana=50.0)
-        assert _compute_power(result, 10) >= 9
+        assert _compute_reach(result, 10) >= 9
 
-    def test_low_power(self):
+    def test_low_reach(self):
         result = _make_result(mean_mana=5.0, ceiling_mana=8.0)
-        assert _compute_power(result, 10) <= 2
+        assert _compute_reach(result, 10) <= 2
 
     def test_scales_with_turns(self):
         result = _make_result(mean_mana=20.0, ceiling_mana=28.0)
-        score_10 = _compute_power(result, 10)
-        score_5 = _compute_power(result, 5)
-        # With fewer turns, same raw values should score higher
+        score_10 = _compute_reach(result, 10)
+        score_5 = _compute_reach(result, 5)
+        # With fewer turns, same raw values should score higher.
         assert score_5 >= score_10
 
 
@@ -145,25 +153,27 @@ class TestConsistency:
         assert 4 <= score <= 8
 
 
-class TestResilience:
-    def test_no_mull_penalty(self):
-        # No difference between mull and no-mull games, low mull rate
+class TestToughness:
+    def test_high_redundancy_scores_high(self):
+        # Lots of mana, lots of draw, lots of early plays, low curve.
         result = _make_result(
-            mean_mana=20.0, mean_mana_with_mull=20.0, mean_mana_no_mull=20.0,
-            mull_rate=0.1,
+            mana_source_count=50, draw_count=18, early_count=35, avg_cmc=2.5,
         )
-        assert _compute_resilience(result) >= 8
+        assert _compute_toughness(result) >= 8
 
-    def test_severe_mull_penalty(self):
+    def test_brittle_deck_scores_low(self):
+        # Few mana sources, no draw, few early plays, high curve.
         result = _make_result(
-            mean_mana=20.0, mean_mana_with_mull=10.0, mean_mana_no_mull=22.0,
-            mull_rate=0.5,
+            mana_source_count=20, draw_count=2, early_count=8, avg_cmc=5.5,
         )
-        assert _compute_resilience(result) <= 3
+        assert _compute_toughness(result) <= 3
 
-    def test_zero_mana_returns_5(self):
-        result = _make_result(mean_mana=0.0)
-        assert _compute_resilience(result) == 5
+    def test_mid_redundancy(self):
+        result = _make_result(
+            mana_source_count=38, draw_count=10, early_count=22, avg_cmc=3.0,
+        )
+        score = _compute_toughness(result)
+        assert 3 <= score <= 8
 
 
 class TestEfficiency:
@@ -176,25 +186,23 @@ class TestEfficiency:
         assert _compute_efficiency(result, 10) == 1
 
 
-class TestMomentum:
+class TestSnowball:
     def test_strong_acceleration(self):
-        # Late game mana much higher than early
         result = _make_result(
             mean_mana_per_turn=[0.5, 1.0, 1.5, 2.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],
         )
-        assert _compute_momentum(result, 10) >= 7
+        assert _compute_snowball(result, 10) >= 7
 
     def test_flat_curve(self):
-        # Same mana every turn
         result = _make_result(
             mean_mana_per_turn=[2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0],
         )
-        score = _compute_momentum(result, 10)
+        score = _compute_snowball(result, 10)
         assert score <= 6
 
     def test_short_game_returns_5(self):
         result = _make_result(mean_mana_per_turn=[1.0, 2.0, 3.0])
-        assert _compute_momentum(result, 3) == 5
+        assert _compute_snowball(result, 3) == 5
 
 
 # ---------------------------------------------------------------------------
@@ -216,12 +224,18 @@ class TestComputeDeckScore:
     def test_as_dict_keys(self):
         score = compute_deck_score(_make_result(), turns=10)
         keys = set(score.as_dict().keys())
-        assert keys == {"speed", "power", "consistency", "resilience", "efficiency", "momentum"}
+        assert keys == {
+            "consistency", "acceleration", "snowball",
+            "toughness", "efficiency", "reach",
+        }
 
     def test_format_block_contains_all_stats(self):
         score = compute_deck_score(_make_result(), turns=10)
         block = score.format_block()
-        for stat in ["SPEED", "POWER", "CONSISTENCY", "RESILIENCE", "EFFICIENCY", "MOMENTUM"]:
+        for stat in [
+            "CONSISTENCY", "ACCELERATION", "SNOWBALL",
+            "TOUGHNESS", "EFFICIENCY", "REACH",
+        ]:
             assert stat in block
 
 
@@ -242,3 +256,99 @@ class TestEdgeCases:
         score = compute_deck_score(result, turns=1)
         for value in score.as_dict().values():
             assert 1 <= value <= 10
+
+
+# ---------------------------------------------------------------------------
+# StatAnchors and raw stats
+# ---------------------------------------------------------------------------
+
+class TestStatAnchors:
+    def test_default_anchors_match_historical_values(self):
+        assert DEFAULT_ANCHORS.consistency == (0.0, 1.0)
+        assert DEFAULT_ANCHORS.acceleration == (1.0, 14.0)
+        assert DEFAULT_ANCHORS.snowball_ratio == (0.5, 4.0)
+        assert DEFAULT_ANCHORS.snowball_late_avg_norm == (1.0, 8.0)
+        assert DEFAULT_ANCHORS.toughness == (0.55, 1.00)
+        assert DEFAULT_ANCHORS.efficiency == (0.0, 1.0)
+        assert DEFAULT_ANCHORS.reach_norm == (5.0, 45.0)
+
+    def test_anchors_are_immutable(self):
+        with pytest.raises(Exception):
+            DEFAULT_ANCHORS.consistency = (0.0, 2.0)
+
+
+class TestComputeRawStats:
+    def test_returns_six_top_level_fields(self):
+        raw = compute_raw_stats(_make_result(), turns=10)
+        assert isinstance(raw, DeckRawStats)
+        keys = set(raw.as_dict().keys())
+        assert keys == {
+            "consistency", "acceleration", "snowball",
+            "toughness", "efficiency", "reach",
+        }
+
+    def test_raw_values_are_floats(self):
+        raw = compute_raw_stats(_make_result(), turns=10)
+        for value in raw.as_dict().values():
+            assert isinstance(value, float)
+
+    def test_raw_toughness_matches_formula(self):
+        result = _make_result(
+            mana_source_count=45, draw_count=15, early_count=30, avg_cmc=3.0,
+        )
+        raw = compute_raw_stats(result, turns=10)
+        # All structural inputs at their cap → composite = 0.4+0.3+0.2+0.1 = 1.0.
+        assert raw.toughness == pytest.approx(1.0)
+
+    def test_raw_acceleration_sums_first_four_turns(self):
+        result = _make_result(mean_mana_per_turn=[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])
+        raw = compute_raw_stats(result, turns=10)
+        assert raw.acceleration == pytest.approx(10.0)
+
+
+class TestScoreFromRaw:
+    def test_default_anchors_match_compute_deck_score(self):
+        result = _make_result()
+        raw = compute_raw_stats(result, turns=10)
+        from_raw = score_from_raw(raw, DEFAULT_ANCHORS)
+        direct = compute_deck_score(result, turns=10)
+        assert from_raw.as_dict() == direct.as_dict()
+
+    def test_custom_anchors_change_output(self):
+        """Tightening the toughness window should make a mid-deck score higher."""
+        result = _make_result(
+            mana_source_count=38, draw_count=10, early_count=22, avg_cmc=3.0,
+        )
+        raw = compute_raw_stats(result, turns=10)
+        # Default toughness window: (0.55, 1.00); a much wider window gives a
+        # lower scaled score (raw value lands further from raw_max).
+        wide = StatAnchors(toughness=(0.0, 2.0))
+        narrow = StatAnchors(toughness=(0.55, 1.00))  # default
+        wide_score = score_from_raw(raw, wide)
+        narrow_score = score_from_raw(raw, narrow)
+        assert wide_score.toughness < narrow_score.toughness
+
+    def test_custom_anchors_only_affect_specified_stat(self):
+        """Overriding one anchor leaves the other stats unchanged."""
+        result = _make_result()
+        raw = compute_raw_stats(result, turns=10)
+        custom = StatAnchors(consistency=(0.5, 0.6))  # tight
+        custom_score = score_from_raw(raw, custom)
+        default_score = score_from_raw(raw, DEFAULT_ANCHORS)
+        # Only consistency should differ.
+        for stat in ["acceleration", "snowball", "toughness", "efficiency", "reach"]:
+            assert getattr(custom_score, stat) == getattr(default_score, stat)
+
+    def test_short_game_snowball_returns_5(self):
+        """No late-game data => Snowball falls back to neutral 5."""
+        result = _make_result(mean_mana_per_turn=[3.0, 4.0])
+        raw = compute_raw_stats(result, turns=2)
+        score = score_from_raw(raw)
+        assert score.snowball == 5
+
+    def test_compute_deck_score_accepts_anchors_kwarg(self):
+        """compute_deck_score forwards the anchors arg to score_from_raw."""
+        result = _make_result()
+        custom = StatAnchors(reach_norm=(1.0, 2.0))  # very tight, easy 10
+        score = compute_deck_score(result, turns=10, anchors=custom)
+        assert score.reach == 10

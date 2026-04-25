@@ -13,12 +13,12 @@
             <th data-col="2" data-type="number" class="sortable">Turns</th>
             <th data-col="3" data-type="number" class="sortable">Sims</th>
             <th data-col="4" data-type="number" class="sortable">Lands</th>
-            <th data-col="5" data-type="number" class="sortable stat-col-speed">Speed</th>
-            <th data-col="6" data-type="number" class="sortable stat-col-power">Power</th>
-            <th data-col="7" data-type="number" class="sortable stat-col-consistency">Consistency</th>
-            <th data-col="8" data-type="number" class="sortable stat-col-resilience">Resilience</th>
+            <th data-col="5" data-type="number" class="sortable stat-col-consistency">Consistency</th>
+            <th data-col="6" data-type="number" class="sortable stat-col-acceleration">Acceleration</th>
+            <th data-col="7" data-type="number" class="sortable stat-col-snowball">Snowball</th>
+            <th data-col="8" data-type="number" class="sortable stat-col-toughness">Toughness</th>
             <th data-col="9" data-type="number" class="sortable stat-col-efficiency">Efficiency</th>
-            <th data-col="10" data-type="number" class="sortable stat-col-momentum">Momentum</th>
+            <th data-col="10" data-type="number" class="sortable stat-col-reach">Reach</th>
             <th></th>
         </tr>
     </thead>
@@ -30,12 +30,12 @@
             <td>{{ run.turns }}</td>
             <td>{{ run.sims }}</td>
             <td>{{ run.optimal_land_count or '—' }}</td>
-            <td class="stat-cell-speed">{{ run.speed if run.speed is not none else '—' }}</td>
-            <td class="stat-cell-power">{{ run.power if run.power is not none else '—' }}</td>
             <td class="stat-cell-consistency">{{ run.consistency if run.consistency is not none else '—' }}</td>
-            <td class="stat-cell-resilience">{{ run.resilience if run.resilience is not none else '—' }}</td>
+            <td class="stat-cell-acceleration">{{ run.acceleration if run.acceleration is not none else '—' }}</td>
+            <td class="stat-cell-snowball">{{ run.snowball if run.snowball is not none else '—' }}</td>
+            <td class="stat-cell-toughness">{{ run.toughness if run.toughness is not none else '—' }}</td>
             <td class="stat-cell-efficiency">{{ run.efficiency if run.efficiency is not none else '—' }}</td>
-            <td class="stat-cell-momentum">{{ run.momentum if run.momentum is not none else '—' }}</td>
+            <td class="stat-cell-reach">{{ run.reach if run.reach is not none else '—' }}</td>
             <td><button class="btn-sm" onclick="toggleChart({{ run.id }})">Show</button></td>
         </tr>
         <tr class="chart-row" id="chart-row-{{ run.id }}" style="display:none">
@@ -65,14 +65,14 @@
 
 <script>
 const RUNS_DATA = {{ runs | tojson }};
-const STAT_KEYS = ['speed', 'power', 'consistency', 'resilience', 'efficiency', 'momentum'];
+const STAT_KEYS = ['consistency', 'acceleration', 'snowball', 'toughness', 'efficiency', 'reach'];
 const STAT_COLORS = {
-    speed: '#ef4444',
-    power: '#f97316',
     consistency: '#eab308',
-    resilience: '#22c55e',
+    acceleration: '#ef4444',
+    snowball: '#8b5cf6',
+    toughness: '#22c55e',
     efficiency: '#3b82f6',
-    momentum: '#8b5cf6',
+    reach: '#f97316',
 };
 const DECK_COLORS = [
     '#3b82f6', '#ef4444', '#22c55e', '#f97316', '#8b5cf6',

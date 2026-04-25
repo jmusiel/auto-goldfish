@@ -1119,21 +1119,21 @@ h2 { font-size: 1.15rem; margin-bottom: 0.75rem; }
 .chart-row { background: #f1f5f9; }
 .chart-cell { padding: 1rem; text-align: center; }
 
-/* Stat column header colors */
-.stat-col-speed { color: #ef4444 !important; }
-.stat-col-power { color: #f97316 !important; }
+/* Stat column header colors (CASTER) */
 .stat-col-consistency { color: #eab308 !important; }
-.stat-col-resilience { color: #22c55e !important; }
+.stat-col-acceleration { color: #ef4444 !important; }
+.stat-col-snowball { color: #8b5cf6 !important; }
+.stat-col-toughness { color: #22c55e !important; }
 .stat-col-efficiency { color: #3b82f6 !important; }
-.stat-col-momentum { color: #8b5cf6 !important; }
+.stat-col-reach { color: #f97316 !important; }
 
 /* Stat cell value styling */
-.stat-cell-speed,
-.stat-cell-power,
 .stat-cell-consistency,
-.stat-cell-resilience,
+.stat-cell-acceleration,
+.stat-cell-snowball,
+.stat-cell-toughness,
 .stat-cell-efficiency,
-.stat-cell-momentum {
+.stat-cell-reach {
     font-weight: 600;
     text-align: center;
 }

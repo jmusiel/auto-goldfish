@@ -154,6 +154,7 @@ def save_simulation_run(
         ci_mana = r.get("ci_mean_mana", [0.0, 0.0])
         ci_con = r.get("ci_consistency", [0.0, 0.0])
         deck_score = r.get("deck_score", {})
+        deck_raw = r.get("deck_raw", {})
         session.add(SimulationResultRow(
             run_id=run.id,
             land_count=r.get("land_count", 0),
@@ -171,12 +172,18 @@ def save_simulation_run(
             percentile_25=r.get("percentile_25", 0.0),
             percentile_50=r.get("percentile_50", 0.0),
             percentile_75=r.get("percentile_75", 0.0),
-            score_speed=deck_score.get("speed"),
-            score_power=deck_score.get("power"),
             score_consistency=deck_score.get("consistency"),
-            score_resilience=deck_score.get("resilience"),
+            score_acceleration=deck_score.get("acceleration"),
+            score_snowball=deck_score.get("snowball"),
+            score_toughness=deck_score.get("toughness"),
             score_efficiency=deck_score.get("efficiency"),
-            score_momentum=deck_score.get("momentum"),
+            score_reach=deck_score.get("reach"),
+            raw_consistency=deck_raw.get("consistency"),
+            raw_acceleration=deck_raw.get("acceleration"),
+            raw_snowball=deck_raw.get("snowball"),
+            raw_toughness=deck_raw.get("toughness"),
+            raw_efficiency=deck_raw.get("efficiency"),
+            raw_reach=deck_raw.get("reach"),
         ))
 
     # Save card performance only at optimal land count (bottom 10 with effects)

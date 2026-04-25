@@ -1,7 +1,7 @@
 """Tests for DB models -- schema creation, unique constraints."""
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -15,6 +15,7 @@ from auto_goldfish.db.models import (
     SimulationResultRow,
     SimulationRunRow,
 )
+from auto_goldfish.db.session import _migrate
 
 
 @pytest.fixture
@@ -177,6 +178,115 @@ class TestSimulationResultRow:
         ))
         with pytest.raises(IntegrityError):
             db_session.commit()
+
+
+class TestMigration:
+    """Verify the idempotent _migrate() patches existing tables in place."""
+
+    def test_adds_raw_columns_to_legacy_table(self):
+        """A simulation_results table missing raw_* columns gets them added."""
+        engine = create_engine("sqlite:///:memory:")
+        # Create an old-shape simulation_results without the new raw_* columns.
+        with engine.begin() as conn:
+            conn.execute(text("""
+                CREATE TABLE simulation_results (
+                    id INTEGER PRIMARY KEY,
+                    run_id INTEGER NOT NULL,
+                    land_count INTEGER NOT NULL,
+                    mean_mana FLOAT NOT NULL,
+                    mean_draws FLOAT NOT NULL,
+                    mean_bad_turns FLOAT NOT NULL,
+                    mean_lands FLOAT NOT NULL,
+                    mean_mulls FLOAT NOT NULL,
+                    ci_mean_mana_low FLOAT NOT NULL,
+                    ci_mean_mana_high FLOAT NOT NULL,
+                    consistency FLOAT NOT NULL,
+                    ci_consistency_low FLOAT NOT NULL,
+                    ci_consistency_high FLOAT NOT NULL,
+                    percentile_25 FLOAT NOT NULL,
+                    percentile_50 FLOAT NOT NULL,
+                    percentile_75 FLOAT NOT NULL
+                )
+            """))
+
+        _migrate(engine)
+
+        cols = {c["name"] for c in inspect(engine).get_columns("simulation_results")}
+        for raw_col in [
+            "raw_consistency", "raw_acceleration", "raw_snowball",
+            "raw_toughness", "raw_efficiency", "raw_reach",
+        ]:
+            assert raw_col in cols, f"{raw_col} not added by migration"
+
+    def test_migration_is_idempotent(self):
+        """Running _migrate() twice is safe (no duplicate-column error)."""
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        _migrate(engine)  # should be a no-op on a freshly-created schema
+        _migrate(engine)  # second call must also succeed
+        cols = {c["name"] for c in inspect(engine).get_columns("simulation_results")}
+        assert "raw_consistency" in cols
+
+    def test_migration_handles_both_score_momentum_and_score_surge(self):
+        """Production DB with *both* legacy Snowball columns converges cleanly.
+
+        Repros the Vercel failure where momentum -> surge -> snowball left
+        the DB with both ``score_momentum`` and ``score_surge`` present and
+        no ``score_snowball``. The fix plans the renames against a tracked
+        column set so the second hit on the same target becomes a DROP of
+        the redundant legacy column instead of a duplicate-column error.
+        Surge wins the rename (preserves its data); momentum is dropped.
+        """
+        engine = create_engine("sqlite:///:memory:")
+        with engine.begin() as conn:
+            conn.execute(text("""
+                CREATE TABLE simulation_results (
+                    id INTEGER PRIMARY KEY,
+                    run_id INTEGER NOT NULL,
+                    land_count INTEGER NOT NULL,
+                    mean_mana FLOAT NOT NULL,
+                    mean_draws FLOAT NOT NULL,
+                    mean_bad_turns FLOAT NOT NULL,
+                    mean_lands FLOAT NOT NULL,
+                    mean_mulls FLOAT NOT NULL,
+                    ci_mean_mana_low FLOAT NOT NULL,
+                    ci_mean_mana_high FLOAT NOT NULL,
+                    consistency FLOAT NOT NULL,
+                    ci_consistency_low FLOAT NOT NULL,
+                    ci_consistency_high FLOAT NOT NULL,
+                    percentile_25 FLOAT NOT NULL,
+                    percentile_50 FLOAT NOT NULL,
+                    percentile_75 FLOAT NOT NULL,
+                    score_momentum INTEGER,
+                    score_surge INTEGER
+                )
+            """))
+            # Insert one row: surge has the live data, momentum is stale.
+            conn.execute(text("""
+                INSERT INTO simulation_results (
+                    run_id, land_count, mean_mana, mean_draws, mean_bad_turns,
+                    mean_lands, mean_mulls, ci_mean_mana_low, ci_mean_mana_high,
+                    consistency, ci_consistency_low, ci_consistency_high,
+                    percentile_25, percentile_50, percentile_75,
+                    score_momentum, score_surge
+                ) VALUES (
+                    1, 38, 20.0, 3.0, 1.0, 5.0, 0.2, 18.0, 22.0,
+                    0.85, 0.80, 0.90, 15.0, 20.0, 25.0,
+                    NULL, 7
+                )
+            """))
+
+        _migrate(engine)
+
+        cols = {c["name"] for c in inspect(engine).get_columns("simulation_results")}
+        assert "score_snowball" in cols
+        assert "score_momentum" not in cols
+        assert "score_surge" not in cols
+        with engine.begin() as conn:
+            row = conn.execute(text(
+                "SELECT score_snowball FROM simulation_results"
+            )).scalar_one()
+        assert row == 7  # surge's data was preserved through the rename
 
 
 class TestCardPerformanceRow:

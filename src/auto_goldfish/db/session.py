@@ -45,9 +45,53 @@ def _migrate(engine) -> None:
                     "ALTER TABLE simulation_results ADD COLUMN mean_spells_cast FLOAT NOT NULL DEFAULT 0.0"
                 ))
             logger.info("Migrated simulation_results: added mean_spells_cast column")
+        # Rename CASTER score columns from old names if present (idempotent).
+        # The Snowball stat went through two renames (momentum -> surge ->
+        # snowball); some production DBs ended up with *both* legacy
+        # columns. We plan operations against a tracked column set so the
+        # second rename to the same target turns into a DROP of the
+        # redundant legacy column instead of a duplicate-column error.
+        # Order matters: the most recent legacy name wins the rename
+        # (preserving its data) and older legacy duplicates get dropped.
+        column_renames = [
+            ("score_speed", "score_acceleration"),
+            ("score_power", "score_reach"),
+            ("score_resilience", "score_toughness"),
+            ("score_surge", "score_snowball"),
+            ("score_momentum", "score_snowball"),
+            ("raw_surge", "raw_snowball"),
+        ]
+        live_cols = set(cols)
+        ops: list[tuple] = []
+        for old, new in column_renames:
+            if old not in live_cols:
+                continue
+            if new in live_cols:
+                ops.append(("drop", old))
+                live_cols.discard(old)
+            else:
+                ops.append(("rename", old, new))
+                live_cols.discard(old)
+                live_cols.add(new)
+        if ops:
+            with engine.begin() as conn:
+                for op in ops:
+                    if op[0] == "rename":
+                        _, old, new = op
+                        conn.execute(text(
+                            f"ALTER TABLE simulation_results RENAME COLUMN {old} TO {new}"
+                        ))
+                    else:
+                        _, old = op
+                        conn.execute(text(
+                            f"ALTER TABLE simulation_results DROP COLUMN {old}"
+                        ))
+            logger.info("Migrated simulation_results: applied %s", ops)
+            cols = live_cols
+
         score_cols = [
-            "score_speed", "score_power", "score_consistency",
-            "score_resilience", "score_efficiency", "score_momentum",
+            "score_consistency", "score_acceleration", "score_snowball",
+            "score_toughness", "score_efficiency", "score_reach",
         ]
         missing = [c for c in score_cols if c not in cols]
         if missing:
@@ -55,6 +99,18 @@ def _migrate(engine) -> None:
                 for col in missing:
                     conn.execute(text(f"ALTER TABLE simulation_results ADD COLUMN {col} INTEGER"))
             logger.info("Migrated simulation_results: added deck score columns")
+            cols = {c["name"] for c in inspect(engine).get_columns("simulation_results")}
+
+        raw_cols = [
+            "raw_consistency", "raw_acceleration", "raw_snowball",
+            "raw_toughness", "raw_efficiency", "raw_reach",
+        ]
+        missing_raw = [c for c in raw_cols if c not in cols]
+        if missing_raw:
+            with engine.begin() as conn:
+                for col in missing_raw:
+                    conn.execute(text(f"ALTER TABLE simulation_results ADD COLUMN {col} FLOAT"))
+            logger.info("Migrated simulation_results: added raw stat columns")
 
     if "card_performance" in insp.get_table_names():
         cols = {c["name"] for c in insp.get_columns("card_performance")}

@@ -233,6 +233,46 @@ class TestSaveSimulationRun:
         result_rows = db_session.execute(select(SimulationResultRow)).scalars().all()
         assert len(result_rows) == 0
 
+    def test_raw_stats_persisted(self, db_session: Session):
+        """save_simulation_run stores deck_raw values into raw_* columns."""
+        deck = get_or_create_deck(db_session, "test-deck")
+        results = _make_results(land_counts=(38,))
+        # Inject deck_raw on the input dict (as result_to_dict now does).
+        results[0]["deck_raw"] = {
+            "consistency": 0.62,
+            "acceleration": 7.5,
+            "snowball": 1.8,
+            "toughness": 0.81,
+            "efficiency": 0.55,
+            "reach": 22.0,
+        }
+        config = {"turns": 10, "sims": 1000, "min_lands": 38, "max_lands": 38}
+
+        save_simulation_run(db_session, "rawjob", deck, config, results)
+        db_session.commit()
+
+        row = db_session.execute(select(SimulationResultRow)).scalar_one()
+        assert row.raw_consistency == pytest.approx(0.62)
+        assert row.raw_acceleration == pytest.approx(7.5)
+        assert row.raw_snowball == pytest.approx(1.8)
+        assert row.raw_toughness == pytest.approx(0.81)
+        assert row.raw_efficiency == pytest.approx(0.55)
+        assert row.raw_reach == pytest.approx(22.0)
+
+    def test_raw_stats_nullable_when_absent(self, db_session: Session):
+        """Legacy result dicts with no deck_raw key save NULLs (not a crash)."""
+        deck = get_or_create_deck(db_session, "test-deck")
+        results = _make_results(land_counts=(38,))
+        # No deck_raw key on this dict.
+        config = {"turns": 10, "sims": 1000, "min_lands": 38, "max_lands": 38}
+
+        save_simulation_run(db_session, "legacyjob", deck, config, results)
+        db_session.commit()
+
+        row = db_session.execute(select(SimulationResultRow)).scalar_one()
+        assert row.raw_consistency is None
+        assert row.raw_reach is None
+
     def test_run_config_stored(self, db_session: Session):
         deck = get_or_create_deck(db_session, "test-deck")
         config = {
