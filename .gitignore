@@ -14,6 +14,7 @@ CLAUDE.md
 src/auto_goldfish/autocard/data/*.json
 !src/auto_goldfish/autocard/data/labeled_cards.json
 decks/**/*.json
+!decks/*-demo/*.json
 .env
 scripts/**/*.png
 public/

@@ -338,9 +338,10 @@
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label for="algorithm">Optimizer Algorithm <span class="info-tip" data-tip="Racing uses CRN-paired sequential elimination for faster results with similar accuracy. Hyperband uses successive halving (slower but more exhaustive).">i</span></label>
+                <label for="algorithm">Optimizer Algorithm <span class="info-tip" data-tip="Factored evaluates each change independently (land count, draw, ramp) with adaptive sampling — fast and interpretable. Racing uses CRN-paired sequential elimination over the full config space. Hyperband uses successive halving (slower but most exhaustive).">i</span></label>
                 <select id="algorithm" name="algorithm">
-                    <option value="racing" selected>Racing (fast)</option>
+                    <option value="factored" selected>Factored (recommended)</option>
+                    <option value="racing">Racing (fast)</option>
                     <option value="hyperband">Hyperband (classic)</option>
                 </select>
             </div>

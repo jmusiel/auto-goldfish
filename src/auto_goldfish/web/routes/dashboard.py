@@ -11,6 +11,12 @@ from auto_goldfish.decklist.loader import get_deckpath
 
 bp = Blueprint("dashboard", __name__)
 
+_DECK_DESCRIPTIONS: dict[str, str] = {
+    "mana-starved-demo": "18 lands with CMC 5-7 spells. Severely under-landed — the optimizer should strongly recommend adding lands.",
+    "overlanded-cantrips-demo": "45 lands with all CMC 1 spells. Way too many lands — the optimizer should recommend cutting lands.",
+    "equilibrium-demo": "37 lands with uniform CMC 2 spells. Already near-optimal — changes should have negligible effect.",
+}
+
 
 def _list_saved_decks() -> list[dict]:
     """Return metadata for each saved deck."""
@@ -42,6 +48,7 @@ def _list_saved_decks() -> list[dict]:
                 "card_count": card_count,
                 "commanders": commanders,
                 "land_count": land_count,
+                "description": _DECK_DESCRIPTIONS.get(name),
             })
     return decks
 

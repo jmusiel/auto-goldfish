@@ -97,7 +97,7 @@ class TestDashboard:
 
     def test_dashboard_contains_title(self, client):
         response = client.get("/")
-        assert b"Shared Decks" in response.data
+        assert b"Sample Decks" in response.data
 
     def test_dashboard_shows_import_link_when_empty(self, client, tmp_path, monkeypatch):
         monkeypatch.setattr(
