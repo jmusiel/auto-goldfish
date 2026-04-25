@@ -87,14 +87,37 @@ def _load_runs() -> list[dict]:
     return runs
 
 
+def _load_calibration_meta() -> dict | None:
+    """Return the active calibration metadata dict, or None if defaults."""
+    try:
+        from auto_goldfish.metrics.calibration import get_active_anchors
+    except Exception:
+        return None
+    try:
+        _, meta = get_active_anchors()
+    except Exception:
+        return None
+    if meta is None:
+        return None
+    return {
+        "n_rows": meta.n_rows,
+        "n_decks": meta.n_decks,
+        "pseudo_count": meta.pseudo_count,
+        "low_pct": meta.low_pct,
+        "high_pct": meta.high_pct,
+    }
+
+
 @bp.route("/")
 def index():
     runs = _load_runs()
-    return render_template("runs.html", runs=runs)
+    return render_template(
+        "runs.html", runs=runs, calibration=_load_calibration_meta(),
+    )
 
 
 @bp.route("/api/data")
 def api_data():
     """Return all runs as JSON."""
     runs = _load_runs()
-    return jsonify(runs)
+    return jsonify({"runs": runs, "calibration": _load_calibration_meta()})

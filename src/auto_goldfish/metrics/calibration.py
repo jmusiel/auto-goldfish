@@ -9,19 +9,31 @@ decks accumulate.
 
 ``snowball_late_avg_norm`` is not persisted, so it always falls through to
 the default anchor.
+
+For runtime use, :func:`get_active_anchors` wraps the heavy DB query in a
+row-count-keyed cache and applies an env-var toggle. Calibration is
+**enabled by default**; set ``AUTO_GOLDFISH_CALIBRATE=0`` to fall back to
+defaults.
 """
 
 from __future__ import annotations
 
+import logging
+import os
 from dataclasses import dataclass
-from typing import Iterable, Tuple
+from typing import Iterable, Optional, Tuple
 
 import numpy as np
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
-from auto_goldfish.db.models import SimulationResultRow, SimulationRunRow
 from auto_goldfish.metrics.deck_score import DEFAULT_ANCHORS, StatAnchors
+
+# sqlalchemy and auto_goldfish.db.models are intentionally imported lazily
+# inside the functions that need them: this module is imported on the
+# scoring path (via reporter.result_to_dict), which also runs in Pyodide
+# where sqlalchemy is not installed. The runtime entry point
+# get_active_anchors() short-circuits to defaults before any DB code runs.
+
+logger = logging.getLogger(__name__)
 
 # Stats whose anchors are calibrated from a single persisted raw column.
 # Maps the StatAnchors field name to the SimulationResultRow column name.
@@ -69,7 +81,7 @@ def _percentiles(values: Iterable[float], low_pct: float, high_pct: float) -> Tu
 
 
 def compute_anchors_from_db(
-    session: Session,
+    session: "Session",
     *,
     pseudo_count: int = 76,
     low_pct: float = 10.0,
@@ -86,6 +98,10 @@ def compute_anchors_from_db(
     the empirical distribution, then shrunk toward ``defaults`` by
     ``pseudo_count``. With zero usable rows the result is ``defaults``.
     """
+    from sqlalchemy import select
+
+    from auto_goldfish.db.models import SimulationResultRow, SimulationRunRow
+
     raw_cols = list(_STAT_TO_RAW_COL.values())
 
     stmt = (
@@ -134,3 +150,98 @@ def compute_anchors_from_db(
         high_pct=high_pct,
     )
     return anchors, metadata
+
+
+# ---------------------------------------------------------------------------
+# Runtime cached provider
+# ---------------------------------------------------------------------------
+
+_ENV_TOGGLE = "AUTO_GOLDFISH_CALIBRATE"
+
+# Single-slot cache keyed by total simulation_results row count. New rows
+# (the only normal mutation) bump the count and invalidate naturally.
+_cache: dict = {"row_count": None, "result": None}
+
+
+def _is_enabled() -> bool:
+    """Calibration is on by default; ``AUTO_GOLDFISH_CALIBRATE=0`` disables."""
+    raw = os.environ.get(_ENV_TOGGLE, "1").strip().lower()
+    return raw not in ("0", "false", "no", "off", "")
+
+
+def _row_count(session: "Session") -> int:
+    from sqlalchemy import func, select
+
+    from auto_goldfish.db.models import SimulationResultRow
+
+    return int(session.execute(
+        select(func.count()).select_from(SimulationResultRow)
+    ).scalar_one())
+
+
+def reset_cache() -> None:
+    """Drop the cached anchors. Mainly for tests; runtime uses row-count
+    invalidation automatically."""
+    _cache["row_count"] = None
+    _cache["result"] = None
+
+
+def get_active_anchors(
+    session: "Optional[Session]" = None,
+) -> Tuple[StatAnchors, Optional[CalibrationMetadata]]:
+    """Return the active anchors for live scoring.
+
+    Returns calibrated anchors when:
+      * the toggle env var is not set to a falsy value (default: enabled),
+      * a usable DB session can be obtained, and
+      * the underlying calibration query succeeds.
+
+    Falls back to ``(DEFAULT_ANCHORS, None)`` otherwise -- never raises, so
+    a calibration failure cannot break scoring.
+
+    A session may be passed in (server-side flows that already hold one);
+    otherwise a fresh session is opened via :func:`get_session`.
+    """
+    if not _is_enabled():
+        return DEFAULT_ANCHORS, None
+
+    if session is not None:
+        return _from_session(session)
+
+    try:
+        # Local import: db.session imports calibration's siblings, so keep
+        # this lazy to avoid pulling the DB layer at module import.
+        from auto_goldfish.db.session import get_session
+    except Exception:
+        return DEFAULT_ANCHORS, None
+
+    try:
+        with get_session() as managed:
+            return _from_session(managed)
+    except Exception:
+        # Includes "DB not initialized" (pyodide / CLI) and any query error.
+        logger.debug("Calibration unavailable; using defaults", exc_info=True)
+        return DEFAULT_ANCHORS, None
+
+
+def _from_session(session: "Session") -> Tuple[StatAnchors, Optional[CalibrationMetadata]]:
+    """Cached read against a live session."""
+    try:
+        count = _row_count(session)
+    except Exception:
+        logger.debug("Row-count probe failed; using defaults", exc_info=True)
+        return DEFAULT_ANCHORS, None
+
+    if _cache["row_count"] == count and _cache["result"] is not None:
+        return _cache["result"]
+
+    try:
+        anchors, meta = compute_anchors_from_db(session)
+    except Exception:
+        logger.exception("Calibration query failed; using defaults")
+        return DEFAULT_ANCHORS, None
+
+    result = (anchors, meta)
+    _cache["row_count"] = count
+    _cache["result"] = result
+    return result

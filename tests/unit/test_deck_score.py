@@ -278,13 +278,17 @@ class TestStatAnchors:
 
 
 class TestComputeRawStats:
-    def test_returns_six_top_level_fields(self):
+    def test_returns_top_level_fields(self):
         raw = compute_raw_stats(_make_result(), turns=10)
         assert isinstance(raw, DeckRawStats)
         keys = set(raw.as_dict().keys())
+        # Six CASTER stats plus the secondary snowball input that ships
+        # alongside so server-side persist can re-score snowball with
+        # active anchors.
         assert keys == {
             "consistency", "acceleration", "snowball",
             "toughness", "efficiency", "reach",
+            "snowball_late_avg_norm",
         }
 
     def test_raw_values_are_floats(self):

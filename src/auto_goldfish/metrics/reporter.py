@@ -105,13 +105,32 @@ def save_report(
 
 
 def result_to_dict(result: SimulationResult, turns: int = 10) -> Dict[str, Any]:
-    """Convert SimulationResult to a JSON-serializable dict."""
+    """Convert SimulationResult to a JSON-serializable dict.
+
+    Scores are computed against the active calibrated anchors when a DB
+    session is available, otherwise the historical defaults.
+    """
+    from auto_goldfish.metrics.calibration import get_active_anchors
     from auto_goldfish.metrics.deck_score import compute_raw_stats, score_from_raw
+
     raw = compute_raw_stats(result, turns)
-    score = score_from_raw(raw)
+    anchors, calibration_meta = get_active_anchors()
+    score = score_from_raw(raw, anchors)
+    calibration_dict = (
+        {
+            "n_rows": calibration_meta.n_rows,
+            "n_decks": calibration_meta.n_decks,
+            "pseudo_count": calibration_meta.pseudo_count,
+            "low_pct": calibration_meta.low_pct,
+            "high_pct": calibration_meta.high_pct,
+        }
+        if calibration_meta is not None
+        else None
+    )
     return {
         "deck_score": score.as_dict(),
         "deck_raw": raw.as_dict(),
+        "calibration": calibration_dict,
         "land_count": result.land_count,
         "mean_mana": result.mean_mana,
         "mean_mana_value": result.mean_mana_value,
