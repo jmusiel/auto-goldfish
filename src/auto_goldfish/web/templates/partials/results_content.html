@@ -1,6 +1,36 @@
 <div class="results-content">
 <h1>Results: {{ deck_name }}</h1>
 
+{% if results[-1].deck_score %}
+{% set score = results[-1].deck_score %}
+<div class="deck-score-section">
+<h2>Deck Stats</h2>
+<div class="deck-score-grid">
+    <div class="deck-score-radar"><canvas id="deckScoreRadar"></canvas></div>
+    <div class="deck-score-bars">
+        {% set stat_defs = [
+            ('Speed', 'speed', '#ef4444', 'Early-game mana deployment'),
+            ('Power', 'power', '#f97316', 'Peak mana output and ceiling'),
+            ('Consistency', 'consistency', '#eab308', 'How rarely the deck bricks'),
+            ('Resilience', 'resilience', '#22c55e', 'Recovery from mulligans'),
+            ('Efficiency', 'efficiency', '#3b82f6', 'Mana utilization per turn'),
+            ('Momentum', 'momentum', '#8b5cf6', 'Late-game acceleration'),
+        ] %}
+        {% for name, key, color, desc in stat_defs %}
+        {% set val = score[key]|default(0) %}
+        <div class="deck-stat-row">
+            <div class="deck-stat-label" title="{{ desc }}">{{ name }}</div>
+            <div class="deck-stat-bar-track">
+                <div class="deck-stat-bar-fill" style="width:{{ (val / 10 * 100)|int }}%;background:{{ color }}"></div>
+            </div>
+            <div class="deck-stat-value">{{ val }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+</div>
+{% endif %}
+
 <h2>Summary Statistics</h2>
 <details class="metric-descriptions">
     <summary>Metric Definitions</summary>
@@ -364,6 +394,40 @@
                     }
                 }
             });
+
+            // Deck score radar chart
+            var scoreCanvas = document.getElementById('deckScoreRadar');
+            if (scoreCanvas && data.length > 0 && data[data.length - 1].deck_score) {
+                var ds = data[data.length - 1].deck_score;
+                new Chart(scoreCanvas, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Speed', 'Power', 'Consistency', 'Resilience', 'Efficiency', 'Momentum'],
+                        datasets: [{
+                            label: 'Deck Stats',
+                            data: [ds.speed, ds.power, ds.consistency, ds.resilience, ds.efficiency, ds.momentum],
+                            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                            borderColor: '#3b82f6',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#3b82f6',
+                            pointRadius: 4,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            r: {
+                                min: 0,
+                                max: 10,
+                                ticks: { stepSize: 2, display: true },
+                                pointLabels: { font: { size: 13, weight: 'bold' } },
+                            }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
 
             // Replay viewer
             initReplayViewer(data);

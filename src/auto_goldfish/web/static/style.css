@@ -305,6 +305,63 @@ a:hover { text-decoration: underline; }
 .score-positive { color: #16a34a; font-weight: 600; }
 .score-negative { color: #dc2626; font-weight: 600; }
 
+/* Deck score stat block */
+.deck-score-section {
+    margin: 1.5rem 0;
+    padding: 1rem 1.25rem;
+    background: #f8fafb;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+.deck-score-section h2 { margin-top: 0; }
+.deck-score-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 1.5rem;
+    align-items: center;
+}
+@media (max-width: 700px) {
+    .deck-score-grid { grid-template-columns: 1fr; }
+}
+.deck-score-radar {
+    max-width: 280px;
+}
+.deck-score-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.deck-stat-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.deck-stat-label {
+    width: 100px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: right;
+    cursor: help;
+}
+.deck-stat-bar-track {
+    flex: 1;
+    height: 18px;
+    background: #e2e8f0;
+    border-radius: 9px;
+    overflow: hidden;
+}
+.deck-stat-bar-fill {
+    height: 100%;
+    border-radius: 9px;
+    transition: width 0.4s ease;
+}
+.deck-stat-value {
+    width: 28px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-align: center;
+}
+
 /* Feature analysis / recommendations */
 .feature-analysis-section {
     margin: 1.5rem 0;
@@ -1025,4 +1082,73 @@ h2 { font-size: 1.15rem; margin-bottom: 0.75rem; }
 .leaderboard-table th:first-child {
     width: 2rem;
     text-align: center;
+}
+
+/* Runs table */
+.runs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+.runs-table th,
+.runs-table td {
+    padding: 0.45rem 0.6rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+.runs-table th {
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+.runs-table th.sortable:hover { color: #2563eb; }
+.runs-table th.sort-asc::after { content: ' \2191'; }
+.runs-table th.sort-desc::after { content: ' \2193'; }
+.runs-table th.sortable:not(.sort-asc):not(.sort-desc)::after { content: ' \21C5'; color: #cbd5e1; }
+.run-row:hover { background: #f8fafc; }
+.chart-row { background: #f1f5f9; }
+.chart-cell { padding: 1rem; text-align: center; }
+
+/* Stat column header colors */
+.stat-col-speed { color: #ef4444 !important; }
+.stat-col-power { color: #f97316 !important; }
+.stat-col-consistency { color: #eab308 !important; }
+.stat-col-resilience { color: #22c55e !important; }
+.stat-col-efficiency { color: #3b82f6 !important; }
+.stat-col-momentum { color: #8b5cf6 !important; }
+
+/* Stat cell value styling */
+.stat-cell-speed,
+.stat-cell-power,
+.stat-cell-consistency,
+.stat-cell-resilience,
+.stat-cell-efficiency,
+.stat-cell-momentum {
+    font-weight: 600;
+    text-align: center;
+}
+
+/* Comparison charts */
+.comparison-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+@media (max-width: 900px) {
+    .comparison-charts { grid-template-columns: 1fr; }
+}
+.chart-box {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+}
+.chart-box h3 {
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+    color: #475569;
 }

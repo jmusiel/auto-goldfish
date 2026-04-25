@@ -111,7 +111,7 @@ def run_simulation(
                 )
 
         result = goldfisher.simulate(progress_callback=land_callback)
-        results.append(result_to_dict(result))
+        results.append(result_to_dict(result, turns=turns))
 
     return json.dumps(results)
 

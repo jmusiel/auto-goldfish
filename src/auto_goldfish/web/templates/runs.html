@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}Simulation Runs — Auto Goldfish{% endblock %}
+{% block content %}
+<h1>Simulation Runs</h1>
+{% if runs %}
+<p style="color:#64748b; margin-bottom:1rem;">{{ runs|length }} run{{ 's' if runs|length != 1 }} found. Click column headers to sort.</p>
+
+<table class="runs-table" id="runsTable">
+    <thead>
+        <tr>
+            <th data-col="0" data-type="string" class="sortable">Deck</th>
+            <th data-col="1" data-type="string" class="sortable">Date</th>
+            <th data-col="2" data-type="number" class="sortable">Turns</th>
+            <th data-col="3" data-type="number" class="sortable">Sims</th>
+            <th data-col="4" data-type="number" class="sortable">Lands</th>
+            <th data-col="5" data-type="number" class="sortable stat-col-speed">Speed</th>
+            <th data-col="6" data-type="number" class="sortable stat-col-power">Power</th>
+            <th data-col="7" data-type="number" class="sortable stat-col-consistency">Consistency</th>
+            <th data-col="8" data-type="number" class="sortable stat-col-resilience">Resilience</th>
+            <th data-col="9" data-type="number" class="sortable stat-col-efficiency">Efficiency</th>
+            <th data-col="10" data-type="number" class="sortable stat-col-momentum">Momentum</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for run in runs %}
+        <tr class="run-row" data-run-id="{{ run.id }}">
+            <td>{{ run.deck_name }}</td>
+            <td>{{ run.created_at }}</td>
+            <td>{{ run.turns }}</td>
+            <td>{{ run.sims }}</td>
+            <td>{{ run.optimal_land_count or '—' }}</td>
+            <td class="stat-cell-speed">{{ run.speed if run.speed is not none else '—' }}</td>
+            <td class="stat-cell-power">{{ run.power if run.power is not none else '—' }}</td>
+            <td class="stat-cell-consistency">{{ run.consistency if run.consistency is not none else '—' }}</td>
+            <td class="stat-cell-resilience">{{ run.resilience if run.resilience is not none else '—' }}</td>
+            <td class="stat-cell-efficiency">{{ run.efficiency if run.efficiency is not none else '—' }}</td>
+            <td class="stat-cell-momentum">{{ run.momentum if run.momentum is not none else '—' }}</td>
+            <td><button class="btn-sm" onclick="toggleChart({{ run.id }})">Show</button></td>
+        </tr>
+        <tr class="chart-row" id="chart-row-{{ run.id }}" style="display:none">
+            <td colspan="12" class="chart-cell">
+                <canvas id="radar-{{ run.id }}" width="360" height="360"></canvas>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2 style="margin-top:2rem;">Comparison</h2>
+<div class="comparison-charts">
+    <div class="chart-box">
+        <h3>Stat Profiles (Radar)</h3>
+        <canvas id="comparisonRadar" width="500" height="500"></canvas>
+    </div>
+    <div class="chart-box">
+        <h3>Stat Comparison (Bar)</h3>
+        <canvas id="comparisonBar" width="600" height="400"></canvas>
+    </div>
+</div>
+
+{% else %}
+<p style="color:#64748b;">No simulation runs found. Run a simulation first and results will appear here.</p>
+{% endif %}
+
+<script>
+const RUNS_DATA = {{ runs | tojson }};
+const STAT_KEYS = ['speed', 'power', 'consistency', 'resilience', 'efficiency', 'momentum'];
+const STAT_COLORS = {
+    speed: '#ef4444',
+    power: '#f97316',
+    consistency: '#eab308',
+    resilience: '#22c55e',
+    efficiency: '#3b82f6',
+    momentum: '#8b5cf6',
+};
+const DECK_COLORS = [
+    '#3b82f6', '#ef4444', '#22c55e', '#f97316', '#8b5cf6',
+    '#06b6d4', '#ec4899', '#84cc16', '#f59e0b', '#6366f1',
+];
+
+// --- Table sorting ---
+const table = document.getElementById('runsTable');
+if (table) {
+    let currentSort = { col: -1, asc: true };
+    table.querySelectorAll('th.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+            const col = parseInt(th.dataset.col);
+            const type = th.dataset.type;
+            const asc = currentSort.col === col ? !currentSort.asc : true;
+            currentSort = { col, asc };
+
+            const tbody = table.querySelector('tbody');
+            const runRows = Array.from(tbody.querySelectorAll('tr.run-row'));
+            runRows.sort((a, b) => {
+                let va = a.children[col].textContent.trim();
+                let vb = b.children[col].textContent.trim();
+                if (type === 'number') {
+                    va = va === '—' ? -Infinity : parseFloat(va);
+                    vb = vb === '—' ? -Infinity : parseFloat(vb);
+                    return asc ? va - vb : vb - va;
+                }
+                return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+            });
+            // Re-append rows (run-row + its chart-row)
+            runRows.forEach(row => {
+                const chartRow = document.getElementById('chart-row-' + row.dataset.runId);
+                tbody.appendChild(row);
+                if (chartRow) tbody.appendChild(chartRow);
+            });
+            // Update sort indicators
+            table.querySelectorAll('th.sortable').forEach(h => {
+                h.classList.remove('sort-asc', 'sort-desc');
+            });
+            th.classList.add(asc ? 'sort-asc' : 'sort-desc');
+        });
+    });
+}
+
+// --- Per-run radar chart ---
+const chartInstances = {};
+function toggleChart(runId) {
+    const row = document.getElementById('chart-row-' + runId);
+    if (!row) return;
+    const visible = row.style.display !== 'none';
+    row.style.display = visible ? 'none' : '';
+    if (!visible && !chartInstances[runId]) {
+        const run = RUNS_DATA.find(r => r.id === runId);
+        if (!run) return;
+        const ctx = document.getElementById('radar-' + runId).getContext('2d');
+        chartInstances[runId] = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: STAT_KEYS.map(s => s.charAt(0).toUpperCase() + s.slice(1)),
+                datasets: [{
+                    label: run.deck_name,
+                    data: STAT_KEYS.map(k => run[k] ?? 0),
+                    backgroundColor: 'rgba(59,130,246,0.2)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 2,
+                    pointBackgroundColor: STAT_KEYS.map(k => STAT_COLORS[k]),
+                    pointRadius: 5,
+                }],
+            },
+            options: {
+                responsive: false,
+                scales: {
+                    r: { min: 0, max: 10, ticks: { stepSize: 2 } }
+                },
+                plugins: { legend: { display: false } },
+            },
+        });
+    }
+}
+
+// --- Comparison charts ---
+if (RUNS_DATA.length > 0) {
+    // Radar comparison
+    const radarCtx = document.getElementById('comparisonRadar');
+    if (radarCtx) {
+        new Chart(radarCtx.getContext('2d'), {
+            type: 'radar',
+            data: {
+                labels: STAT_KEYS.map(s => s.charAt(0).toUpperCase() + s.slice(1)),
+                datasets: RUNS_DATA.map((run, i) => ({
+                    label: run.deck_name + ' (' + run.created_at.split(' ')[0] + ')',
+                    data: STAT_KEYS.map(k => run[k] ?? 0),
+                    backgroundColor: DECK_COLORS[i % DECK_COLORS.length] + '22',
+                    borderColor: DECK_COLORS[i % DECK_COLORS.length],
+                    borderWidth: 2,
+                    pointRadius: 3,
+                })),
+            },
+            options: {
+                responsive: false,
+                scales: {
+                    r: { min: 0, max: 10, ticks: { stepSize: 2 } }
+                },
+            },
+        });
+    }
+
+    // Bar comparison
+    const barCtx = document.getElementById('comparisonBar');
+    if (barCtx) {
+        new Chart(barCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: RUNS_DATA.map(r => r.deck_name),
+                datasets: STAT_KEYS.map(stat => ({
+                    label: stat.charAt(0).toUpperCase() + stat.slice(1),
+                    data: RUNS_DATA.map(r => r[stat] ?? 0),
+                    backgroundColor: STAT_COLORS[stat],
+                })),
+            },
+            options: {
+                responsive: false,
+                scales: {
+                    y: { min: 0, max: 10, ticks: { stepSize: 2 } },
+                },
+                plugins: {
+                    legend: { position: 'bottom' },
+                },
+            },
+        });
+    }
+}
+</script>
+{% endblock %}

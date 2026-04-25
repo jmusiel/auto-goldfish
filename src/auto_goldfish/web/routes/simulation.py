@@ -333,10 +333,6 @@ def api_wheel_download(filename: str):
 @bp.route("/api/<deck_name>/results", methods=["POST"])
 def api_save_results(deck_name: str):
     """Persist client-side simulation results to the database."""
-    path = get_deckpath(deck_name)
-    if not os.path.isfile(path):
-        abort(404)
-
     try:
         body = request.get_json(force=True)
     except Exception:

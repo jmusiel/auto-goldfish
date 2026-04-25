@@ -15,6 +15,7 @@ Runs "goldfishing" simulations (playing games without an opponent) to evaluate d
 - **Game replay viewer** -- interactive turn-by-turn replay of sample games from top/mid/low quartiles, showing hand state, played cards, board state, and mana production (works in both sequential and parallel modes)
 - **Web UI** -- Flask-based dashboard for importing decks, running simulations, and viewing inline results with charts and replay viewer. Card effects editor lets you override effects before running, with overrides persisted across sessions. Results appear inline below the form for an iterative tweak-and-rerun workflow
 - **Client-side simulation** -- simulations run entirely in-browser via Pyodide (CPython compiled to WebAssembly). The Flask server is a thin data layer; all compute happens on the user's hardware with a progress bar and full results rendering
+- **Deck scoring** -- D&D-style stat block (Speed, Power, Consistency, Resilience, Efficiency, Momentum) on a 1-10 scale, derived from simulation metrics. Use `--score` in the CLI or call `compute_deck_score()` programmatically
 - **Reports** -- generates text reports with per-bucket game stats and mana curve scatter plots (PNG)
 
 ## Setup
@@ -97,6 +98,11 @@ result = gf.simulate()
 print(f"Mean mana spent: {result.mean_mana:.1f}")
 print(f"Consistency: {result.consistency:.3f}")
 print(f"Bad turns: {result.mean_bad_turns:.2f}")
+
+# D&D-style deck scoring
+from auto_goldfish.metrics.deck_score import compute_deck_score
+score = compute_deck_score(result, turns=10)
+print(score.format_block())
 ```
 
 ### Adding a new card
@@ -154,4 +160,5 @@ tests/
 | `--max_lands` | `39` | End of land count sweep |
 | `--cuts` | — | Card names to cut when adding lands |
 | `--record_results` | `quartile` | Recording granularity (`centile`, `decile`, `quartile`) |
+| `--score` | off | Print D&D-style deck stat block after simulation |
 | `--verbose` | off | Print every game log |
