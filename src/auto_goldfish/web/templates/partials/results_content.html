@@ -133,9 +133,9 @@
             {% for m in card.marginals %}
                 {% set ord = _ordinal[m.k] if m.k < _ordinal|length else (m.k|string + 'th') %}
                 {% if m.noise %}
-                    <span class="marginal noise" title="{{ ord }} copy: 90% CI overlaps zero, so the effect is too small to distinguish from chance ({{ m.n_curr }} games drew exactly {{ m.k }}).">{{ ord }}: —</span>
+                    <span class="marginal noise" data-tip="{{ ord }} copy: 90% CI overlaps zero, so the effect is too small to distinguish from chance ({{ m.n_curr }} games drew exactly {{ m.k }}).">{{ ord }}: —</span>
                 {% else %}
-                    <span class="marginal {{ 'pos' if m.effect > 0 else 'neg' }}" title="Drawing the {{ ord }} copy changes total mana spent by {{ '%+.2f'|format(m.effect) }} on average (90% CI ±{{ '%.2f'|format(m.ci) }}, based on {{ m.n_curr }} games).">{{ ord }}: {{ "%+.2f"|format(m.effect) }}</span>
+                    <span class="marginal {{ 'pos' if m.effect > 0 else 'neg' }}" data-tip="Drawing the {{ ord }} copy changes total mana spent by {{ '%+.2f'|format(m.effect) }} on average (90% CI ±{{ '%.2f'|format(m.ci) }}, based on {{ m.n_curr }} games).">{{ ord }}: {{ "%+.2f"|format(m.effect) }}</span>
                 {% endif %}
             {% endfor %}
         </div>
@@ -151,13 +151,13 @@
 {% macro render_badge(card) %}
     {% set sat = card.saturation or {} %}
     {% if sat.badge == 'scaling' %}
-        <span class="sat-badge sat-scaling" title="Every extra copy you draw is still adding measurable mana. More copies would likely help.">↑ Add more</span>
+        <span class="sat-badge sat-scaling" data-tip="Every extra copy you draw is still adding measurable mana. More copies would likely help.">↑ Add more</span>
     {% elif sat.badge == 'saturated' %}
-        <span class="sat-badge sat-saturated" title="Past copy {{ sat.saturates_at }}, additional copies don't add measurable value. {{ sat.saturates_at }} is roughly the sweet spot.">≈ Enough at {{ sat.saturates_at }}</span>
+        <span class="sat-badge sat-saturated" data-tip="Past copy {{ sat.saturates_at }}, additional copies don't add measurable value. {{ sat.saturates_at }} is roughly the sweet spot.">≈ Enough at {{ sat.saturates_at }}</span>
     {% elif sat.badge == 'crowding' %}
-        <span class="sat-badge sat-crowding" title="Drawing extra copies actually hurts (they crowd your hand or compete for mana). Consider running fewer.">↓ Cut copies</span>
+        <span class="sat-badge sat-crowding" data-tip="Drawing extra copies actually hurts (they crowd your hand or compete for mana). Consider running fewer.">↓ Cut copies</span>
     {% elif sat.badge == 'unclear' %}
-        <span class="sat-badge sat-unclear" title="Not enough games drew this spell at varying counts to give a confident verdict. Try running more simulations.">? Need more data</span>
+        <span class="sat-badge sat-unclear" data-tip="Not enough games drew this spell at varying counts to give a confident verdict. Try running more simulations.">? Need more data</span>
     {% endif %}
 {% endmacro %}
 {% if results[0].card_performance and results[0].card_performance.high_performing %}
@@ -188,8 +188,8 @@
                     <th title="How many copies of this spell (or simulator-equivalent variants) are in the deck.">Copies</th>
                     <th title="Average mana actually paid when this spell was cast across all simulated games.">Avg cost</th>
                     <th title="Average mana spent in games that drew at least one copy minus games that drew none. Positive = the deck performs better with this spell in hand.">Impact</th>
-                    <th title="Per-copy effect: how much more (or less) mana the deck spends when you draw the 1st, 2nd, 3rd … copy compared to having one fewer. Hover any pill for details.">Each extra copy <span class="help-icon" aria-hidden="true">?</span></th>
-                    <th title="Plain-English verdict on whether to add more copies, you have enough, cut copies, or there isn't enough data yet.">Recommendation <span class="help-icon" aria-hidden="true">?</span></th>
+                    <th data-tip="Per-copy effect: how much more (or less) mana the deck spends when you draw the 1st, 2nd, 3rd … copy compared to having one fewer. Hover any pill for details.">Each extra copy <span class="help-icon" aria-hidden="true">?</span></th>
+                    <th data-tip="Plain-English verdict on whether to add more copies, you have enough, cut copies, or there isn't enough data yet.">Recommendation <span class="help-icon" aria-hidden="true">?</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -222,8 +222,8 @@
                     <th title="How many copies of this spell (or simulator-equivalent variants) are in the deck.">Copies</th>
                     <th title="Average mana actually paid when this spell was cast across all simulated games.">Avg cost</th>
                     <th title="Average mana spent in games that drew at least one copy minus games that drew none. Positive = the deck performs better with this spell in hand.">Impact</th>
-                    <th title="Per-copy effect: how much more (or less) mana the deck spends when you draw the 1st, 2nd, 3rd … copy compared to having one fewer. Hover any pill for details.">Each extra copy <span class="help-icon" aria-hidden="true">?</span></th>
-                    <th title="Plain-English verdict on whether to add more copies, you have enough, cut copies, or there isn't enough data yet.">Recommendation <span class="help-icon" aria-hidden="true">?</span></th>
+                    <th data-tip="Per-copy effect: how much more (or less) mana the deck spends when you draw the 1st, 2nd, 3rd … copy compared to having one fewer. Hover any pill for details.">Each extra copy <span class="help-icon" aria-hidden="true">?</span></th>
+                    <th data-tip="Plain-English verdict on whether to add more copies, you have enough, cut copies, or there isn't enough data yet.">Recommendation <span class="help-icon" aria-hidden="true">?</span></th>
                 </tr>
             </thead>
             <tbody>

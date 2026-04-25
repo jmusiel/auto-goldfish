@@ -290,7 +290,7 @@ const ClientResults = (function() {
                 if (m.noise) {
                     const tip = ord + ' copy: 90% CI overlaps zero, so the effect is too small to distinguish from chance ('
                         + m.n_curr + ' games drew exactly ' + m.k + ').';
-                    return '<span class="marginal noise" title="' + escapeHtml(tip) + '">'
+                    return '<span class="marginal noise" data-tip="' + escapeHtml(tip) + '">'
                         + ord + ': —</span>';
                 }
                 const cls = m.effect > 0 ? 'pos' : 'neg';
@@ -298,7 +298,7 @@ const ClientResults = (function() {
                 const tip = 'Drawing the ' + ord + ' copy changes total mana spent by '
                     + sign + fmt(m.effect, 2) + ' on average (90% CI ±' + fmt(m.ci, 2)
                     + ', based on ' + m.n_curr + ' games).';
-                return '<span class="marginal ' + cls + '" title="' + escapeHtml(tip) + '">'
+                return '<span class="marginal ' + cls + '" data-tip="' + escapeHtml(tip) + '">'
                     + ord + ': ' + sign + fmt(m.effect, 2) + '</span>';
             });
             return '<div class="marginals">' + parts.join('') + '</div>';
@@ -307,18 +307,18 @@ const ClientResults = (function() {
         function renderBadge(card) {
             const sat = card.saturation || {};
             if (sat.badge === 'scaling') {
-                return '<span class="sat-badge sat-scaling" title="Every extra copy you draw is still adding measurable mana. More copies would likely help.">↑ Add more</span>';
+                return '<span class="sat-badge sat-scaling" data-tip="Every extra copy you draw is still adding measurable mana. More copies would likely help.">↑ Add more</span>';
             }
             if (sat.badge === 'saturated') {
                 const tip = 'Past copy ' + sat.saturates_at + ", additional copies don't add measurable value. "
                     + sat.saturates_at + ' is roughly the sweet spot.';
-                return '<span class="sat-badge sat-saturated" title="' + escapeHtml(tip) + '">≈ Enough at ' + sat.saturates_at + '</span>';
+                return '<span class="sat-badge sat-saturated" data-tip="' + escapeHtml(tip) + '">≈ Enough at ' + sat.saturates_at + '</span>';
             }
             if (sat.badge === 'crowding') {
-                return '<span class="sat-badge sat-crowding" title="Drawing extra copies actually hurts (they crowd your hand or compete for mana). Consider running fewer.">↓ Cut copies</span>';
+                return '<span class="sat-badge sat-crowding" data-tip="Drawing extra copies actually hurts (they crowd your hand or compete for mana). Consider running fewer.">↓ Cut copies</span>';
             }
             if (sat.badge === 'unclear') {
-                return '<span class="sat-badge sat-unclear" title="Not enough games drew this spell at varying counts to give a confident verdict. Try running more simulations.">? Need more data</span>';
+                return '<span class="sat-badge sat-unclear" data-tip="Not enough games drew this spell at varying counts to give a confident verdict. Try running more simulations.">? Need more data</span>';
             }
             return '';
         }
@@ -347,8 +347,8 @@ const ClientResults = (function() {
             + '<th title="How many copies of this spell (or simulator-equivalent variants) are in the deck.">Copies</th>'
             + '<th title="Average mana actually paid when this spell was cast across all simulated games.">Avg cost</th>'
             + '<th title="Average mana spent in games that drew at least one copy minus games that drew none. Positive = the deck performs better with this spell in hand.">Impact</th>'
-            + '<th title="Per-copy effect: how much more (or less) mana the deck spends when you draw the 1st, 2nd, 3rd … copy compared to having one fewer. Hover any pill for details.">Each extra copy <span class="help-icon" aria-hidden="true">?</span></th>'
-            + '<th title="Plain-English verdict on whether to add more copies, you have enough, cut copies, or there isn\'t enough data yet.">Recommendation <span class="help-icon" aria-hidden="true">?</span></th>';
+            + '<th data-tip="Per-copy effect: how much more (or less) mana the deck spends when you draw the 1st, 2nd, 3rd … copy compared to having one fewer. Hover any pill for details.">Each extra copy <span class="help-icon" aria-hidden="true">?</span></th>'
+            + '<th data-tip="Plain-English verdict on whether to add more copies, you have enough, cut copies, or there isn\'t enough data yet.">Recommendation <span class="help-icon" aria-hidden="true">?</span></th>';
 
         // High performers
         html += '<div><h3>Top Performers</h3><div class="table-wrap"><table class="stats-table">';

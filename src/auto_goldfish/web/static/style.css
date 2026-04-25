@@ -692,8 +692,12 @@ sup.always-drawn { color: #64748b; font-size: 0.7em; margin-left: 2px; cursor: h
     border-color: #475569;
     transition: none;
 }
-.info-tip:hover::after,
-.info-tip:focus::after {
+/* Generic instant tooltip — any element with [data-tip] shows it on
+   hover with no delay (vs native `title` which has a browser-imposed
+   ~500ms delay). */
+[data-tip] { position: relative; }
+[data-tip]:hover::after,
+[data-tip]:focus::after {
     content: attr(data-tip);
     position: absolute;
     bottom: calc(100% + 6px);
@@ -714,6 +718,24 @@ sup.always-drawn { color: #64748b; font-size: 0.7em; margin-left: 2px; cursor: h
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     transition: none;
     animation: none;
+}
+/* Right-anchored tooltips for elements near the right edge of a table
+   (e.g. saturation badges in the last column) so the tooltip doesn't
+   clip the viewport. */
+.sat-badge[data-tip]:hover::after,
+.sat-badge[data-tip]:focus::after,
+th[data-tip]:last-child:hover::after,
+th[data-tip]:last-child:focus::after {
+    left: auto;
+    right: 0;
+    transform: none;
+}
+/* `<th>` tooltips render below the header cell instead of above, since the
+   table wrapper's `overflow-x: auto` implicitly clips overflow-y above. */
+th[data-tip]:hover::after,
+th[data-tip]:focus::after {
+    bottom: auto;
+    top: calc(100% + 6px);
 }
 
 /* Effects editor */
