@@ -147,6 +147,7 @@ def run_optimization(
         ALL_CANDIDATES,
         make_custom_candidate,
     )
+    from auto_goldfish.optimization.factored_optimizer import FactoredOptimizer
     from auto_goldfish.optimization.fast_optimizer import FastDeckOptimizer
     from auto_goldfish.optimization.optimizer import DeckOptimizer
 
@@ -229,9 +230,20 @@ def run_optimization(
     if max_lands is not None:
         land_delta_max = max_lands - goldfisher.land_count
 
-    algorithm = config.get("algorithm", "racing")
+    algorithm = config.get("algorithm", "factored")
 
-    if algorithm == "racing":
+    if algorithm == "factored":
+        optimizer = FactoredOptimizer(
+            goldfisher=goldfisher,
+            candidates=candidates,
+            swap_mode=swap_mode,
+            max_draw=max_draw,
+            max_ramp=max_ramp,
+            land_delta_min=land_delta_min,
+            land_delta_max=land_delta_max,
+            optimize_for=optimize_for,
+        )
+    elif algorithm == "racing":
         optimizer = FastDeckOptimizer(
             goldfisher=goldfisher,
             candidates=candidates,
