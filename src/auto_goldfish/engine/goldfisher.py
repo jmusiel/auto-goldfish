@@ -6,6 +6,7 @@ No CLI code here -- returns structured ``SimulationResult``.
 
 from __future__ import annotations
 
+import math
 import os
 import random
 from collections import defaultdict
@@ -204,6 +205,13 @@ _MARGINAL_MIN_BUCKET = 30   # both buckets must have >=30 games or we skip the p
 _MARGINAL_MAX_K = 4         # stop evaluating beyond the 4th copy
 _MARGINAL_CI_Z = 1.645      # 90% normal CI
 _SATURATION_THRESHOLD = 0.1  # marginal magnitude below this rounds to "saturated"
+
+# Top-up tunables: when a pool's k=1 or k=2 marginal has too few games in
+# either bucket, we run additional natural goldfishing games (rejection
+# sampling) to fill them. _TOPUP_CAP_FACTOR caps total extras as a multiple
+# of the original sim count.
+_TOPUP_TARGET_KS = (1, 2)
+_TOPUP_CAP_FACTOR = 2.0
 
 
 def _compute_marginal_impacts(
@@ -1102,20 +1110,55 @@ class Goldfisher:
             sig = _card_equivalence_key(card)
             groups.setdefault(sig, []).append(k)
 
-        scores = []
+        # Compute initial per-pool draw counts.
+        count_arrays: dict[tuple, np.ndarray] = {}
         for sig, indices in groups.items():
-            cmc, effect_desc = sig
-
-            # Per-game pool count: how many pool members were drawn this game
             index_set = set(indices)
-            count_per_game = np.fromiter(
+            count_arrays[sig] = np.fromiter(
                 (len(index_set & drawn_cards_per_game[i]) for i in range(n_games)),
                 dtype=int,
                 count=n_games,
             )
+
+        # Top-up: run extra natural goldfishing games when k=1/k=2 buckets
+        # are underfilled. Each extra game contributes draw counts to *every*
+        # pool, so one shared batch can fill many pools at once. Skipped when
+        # there are no candidate buckets within the cap.
+        n_supplemental = self._plan_topup_budget(groups, count_arrays, n_games)
+        if n_supplemental > 0:
+            extra_data = _worker_run_batch(
+                self._get_deck_dicts(),
+                self.turns,
+                n_supplemental,
+                base_seed=self.seed,
+                game_offset=n_games,
+                capture_replays=False,
+                extra_config=self._get_worker_config(),
+            )
+            extra_drawn = extra_data["drawn_cards_per_game"]
+            extra_mana = extra_data["mana_spent"]
+            mana_arr = np.concatenate(
+                [mana_arr, np.array(extra_mana, dtype=float)]
+            )
+            for sig, indices in groups.items():
+                index_set = set(indices)
+                extra_counts = np.fromiter(
+                    (len(index_set & extra_drawn[i]) for i in range(n_supplemental)),
+                    dtype=int,
+                    count=n_supplemental,
+                )
+                count_arrays[sig] = np.concatenate(
+                    [count_arrays[sig], extra_counts]
+                )
+
+        n_games_total = n_games + n_supplemental
+        scores = []
+        for sig, indices in groups.items():
+            cmc, effect_desc = sig
+            count_per_game = count_arrays[sig]
             drawn_mask = count_per_game >= 1
             n_drawn = int(drawn_mask.sum())
-            n_not_drawn = n_games - n_drawn
+            n_not_drawn = n_games_total - n_drawn
 
             if n_drawn < 20:
                 continue  # No "drew at least one" group to measure
@@ -1179,7 +1222,7 @@ class Goldfisher:
                 "mean_with": round(mean_with, 2),
                 "mean_without": round(mean_without, 2),
                 "score": round(impact, 4),
-                "drawn_pct": round(n_drawn / n_games, 4),
+                "drawn_pct": round(n_drawn / n_games_total, 4),
                 "always_drawn": always_drawn,
                 "marginals": marginals,
                 "saturation": saturation,
@@ -1193,7 +1236,49 @@ class Goldfisher:
             "high_performing": high_performing,
             "low_performing": low_performing,
             "total_games": n_games,
+            "supplemental_games": n_supplemental,
         }
+
+    def _plan_topup_budget(
+        self,
+        groups: Dict[tuple, list[int]],
+        count_arrays: dict,
+        n_games: int,
+    ) -> int:
+        """Decide how many extra games to run for marginal top-up.
+
+        Scans candidate buckets across all pools (k in _TOPUP_TARGET_KS where
+        the smaller adjacent bucket is in [1, _MARGINAL_MIN_BUCKET)). For each
+        candidate, extrapolates how many more natural goldfishing games would
+        push the smaller bucket past the floor. Returns the largest such
+        request that fits within _TOPUP_CAP_FACTOR x n_games (since one shared
+        batch fills every pool simultaneously, running the largest affordable
+        request also resolves all cheaper candidates as a side effect).
+        Returns 0 when nothing is fillable.
+        """
+        cap = int(_TOPUP_CAP_FACTOR * n_games)
+        best = 0
+        for sig, indices in groups.items():
+            copies = len(indices)
+            if copies < 2:
+                continue
+            cpg = count_arrays[sig]
+            for k in _TOPUP_TARGET_KS:
+                if k > copies:
+                    continue
+                n_curr = int((cpg == k).sum())
+                n_prev = int((cpg == k - 1).sum())
+                n_smaller = min(n_curr, n_prev)
+                if n_smaller >= _MARGINAL_MIN_BUCKET:
+                    continue  # already resolved
+                if n_smaller < 1:
+                    continue  # bucket physically rare; rejection won't help
+                p_smaller = n_smaller / n_games
+                needed = (_MARGINAL_MIN_BUCKET - n_smaller) / p_smaller
+                extras = math.ceil(needed)
+                if extras <= cap and extras > best:
+                    best = extras
+        return best
 
     def _get_deck_dicts(self) -> list[dict]:
         """Serialize current decklist + commanders to dicts for workers."""

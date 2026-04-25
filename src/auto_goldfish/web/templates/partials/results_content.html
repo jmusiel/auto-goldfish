@@ -175,7 +175,7 @@
     </ul>
     <p><em>Lands are excluded, except for MDFCs (cards with both a land face and a spell face).</em></p>
 </details>
-<p class="card-perf-summary">Impact of drawing each spell on average mana spent across {{ results[0].card_performance.total_games }} games.</p>
+<p class="card-perf-summary">Impact of drawing each spell on average mana spent across {{ results[0].card_performance.total_games }} games{% if results[0].card_performance.supplemental_games %} (+{{ results[0].card_performance.supplemental_games }} supplemental games for marginal precision){% endif %}.</p>
 <div class="card-perf-grid">
     <div>
         <h3>Top Performers</h3>

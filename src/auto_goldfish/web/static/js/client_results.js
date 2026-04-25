@@ -276,8 +276,11 @@ const ClientResults = (function() {
             + '</ul>'
             + '<p><em>Lands are excluded, except for MDFCs (cards with both a land face and a spell face).</em></p>'
             + '</details>';
+        const supplementalSuffix = cp.supplemental_games
+            ? ' (+' + cp.supplemental_games + ' supplemental games for marginal precision)'
+            : '';
         html += '<p class="card-perf-summary">Impact of drawing each spell on average mana spent across '
-            + cp.total_games + ' games.</p>';
+            + cp.total_games + ' games' + supplementalSuffix + '.</p>';
         html += '<div class="card-perf-grid">';
 
         function renderMarginals(card) {

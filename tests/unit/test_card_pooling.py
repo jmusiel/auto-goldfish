@@ -237,6 +237,69 @@ class TestMarginalImpacts:
             assert r["noise"] is False
 
 
+class TestTopupBudgetPlanner:
+    def _make_gf(self):
+        deck = [{
+            "name": "Cmd", "cmc": 2, "cost": "{1}{U}", "text": "",
+            "types": ["Creature"], "commander": True,
+        }]
+        for i in range(99):
+            deck.append({
+                "name": f"f{i}", "cmc": 0, "cost": "", "text": "",
+                "types": ["Land"], "commander": False,
+            })
+        return Goldfisher(deck, turns=8, sims=2000, seed=0, workers=1)
+
+    def test_returns_zero_when_no_candidates(self):
+        gf = self._make_gf()
+        # Pool with both buckets well-sampled
+        cpg = np.array([0] * 1000 + [1] * 1000)
+        groups = {("k1",): [0, 1, 2]}
+        budget = gf._plan_topup_budget(groups, {("k1",): cpg}, n_games=2000)
+        assert budget == 0
+
+    def test_skips_pool_with_zero_in_baseline(self):
+        gf = self._make_gf()
+        # n_prev=0 (drew zero of a 5-copy pool — physically rare)
+        cpg = np.array([1] * 1500 + [2] * 500)  # k=0 has zero games
+        groups = {("k1",): [0, 1, 2, 3, 4]}
+        budget = gf._plan_topup_budget(groups, {("k1",): cpg}, n_games=2000)
+        assert budget == 0
+
+    def test_extrapolates_extras_to_clear_floor(self):
+        gf = self._make_gf()
+        # n_prev=10 (k=0 bucket), n_curr=1990 (k=1) — need 20 more in baseline
+        # at observed rate 10/2000 = 0.5%, expect ceil(20/0.005) = 4000 extras
+        cpg = np.array([0] * 10 + [1] * 1990)
+        groups = {("k1",): [0, 1, 2]}
+        budget = gf._plan_topup_budget(groups, {("k1",): cpg}, n_games=2000)
+        assert budget == 4000
+
+    def test_caps_request_at_2x_sims(self):
+        gf = self._make_gf()
+        # n_prev=2 → would need 28/0.001 = 28000 extras, exceeds 4000 cap
+        cpg = np.array([0] * 2 + [1] * 1998)
+        groups = {("k1",): [0, 1, 2]}
+        budget = gf._plan_topup_budget(groups, {("k1",): cpg}, n_games=2000)
+        assert budget == 0  # over cap → skipped
+
+    def test_picks_largest_affordable_request(self):
+        # Two candidates: cheap one (1000 extras) and pricier one (3500).
+        # Both fit under 4000 cap; we should pick 3500 since one shared batch
+        # also resolves the 1000-extra pool.
+        gf = self._make_gf()
+        cheap = np.array([0] * 30 + [1] * 1970)
+        pricy = np.array([0] * 16 + [1] * 1984)
+        groups = {
+            ("cheap",): [0, 1, 2],
+            ("pricy",): [3, 4, 5],
+        }
+        count_arrays = {("cheap",): cheap, ("pricy",): pricy}
+        budget = gf._plan_topup_budget(groups, count_arrays, n_games=2000)
+        # Should be the pricier one (>= 1500 extras for n_prev=16 → 14/0.008)
+        assert 1500 <= budget <= 4000
+
+
 class TestSaturationBadge:
     def test_scaling_when_last_marginal_positive(self):
         marginals = [
