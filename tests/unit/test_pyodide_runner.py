@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from auto_goldfish.decklist.loader import get_basic_island
-from auto_goldfish.pyodide_runner import run_simulation
+from auto_goldfish.pyodide_runner import run_optimization, run_simulation
 
 
 def _make_deck_json(n_lands=10, n_spells=5):
@@ -171,3 +171,65 @@ class TestRunSimulation:
             "ci_mean_mana", "ci_consistency", "ci_mean_bad_turns",
         }
         assert expected_keys.issubset(set(r.keys()))
+
+
+class TestRunOptimizationDispatch:
+    """Verify the algorithm string routes to the correct optimizer class.
+
+    Regression: the UI defaults to ``algorithm="factored"`` but pyodide_runner
+    used to fall through to DeckOptimizer (Hyperband), so client-side runs
+    never exercised the FactoredOptimizer despite the form selection.
+    """
+
+    def _make_optimization_config(self, algorithm: str) -> str:
+        return json.dumps({
+            "turns": 3,
+            "sims": 5,
+            "seed": 42,
+            "min_lands": 10,
+            "max_lands": 11,
+            "algorithm": algorithm,
+            "enabled_candidates": [],
+            "max_draw_additions": 0,
+            "max_ramp_additions": 0,
+        })
+
+    @pytest.mark.parametrize(
+        "algorithm,expected_module,expected_class",
+        [
+            ("factored", "auto_goldfish.optimization.factored_optimizer", "FactoredOptimizer"),
+            ("racing", "auto_goldfish.optimization.fast_optimizer", "FastDeckOptimizer"),
+            ("hyperband", "auto_goldfish.optimization.optimizer", "DeckOptimizer"),
+        ],
+    )
+    def test_algorithm_dispatch(self, monkeypatch, algorithm, expected_module, expected_class):
+        """Each algorithm string must instantiate the matching optimizer class."""
+        import importlib
+
+        captured = {"class_name": None}
+
+        for mod_path, cls_name in [
+            ("auto_goldfish.optimization.factored_optimizer", "FactoredOptimizer"),
+            ("auto_goldfish.optimization.fast_optimizer", "FastDeckOptimizer"),
+            ("auto_goldfish.optimization.optimizer", "DeckOptimizer"),
+        ]:
+            mod = importlib.import_module(mod_path)
+            real_cls = getattr(mod, cls_name)
+            captured_name = cls_name
+
+            def make_recording_init(_real_cls, _name):
+                original_init = _real_cls.__init__
+
+                def recording_init(self, *args, **kwargs):
+                    captured["class_name"] = _name
+                    original_init(self, *args, **kwargs)
+
+                return recording_init
+
+            monkeypatch.setattr(real_cls, "__init__", make_recording_init(real_cls, captured_name))
+
+        deck_json = _make_deck_json()
+        config_json = self._make_optimization_config(algorithm)
+        run_optimization(deck_json, config_json)
+
+        assert captured["class_name"] == expected_class
