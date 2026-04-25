@@ -1583,7 +1583,7 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
 
         // Count enabled candidates
         var drawCount = 0, rampCount = 0;
-        document.querySelectorAll('#card-optimization-settings [data-candidate]').forEach(function(cb) {
+        document.querySelectorAll('[data-candidate]').forEach(function(cb) {
             if (!cb.checked) return;
             var cid = cb.dataset.candidate;
             if (cid === 'draw_custom' || cid === 'ramp_custom') return;
@@ -1858,7 +1858,7 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
 
     document.getElementById('sims').addEventListener('input', updateEstimate);
     document.getElementById('hyperband-max-sims').addEventListener('input', updateEstimate);
-    document.querySelectorAll('#card-optimization-settings [data-candidate]').forEach(function(cb) {
+    document.querySelectorAll('[data-candidate]').forEach(function(cb) {
         cb.addEventListener('change', updateEstimate);
     });
 
@@ -1874,7 +1874,7 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
 
     function collectOptimizationConfig() {
         const enabledCandidates = [];
-        document.querySelectorAll('#card-optimization-settings [data-candidate]').forEach(function(cb) {
+        document.querySelectorAll('[data-candidate]').forEach(function(cb) {
             if (cb.checked && cb.dataset.candidate !== 'draw_custom' && cb.dataset.candidate !== 'ramp_custom') {
                 enabledCandidates.push(cb.dataset.candidate);
             }

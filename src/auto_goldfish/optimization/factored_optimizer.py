@@ -203,7 +203,7 @@ class FactoredOptimizer:
             enum_progress(done_sims[0], done_sims[0])
 
         # Build feature analysis from marginal results
-        self.feature_analysis = self._build_feature_analysis()
+        self.feature_analysis = self._build_feature_analysis(baseline_score)
 
         # Phase 3: Full evaluation of top configs
         all_candidates = self.marginal_results + combo_results
@@ -555,8 +555,9 @@ class FactoredOptimizer:
 
     # -- Feature analysis --
 
-    def _build_feature_analysis(self) -> dict[str, Any]:
+    def _build_feature_analysis(self, baseline_score: float) -> dict[str, Any]:
         """Build feature analysis dict from marginal results."""
+        from auto_goldfish.optimization.candidate_cards import ALL_CANDIDATES
         from auto_goldfish.optimization.feature_analysis import (
             synthesize_factored_recommendations,
         )
@@ -567,6 +568,17 @@ class FactoredOptimizer:
 
         marginal_impact = []
         for mr in self.marginal_results:
+            if mr.dimension == "land":
+                delta = mr.config.land_delta
+                label = f"+{delta} land" if delta > 0 else f"{delta} land"
+            elif mr.config.added_cards:
+                cid = mr.config.added_cards[0]
+                cand = ALL_CANDIDATES.get(cid)
+                compact = cand.compact_label if cand else cid
+                label = f"+1 {compact}"
+            else:
+                label = mr.config.describe()
+
             marginal_impact.append({
                 "config": mr.config.describe(),
                 "dimension": mr.dimension,
@@ -576,6 +588,12 @@ class FactoredOptimizer:
                 "n_games": mr.n_games,
                 "significant": mr.significant,
                 "negligible": mr.negligible,
+                # Aliases consumed by client_results.js renderer
+                "label": label,
+                "delta": round(mr.effect_size, 4),
+                "mean_with": round(baseline_score + mr.effect_size, 4),
+                "mean_without": round(baseline_score, 4),
+                "count": mr.n_games,
             })
 
         return {
