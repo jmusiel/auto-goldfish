@@ -9,12 +9,12 @@
     <div class="deck-score-radar"><canvas id="deckScoreRadar"></canvas></div>
     <div class="deck-score-bars">
         {% set stat_defs = [
-            ('Speed', 'speed', '#ef4444', 'Early-game mana deployment'),
-            ('Power', 'power', '#f97316', 'Peak mana output and ceiling'),
             ('Consistency', 'consistency', '#eab308', 'How rarely the deck bricks'),
-            ('Resilience', 'resilience', '#22c55e', 'Recovery from mulligans'),
+            ('Acceleration', 'acceleration', '#ef4444', 'Early-game mana deployment'),
+            ('Surge', 'surge', '#8b5cf6', 'Late-game acceleration'),
+            ('Toughness', 'toughness', '#22c55e', 'Structural redundancy of the decklist'),
             ('Efficiency', 'efficiency', '#3b82f6', 'Mana utilization per turn'),
-            ('Momentum', 'momentum', '#8b5cf6', 'Late-game acceleration'),
+            ('Reach', 'reach', '#f97316', 'Peak mana output and ceiling'),
         ] %}
         {% for name, key, color, desc in stat_defs %}
         {% set val = score[key]|default(0) %}
@@ -402,10 +402,10 @@
                 new Chart(scoreCanvas, {
                     type: 'radar',
                     data: {
-                        labels: ['Speed', 'Power', 'Consistency', 'Resilience', 'Efficiency', 'Momentum'],
+                        labels: ['Consistency', 'Acceleration', 'Surge', 'Toughness', 'Efficiency', 'Reach'],
                         datasets: [{
                             label: 'Deck Stats',
-                            data: [ds.speed, ds.power, ds.consistency, ds.resilience, ds.efficiency, ds.momentum],
+                            data: [ds.consistency, ds.acceleration, ds.surge, ds.toughness, ds.efficiency, ds.reach],
                             backgroundColor: 'rgba(59, 130, 246, 0.2)',
                             borderColor: '#3b82f6',
                             borderWidth: 2,

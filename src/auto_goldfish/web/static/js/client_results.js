@@ -88,12 +88,12 @@ const ClientResults = (function() {
         if (!score) return '';
 
         const stats = [
-            {name: 'Speed', key: 'speed', color: '#ef4444', desc: 'Early-game mana deployment'},
-            {name: 'Power', key: 'power', color: '#f97316', desc: 'Peak mana output and ceiling'},
             {name: 'Consistency', key: 'consistency', color: '#eab308', desc: 'How rarely the deck bricks'},
-            {name: 'Resilience', key: 'resilience', color: '#22c55e', desc: 'Recovery from mulligans'},
+            {name: 'Acceleration', key: 'acceleration', color: '#ef4444', desc: 'Early-game mana deployment'},
+            {name: 'Surge', key: 'surge', color: '#8b5cf6', desc: 'Late-game acceleration'},
+            {name: 'Toughness', key: 'toughness', color: '#22c55e', desc: 'Structural redundancy of the decklist'},
             {name: 'Efficiency', key: 'efficiency', color: '#3b82f6', desc: 'Mana utilization per turn'},
-            {name: 'Momentum', key: 'momentum', color: '#8b5cf6', desc: 'Late-game acceleration'},
+            {name: 'Reach', key: 'reach', color: '#f97316', desc: 'Peak mana output and ceiling'},
         ];
 
         let html = '<div class="deck-score-section"><h2>Deck Stats</h2>';
@@ -125,8 +125,8 @@ const ClientResults = (function() {
         const canvas = document.getElementById('deckScoreRadar');
         if (!canvas) return;
 
-        const labels = ['Speed', 'Power', 'Consistency', 'Resilience', 'Efficiency', 'Momentum'];
-        const values = [score.speed, score.power, score.consistency, score.resilience, score.efficiency, score.momentum];
+        const labels = ['Consistency', 'Acceleration', 'Surge', 'Toughness', 'Efficiency', 'Reach'];
+        const values = [score.consistency, score.acceleration, score.surge, score.toughness, score.efficiency, score.reach];
 
         new Chart(canvas, {
             type: 'radar',

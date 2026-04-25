@@ -1,4 +1,4 @@
-"""Unit tests for the deck scoring module."""
+"""Unit tests for the deck scoring module (CASTER profile)."""
 
 import pytest
 
@@ -6,12 +6,12 @@ from auto_goldfish.engine.goldfisher import SimulationResult
 from auto_goldfish.metrics.deck_score import (
     DeckScore,
     _clamp,
+    _compute_acceleration,
     _compute_consistency,
     _compute_efficiency,
-    _compute_momentum,
-    _compute_power,
-    _compute_resilience,
-    _compute_speed,
+    _compute_reach,
+    _compute_surge,
+    _compute_toughness,
     _scale,
     compute_deck_score,
 )
@@ -44,6 +44,11 @@ def _make_result(**overrides) -> SimulationResult:
         "mull_rate": 0.25,
         "mean_mana_with_mull": 18.0,
         "mean_mana_no_mull": 21.0,
+        # Structural snapshot used by Toughness.
+        "mana_source_count": 38,
+        "draw_count": 10,
+        "early_count": 22,
+        "avg_cmc": 3.0,
     }
     defaults.update(overrides)
     return SimulationResult(**defaults)
@@ -92,41 +97,39 @@ class TestScale:
 # Individual stat computation
 # ---------------------------------------------------------------------------
 
-class TestSpeed:
+class TestAcceleration:
     def test_fast_deck_scores_high(self):
-        # 3+4+5+6 = 18 mana in first 4 turns (above 14 cap)
         result = _make_result(mean_mana_per_turn=[3.0, 4.0, 5.0, 6.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0])
-        assert _compute_speed(result, 10) >= 9
+        assert _compute_acceleration(result, 10) >= 9
 
     def test_slow_deck_scores_low(self):
-        # 0+0.5+0.5+0.5 = 1.5 mana in first 4 turns
         result = _make_result(mean_mana_per_turn=[0.0, 0.5, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
-        assert _compute_speed(result, 10) <= 2
+        assert _compute_acceleration(result, 10) <= 2
 
     def test_empty_per_turn_returns_1(self):
         result = _make_result(mean_mana_per_turn=[])
-        assert _compute_speed(result, 10) == 1
+        assert _compute_acceleration(result, 10) == 1
 
     def test_fewer_than_4_turns(self):
         result = _make_result(mean_mana_per_turn=[2.0, 3.0])
-        score = _compute_speed(result, 2)
+        score = _compute_acceleration(result, 2)
         assert 1 <= score <= 10
 
 
-class TestPower:
-    def test_high_power(self):
+class TestReach:
+    def test_high_reach(self):
         result = _make_result(mean_mana=40.0, ceiling_mana=50.0)
-        assert _compute_power(result, 10) >= 9
+        assert _compute_reach(result, 10) >= 9
 
-    def test_low_power(self):
+    def test_low_reach(self):
         result = _make_result(mean_mana=5.0, ceiling_mana=8.0)
-        assert _compute_power(result, 10) <= 2
+        assert _compute_reach(result, 10) <= 2
 
     def test_scales_with_turns(self):
         result = _make_result(mean_mana=20.0, ceiling_mana=28.0)
-        score_10 = _compute_power(result, 10)
-        score_5 = _compute_power(result, 5)
-        # With fewer turns, same raw values should score higher
+        score_10 = _compute_reach(result, 10)
+        score_5 = _compute_reach(result, 5)
+        # With fewer turns, same raw values should score higher.
         assert score_5 >= score_10
 
 
@@ -145,25 +148,27 @@ class TestConsistency:
         assert 4 <= score <= 8
 
 
-class TestResilience:
-    def test_no_mull_penalty(self):
-        # No difference between mull and no-mull games, low mull rate
+class TestToughness:
+    def test_high_redundancy_scores_high(self):
+        # Lots of mana, lots of draw, lots of early plays, low curve.
         result = _make_result(
-            mean_mana=20.0, mean_mana_with_mull=20.0, mean_mana_no_mull=20.0,
-            mull_rate=0.1,
+            mana_source_count=50, draw_count=18, early_count=35, avg_cmc=2.5,
         )
-        assert _compute_resilience(result) >= 8
+        assert _compute_toughness(result) >= 8
 
-    def test_severe_mull_penalty(self):
+    def test_brittle_deck_scores_low(self):
+        # Few mana sources, no draw, few early plays, high curve.
         result = _make_result(
-            mean_mana=20.0, mean_mana_with_mull=10.0, mean_mana_no_mull=22.0,
-            mull_rate=0.5,
+            mana_source_count=20, draw_count=2, early_count=8, avg_cmc=5.5,
         )
-        assert _compute_resilience(result) <= 3
+        assert _compute_toughness(result) <= 3
 
-    def test_zero_mana_returns_5(self):
-        result = _make_result(mean_mana=0.0)
-        assert _compute_resilience(result) == 5
+    def test_mid_redundancy(self):
+        result = _make_result(
+            mana_source_count=38, draw_count=10, early_count=22, avg_cmc=3.0,
+        )
+        score = _compute_toughness(result)
+        assert 3 <= score <= 8
 
 
 class TestEfficiency:
@@ -176,25 +181,23 @@ class TestEfficiency:
         assert _compute_efficiency(result, 10) == 1
 
 
-class TestMomentum:
+class TestSurge:
     def test_strong_acceleration(self):
-        # Late game mana much higher than early
         result = _make_result(
             mean_mana_per_turn=[0.5, 1.0, 1.5, 2.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],
         )
-        assert _compute_momentum(result, 10) >= 7
+        assert _compute_surge(result, 10) >= 7
 
     def test_flat_curve(self):
-        # Same mana every turn
         result = _make_result(
             mean_mana_per_turn=[2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0],
         )
-        score = _compute_momentum(result, 10)
+        score = _compute_surge(result, 10)
         assert score <= 6
 
     def test_short_game_returns_5(self):
         result = _make_result(mean_mana_per_turn=[1.0, 2.0, 3.0])
-        assert _compute_momentum(result, 3) == 5
+        assert _compute_surge(result, 3) == 5
 
 
 # ---------------------------------------------------------------------------
@@ -216,12 +219,18 @@ class TestComputeDeckScore:
     def test_as_dict_keys(self):
         score = compute_deck_score(_make_result(), turns=10)
         keys = set(score.as_dict().keys())
-        assert keys == {"speed", "power", "consistency", "resilience", "efficiency", "momentum"}
+        assert keys == {
+            "consistency", "acceleration", "surge",
+            "toughness", "efficiency", "reach",
+        }
 
     def test_format_block_contains_all_stats(self):
         score = compute_deck_score(_make_result(), turns=10)
         block = score.format_block()
-        for stat in ["SPEED", "POWER", "CONSISTENCY", "RESILIENCE", "EFFICIENCY", "MOMENTUM"]:
+        for stat in [
+            "CONSISTENCY", "ACCELERATION", "SURGE",
+            "TOUGHNESS", "EFFICIENCY", "REACH",
+        ]:
             assert stat in block
 
 

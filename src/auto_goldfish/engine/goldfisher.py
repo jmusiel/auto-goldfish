@@ -64,9 +64,11 @@ class SimulationResult:
     mean_draws: float = 0.0
     mean_spells_cast: float = 0.0
     mean_ecms: float = 0.0
+    percentile_10: float = 0.0
     percentile_25: float = 0.0
     percentile_50: float = 0.0
     percentile_75: float = 0.0
+    percentile_90: float = 0.0
     threshold_percent: float = 0.0
     threshold_mana: float = 0.0
     ceiling_mana: float = 0.0
@@ -86,6 +88,13 @@ class SimulationResult:
     mull_rate: float = 0.0
     mean_mana_with_mull: float = 0.0
     mean_mana_no_mull: float = 0.0
+
+    # Structural snapshot of the decklist (independent of simulation outcomes).
+    # Used by the Toughness stat. Computed once per Goldfisher build.
+    mana_source_count: int = 0
+    draw_count: int = 0
+    early_count: int = 0
+    avg_cmc: float = 0.0
 
     # 95% CI half-widths (z * std / sqrt(n))
     ci_mana_value: float = 0.0
@@ -494,6 +503,21 @@ class Goldfisher:
 
         self.land_count = sum(1 for c in self.decklist if c.land)
         self.original_card_count = len(self.decklist)
+
+        # Structural snapshot of the decklist (used by the Toughness score).
+        # Counts mana sources (lands + ramp), card-draw cards, low-CMC plays,
+        # and average CMC of non-land cards.
+        non_land_cmc = [c.cmc for c in self.decklist if not c.land]
+        self.mana_source_count = sum(
+            1 for c in self.decklist if c.land or c.ramp
+        )
+        self.draw_count = sum(1 for c in self.decklist if c.draw)
+        self.early_count = sum(
+            1 for c in self.decklist if not c.land and c.cmc <= 3
+        )
+        self.avg_cmc = (
+            sum(non_land_cmc) / len(non_land_cmc) if non_land_cmc else 0.0
+        )
 
         # Save original state for optimizer restore
         self._original_decklist_dicts = list(non_commander_dicts)
@@ -1156,9 +1180,11 @@ class Goldfisher:
         mean_spells_cast = float(np.mean(spells_cast_list))
         mean_bad_turns = float(np.mean(bad_turns_list))
         mean_mid_turns = float(np.mean(mid_turns_list))
+        percentile_10 = float(np.percentile(primary_list, 10))
         percentile_25 = float(np.percentile(primary_list, 25))
         percentile_50 = float(np.percentile(primary_list, 50))
         percentile_75 = float(np.percentile(primary_list, 75))
+        percentile_90 = float(np.percentile(primary_list, 90))
 
         # Left-tail ratio consistency: mean(bottom 25%) / mean(all)
         con_threshold = 0.25
@@ -1292,9 +1318,11 @@ class Goldfisher:
             mean_draws=mean_draws,
             mean_spells_cast=mean_spells_cast,
             mean_ecms=mean_ecms,
+            percentile_10=percentile_10,
             percentile_25=percentile_25,
             percentile_50=percentile_50,
             percentile_75=percentile_75,
+            percentile_90=percentile_90,
             threshold_percent=threshold_percent,
             threshold_mana=threshold_mana,
             ceiling_mana=ceiling_mana,
@@ -1306,6 +1334,10 @@ class Goldfisher:
             mull_rate=mull_rate,
             mean_mana_with_mull=mean_mana_with_mull,
             mean_mana_no_mull=mean_mana_no_mull,
+            mana_source_count=self.mana_source_count,
+            draw_count=self.draw_count,
+            early_count=self.early_count,
+            avg_cmc=self.avg_cmc,
             ci_mana_value=ci_mana_value,
             ci_mana_draw=ci_mana_draw,
             ci_mana_ramp=ci_mana_ramp,
@@ -1605,9 +1637,11 @@ class Goldfisher:
         mean_spells_cast = float(np.mean(spells_cast_list))
         mean_bad_turns = float(np.mean(bad_turns_list))
         mean_mid_turns = float(np.mean(mid_turns_list))
+        percentile_10 = float(np.percentile(primary_list, 10))
         percentile_25 = float(np.percentile(primary_list, 25))
         percentile_50 = float(np.percentile(primary_list, 50))
         percentile_75 = float(np.percentile(primary_list, 75))
+        percentile_90 = float(np.percentile(primary_list, 90))
 
         # Left-tail ratio consistency: mean(bottom 25%) / mean(all)
         con_threshold = 0.25
@@ -1732,9 +1766,11 @@ class Goldfisher:
             mean_draws=mean_draws,
             mean_spells_cast=mean_spells_cast,
             mean_ecms=mean_ecms,
+            percentile_10=percentile_10,
             percentile_25=percentile_25,
             percentile_50=percentile_50,
             percentile_75=percentile_75,
+            percentile_90=percentile_90,
             threshold_percent=threshold_percent,
             threshold_mana=threshold_mana,
             ceiling_mana=ceiling_mana,
@@ -1746,6 +1782,10 @@ class Goldfisher:
             mull_rate=mull_rate,
             mean_mana_with_mull=mean_mana_with_mull,
             mean_mana_no_mull=mean_mana_no_mull,
+            mana_source_count=self.mana_source_count,
+            draw_count=self.draw_count,
+            early_count=self.early_count,
+            avg_cmc=self.avg_cmc,
             ci_mana_value=ci_mana_value,
             ci_mana_draw=ci_mana_draw,
             ci_mana_ramp=ci_mana_ramp,

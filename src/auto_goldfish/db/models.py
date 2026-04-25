@@ -100,12 +100,12 @@ class SimulationResultRow(Base):
     percentile_25: Mapped[float] = mapped_column(Float, nullable=False)
     percentile_50: Mapped[float] = mapped_column(Float, nullable=False)
     percentile_75: Mapped[float] = mapped_column(Float, nullable=False)
-    score_speed: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    score_power: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     score_consistency: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    score_resilience: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    score_acceleration: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    score_surge: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    score_toughness: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     score_efficiency: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    score_momentum: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    score_reach: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     __table_args__ = (
         UniqueConstraint("run_id", "land_count", name="uq_run_land"),

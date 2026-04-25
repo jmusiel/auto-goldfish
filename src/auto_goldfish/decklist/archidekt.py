@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
+import requests
 from pyrchidekt.api import getDeckById
 from tqdm import tqdm
 
 from .loader import get_deckpath, save_decklist
+
+ARCHIDEKT_DECKS_V3_URL = "https://www.archidekt.com/api/decks/v3/"
+ARCHIDEKT_FORMAT_COMMANDER = 3
 
 
 def fetch_decklist(
@@ -110,3 +114,46 @@ def fetch_and_save(
     )
     save_decklist(deck_name, deck_list)
     return deck_list
+
+
+def list_user_decks(
+    username: str,
+    deck_format: int = ARCHIDEKT_FORMAT_COMMANDER,
+    require_size: Optional[int] = 100,
+    page_size: int = 100,
+    timeout: int = 30,
+) -> List[Dict[str, Any]]:
+    """Return public deck listings owned by ``username`` from Archidekt.
+
+    Filters out private, unlisted, and theorycrafted decks. When
+    ``require_size`` is set (default 100) only decks with that exact card
+    count are returned -- matches Commander legality.
+
+    Each entry is the raw v3 result row (keys: id, name, size, deckFormat,
+    edhBracket, owner, createdAt, updatedAt, ...).
+    """
+    params: Optional[Dict[str, Any]] = {
+        "ownerUsername": username,
+        "deckFormat": deck_format,
+        "pageSize": page_size,
+    }
+    url: Optional[str] = ARCHIDEKT_DECKS_V3_URL
+    out: List[Dict[str, Any]] = []
+    while url:
+        resp = requests.get(url, params=params, timeout=timeout)
+        resp.raise_for_status()
+        data = resp.json()
+        out.extend(data.get("results", []))
+        url = data.get("next")
+        params = None  # Archidekt's "next" already encodes the query.
+
+    filtered: List[Dict[str, Any]] = []
+    for entry in out:
+        if entry.get("private") or entry.get("unlisted"):
+            continue
+        if entry.get("theorycrafted"):
+            continue
+        if require_size is not None and entry.get("size") != require_size:
+            continue
+        filtered.append(entry)
+    return filtered

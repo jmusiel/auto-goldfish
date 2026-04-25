@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 bp = Blueprint("runs", __name__, url_prefix="/runs")
 
-STAT_KEYS = ["speed", "power", "consistency", "resilience", "efficiency", "momentum"]
+STAT_KEYS = ["consistency", "acceleration", "surge", "toughness", "efficiency", "reach"]
 
 
 def _load_runs() -> list[dict]:
@@ -54,12 +54,12 @@ def _load_runs() -> list[dict]:
                     [
                         {
                             "land_count": r.land_count,
-                            "speed": r.score_speed,
-                            "power": r.score_power,
                             "consistency": r.score_consistency,
-                            "resilience": r.score_resilience,
+                            "acceleration": r.score_acceleration,
+                            "surge": r.score_surge,
+                            "toughness": r.score_toughness,
                             "efficiency": r.score_efficiency,
-                            "momentum": r.score_momentum,
+                            "reach": r.score_reach,
                         }
                         for r in run.results
                     ],

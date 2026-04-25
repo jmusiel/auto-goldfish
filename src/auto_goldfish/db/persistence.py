@@ -171,12 +171,12 @@ def save_simulation_run(
             percentile_25=r.get("percentile_25", 0.0),
             percentile_50=r.get("percentile_50", 0.0),
             percentile_75=r.get("percentile_75", 0.0),
-            score_speed=deck_score.get("speed"),
-            score_power=deck_score.get("power"),
             score_consistency=deck_score.get("consistency"),
-            score_resilience=deck_score.get("resilience"),
+            score_acceleration=deck_score.get("acceleration"),
+            score_surge=deck_score.get("surge"),
+            score_toughness=deck_score.get("toughness"),
             score_efficiency=deck_score.get("efficiency"),
-            score_momentum=deck_score.get("momentum"),
+            score_reach=deck_score.get("reach"),
         ))
 
     # Save card performance only at optimal land count (bottom 10 with effects)
