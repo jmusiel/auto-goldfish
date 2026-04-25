@@ -140,8 +140,17 @@ def save_simulation_run(
     session.add(run)
     session.flush()
 
-    # Save per-land-count results
+    # The optimizer may return multiple top configs at the same land count
+    # (e.g. different added-card combinations). The DB constrains one result
+    # per (run, land_count), so keep only the highest-ranked entry per land.
+    deduped: Dict[int, Dict[str, Any]] = {}
     for r in results:
+        lc = r.get("land_count", 0)
+        if lc not in deduped:
+            deduped[lc] = r
+
+    # Save per-land-count results
+    for r in deduped.values():
         ci_mana = r.get("ci_mean_mana", [0.0, 0.0])
         ci_con = r.get("ci_consistency", [0.0, 0.0])
         deck_score = r.get("deck_score", {})
