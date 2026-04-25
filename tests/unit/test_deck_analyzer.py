@@ -62,6 +62,29 @@ class TestAnalyzeDeckComposition:
         comp = analyze_deck_composition(deck)
         assert comp.commander_cmc == 4
         assert comp.commander_name == "Atraxa"
+        assert comp.commander_cmcs == [4]
+        assert comp.commander_names == ["Atraxa"]
+
+    def test_partner_commanders_both_tracked(self):
+        deck = [_make_land()] * 36
+        deck += [_make_card_dict("Tymna", cmc=2, commander=True)]
+        deck += [_make_card_dict("Tana", cmc=4, commander=True)]
+        deck += [_make_card_dict("Bear")] * 61
+        comp = analyze_deck_composition(deck)
+        # Primary (legacy fields) point at the first commander encountered.
+        assert comp.commander_cmc == 2
+        assert comp.commander_name == "Tymna"
+        # Both partners listed in the new fields.
+        assert comp.commander_cmcs == [2, 4]
+        assert comp.commander_names == ["Tymna", "Tana"]
+
+    def test_no_commanders_empty_lists(self):
+        deck = [_make_land()] * 36 + [_make_card_dict("Bear")] * 63
+        comp = analyze_deck_composition(deck)
+        assert comp.commander_cmcs == []
+        assert comp.commander_names == []
+        assert comp.commander_cmc == 0
+        assert comp.commander_name == ""
 
     def test_mdfc_counted_as_land(self):
         deck = [_make_land()] * 35 + [_make_mdfc()] + [_make_card_dict("Bear")] * 63

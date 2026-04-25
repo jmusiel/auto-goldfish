@@ -28,6 +28,14 @@ DRAW_EARLY_FRACTION = 0.5
 FLOOD_LAND_COUNT = 7
 FLOOD_TURN = 5
 
+# Composite score weights when 2+ partner commanders are active.
+# Carves 0.05 from each base component to make room for the partner term.
+SCORE_WEIGHT_CURVE_PARTNER = 0.30
+SCORE_WEIGHT_MANA_PARTNER = 0.20
+SCORE_WEIGHT_MULLIGAN_PARTNER = 0.15
+SCORE_WEIGHT_FLOOD_PARTNER = 0.15
+SCORE_WEIGHT_PARTNER = 0.20
+
 
 # ---------------------------------------------------------------------------
 # Core hypergeometric distribution
@@ -192,6 +200,42 @@ def _expected_mana_seen(turn: int, N: int, K: int, cards_seen: int) -> float:
 
 
 # ---------------------------------------------------------------------------
+# Partner commanders -- joint castable probability
+# ---------------------------------------------------------------------------
+
+def prob_both_partners_castable(N: int, K: int, cmc_a: int, cmc_b: int) -> float:
+    """P(cast cheaper partner on its CMC turn AND second partner on its CMC turn).
+
+    Sequential model: cast partner with cmc_a on turn cmc_a, then partner
+    with cmc_b on turn cmc_b. The events are not independent (lands persist
+    across turns), so this iterates over the joint distribution of land
+    draws at turn A and the additional draws between turns A and B.
+    """
+    if cmc_a <= 0 or cmc_b <= 0:
+        return 0.0
+    if cmc_a > cmc_b:
+        cmc_a, cmc_b = cmc_b, cmc_a
+
+    cards_at_a = min(7 + cmc_a - 1, N)
+    cards_at_b = min(7 + cmc_b - 1, N)
+    extra = cards_at_b - cards_at_a
+
+    total = 0.0
+    for lands_a in range(cmc_a, min(cards_at_a, K) + 1):
+        p_a = hypergeometric_pmf(lands_a, N, K, cards_at_a)
+        if p_a == 0.0:
+            continue
+        needed = max(0, cmc_b - lands_a)
+        remaining_pop = N - cards_at_a
+        remaining_lands = K - lands_a
+        if needed > extra or needed > remaining_lands:
+            continue
+        p_more = prob_at_least(needed, remaining_pop, remaining_lands, extra)
+        total += p_a * p_more
+    return total
+
+
+# ---------------------------------------------------------------------------
 # Optimal land count
 # ---------------------------------------------------------------------------
 
@@ -201,6 +245,7 @@ def optimal_land_count(
     ramp_cards: int = 0,
     draw_cards: int = 0,
     commander_cmc: int = 0,
+    commander_cmcs: Optional[List[int]] = None,
     search_range: Tuple[int, int] = DEFAULT_SEARCH_RANGE,
 ) -> Dict[str, Any]:
     """Find the optimal land count by sweeping K and scoring each.
@@ -209,34 +254,51 @@ def optimal_land_count(
     - On-curve probability through key turns
     - Expected mana at critical turns (based on CMC distribution)
     - Mulligan rate penalty
+    - Flood penalty
+    - Partner co-availability (only when 2+ commanders provided)
 
-    Returns dict with recommendation, scores, and reasoning.
+    *commander_cmc* (legacy, single int) and *commander_cmcs* (list) are
+    both accepted; the list takes precedence when given.
     """
     if cmc_distribution is None:
         cmc_distribution = {}
 
-    # Determine key turns from CMC distribution
+    if commander_cmcs is None:
+        commander_cmcs = [commander_cmc] if commander_cmc > 0 else []
+
     avg_cmc = _weighted_avg_cmc(cmc_distribution) if cmc_distribution else 3.0
-    key_turns = _key_turns_from_cmc(cmc_distribution, commander_cmc)
+    key_turns = _key_turns_from_cmc(cmc_distribution, commander_cmcs)
 
     best_score = -1.0
     best_k = search_range[0]
     scores: List[Dict[str, Any]] = []
 
     for k in range(search_range[0], search_range[1] + 1):
-        score = _score_land_count(deck_size, k, key_turns, avg_cmc, ramp_cards, draw_cards)
+        score = _score_land_count(
+            deck_size, k, key_turns, avg_cmc, ramp_cards, draw_cards, commander_cmcs
+        )
         scores.append({"land_count": k, "score": round(score, 4)})
         if score > best_score:
             best_score = score
             best_k = k
 
-    return {
+    result = {
         "recommended_lands": best_k,
         "deck_size": deck_size,
         "avg_cmc": round(avg_cmc, 2),
         "key_turns": key_turns,
+        "commander_cmcs": list(commander_cmcs),
         "scores": scores,
     }
+    if len(commander_cmcs) >= 2:
+        sorted_cmcs = sorted(c for c in commander_cmcs if c > 0)
+        result["partner_castable_prob"] = round(
+            prob_both_partners_castable(
+                deck_size, best_k, sorted_cmcs[0], sorted_cmcs[1]
+            ),
+            4,
+        )
+    return result
 
 
 def _weighted_avg_cmc(cmc_distribution: Dict[int, int]) -> float:
@@ -248,17 +310,19 @@ def _weighted_avg_cmc(cmc_distribution: Dict[int, int]) -> float:
 
 
 def _key_turns_from_cmc(
-    cmc_distribution: Dict[int, int], commander_cmc: int = 0
+    cmc_distribution: Dict[int, int],
+    commander_cmcs: Optional[List[int]] = None,
 ) -> List[int]:
     """Determine which turns matter most based on curve."""
     turns = set()
     for cmc, count in cmc_distribution.items():
         if count > 0 and 1 <= cmc <= 10:
             turns.add(cmc)
-    # Always include commander cast turn
-    if commander_cmc > 0:
-        turns.add(commander_cmc)
-    # Ensure turns 3-5 are represented (common critical turns)
+    if commander_cmcs:
+        for cmc in commander_cmcs:
+            if cmc > 0:
+                turns.add(cmc)
+    # Always include common critical turns 3-5
     turns.update([3, 4, 5])
     return sorted(turns)
 
@@ -269,13 +333,13 @@ def _score_land_count(
     avg_cmc: float,
     ramp_cards: int,
     draw_cards: int,
+    commander_cmcs: Optional[List[int]] = None,
 ) -> float:
     """Composite score for a given land count.
 
-    Components:
-    1. On-curve probability at key turns (weighted)
-    2. Expected mana efficiency
-    3. Mulligan rate penalty
+    Components: on-curve probability, expected mana efficiency, mulligan
+    penalty, flood penalty. When 2+ partner commanders are given, a 5th
+    partner-castable component is added with rebalanced weights.
     """
     # 1. On-curve score (0-1): weighted average of P(on curve) at key turns
     curve_score = 0.0
@@ -303,6 +367,19 @@ def _score_land_count(
     cards_at_flood = min(7 + FLOOD_TURN - 1, N)
     p_flood = prob_at_least(FLOOD_LAND_COUNT, N, K, cards_at_flood)
     flood_score = 1.0 - p_flood
+
+    if commander_cmcs and len([c for c in commander_cmcs if c > 0]) >= 2:
+        sorted_cmcs = sorted(c for c in commander_cmcs if c > 0)
+        partner_score = prob_both_partners_castable(
+            N, K, sorted_cmcs[0], sorted_cmcs[1]
+        )
+        return (
+            SCORE_WEIGHT_CURVE_PARTNER * curve_score
+            + SCORE_WEIGHT_MANA_PARTNER * mana_score
+            + SCORE_WEIGHT_MULLIGAN_PARTNER * mull_score
+            + SCORE_WEIGHT_FLOOD_PARTNER * flood_score
+            + SCORE_WEIGHT_PARTNER * partner_score
+        )
 
     return (
         SCORE_WEIGHT_CURVE * curve_score

@@ -164,3 +164,79 @@ class TestCalculateEndpoint:
         """No body should not 500 -- should fall back to defaults."""
         resp = client.post("/mana-model/api/calculate")
         assert resp.status_code == 200
+
+
+class TestPartnerCommanderFilter:
+    def _partner_deck(self):
+        lands = [
+            {"name": f"Forest_{i}", "cmc": 0, "types": ["Land"], "quantity": 1,
+             "oracle_cmc": 0, "cost": "", "text": "", "commander": False}
+            for i in range(36)
+        ]
+        partners = [
+            {"name": "Tymna the Weaver", "cmc": 2, "types": ["Creature"], "quantity": 1,
+             "oracle_cmc": 2, "cost": "{1}{W}", "text": "", "commander": True},
+            {"name": "Tana the Bloodsower", "cmc": 4, "types": ["Creature"], "quantity": 1,
+             "oracle_cmc": 4, "cost": "{2}{R}{G}", "text": "", "commander": True},
+        ]
+        spells = [
+            {"name": f"Bear_{i}", "cmc": 2, "types": ["Creature"], "quantity": 1,
+             "oracle_cmc": 2, "cost": "{1}{G}", "text": "", "commander": False}
+            for i in range(61)
+        ]
+        return lands + partners + spells
+
+    def test_partner_deck_returns_both_commanders(self, client):
+        resp = client.post(
+            "/mana-model/api/local_partners/analysis",
+            data=json.dumps({"cards": self._partner_deck()}),
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert len(data["composition"]["commanders"]) == 2
+        assert data["active_commander_cmcs"] == [2, 4]
+        assert "partner_castable_prob" in data["recommendation"]
+
+    def test_filter_to_single_partner(self, client):
+        resp = client.post(
+            "/mana-model/api/local_partners/analysis",
+            data=json.dumps({
+                "cards": self._partner_deck(),
+                "commander_filter": "0",
+            }),
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["active_commander_cmcs"] == [2]
+        assert "partner_castable_prob" not in data["recommendation"]
+
+    def test_filter_invalid_index_falls_back_to_all(self, client):
+        resp = client.post(
+            "/mana-model/api/local_partners/analysis",
+            data=json.dumps({
+                "cards": self._partner_deck(),
+                "commander_filter": "99",
+            }),
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["active_commander_cmcs"] == [2, 4]
+
+    def test_single_commander_unaffected(self, client):
+        """Single-commander deck must not get partner_castable_prob."""
+        deck = _make_deck_json()
+        # Mark one as commander.
+        deck[36]["commander"] = True
+        deck[36]["cmc"] = 4
+        resp = client.post(
+            "/mana-model/api/local_solo/analysis",
+            data=json.dumps({"cards": deck}),
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert len(data["composition"]["commanders"]) == 1
+        assert "partner_castable_prob" not in data["recommendation"]

@@ -69,22 +69,34 @@ def analysis(deck_name: str):
             abort(400)
         deck_list = body.get("cards", [])
         overrides = body.get("overrides", {})
+        commander_filter = body.get("commander_filter", request.args.get("commander_filter"))
     else:
         path = get_deckpath(deck_name)
         if not os.path.isfile(path):
             abort(404)
         deck_list = load_decklist(deck_name)
         overrides = load_overrides(deck_name)
+        commander_filter = request.args.get("commander_filter")
 
     comp = analyze_deck_composition(deck_list, DEFAULT_REGISTRY, overrides)
 
-    # Get recommendation
+    # Resolve which commander CMCs feed into the optimization.
+    # commander_filter may be None/"all" (use all detected), or a 0-based index.
+    effective_cmcs = list(comp.commander_cmcs)
+    if commander_filter not in (None, "all", ""):
+        try:
+            idx = int(commander_filter)
+            if 0 <= idx < len(comp.commander_cmcs):
+                effective_cmcs = [comp.commander_cmcs[idx]]
+        except (ValueError, TypeError):
+            pass
+
     rec = optimal_land_count(
         deck_size=comp.deck_size,
         cmc_distribution=comp.cmc_distribution,
         ramp_cards=comp.ramp_cards,
         draw_cards=comp.draw_cards,
-        commander_cmc=comp.commander_cmc,
+        commander_cmcs=effective_cmcs,
     )
 
     # Mana table for current land count
@@ -114,8 +126,14 @@ def analysis(deck_name: str):
             "draw_cards": comp.draw_cards,
             "commander_cmc": comp.commander_cmc,
             "commander_name": comp.commander_name,
+            "commanders": [
+                {"name": n, "cmc": c}
+                for n, c in zip(comp.commander_names, comp.commander_cmcs)
+            ],
             "cmc_distribution": comp.cmc_distribution,
         },
+        "active_commander_cmcs": effective_cmcs,
+        "commander_filter": commander_filter,
         "recommendation": rec,
         "current_mana_table": current_table,
         "comparison": comparison,

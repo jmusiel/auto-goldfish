@@ -13,6 +13,7 @@
 
 <div id="mana-model-loading" class="hint">Loading mana model analysis...</div>
 <div id="mana-model-content" style="display:none;">
+    <div id="commander-filter" style="display:none; margin-bottom:1rem;"></div>
     <div id="mana-model-recommendation" style="margin-bottom:1.5rem;"></div>
 
     <div style="display:flex; gap:2rem; flex-wrap:wrap;">
@@ -71,8 +72,14 @@
     // Comparison state: { cols: [{land_count, mana_table, mulligan_rate}, ...], deckSize, recommended }
     var comparisonState = {cols: [], deckSize: 99, recommended: 36};
 
+    // Commander filter: null/"all" (default) or 0-based index string.
+    var commanderFilter = null;
+
     function loadManaModel() {
         var url = '/mana-model/api/' + encodeURIComponent(deckName) + '/analysis';
+        if (commanderFilter !== null) {
+            url += '?commander_filter=' + encodeURIComponent(commanderFilter);
+        }
         var fetchOpts = {};
 
         if (isLocal) {
@@ -84,6 +91,7 @@
                     body: JSON.stringify({
                         cards: storedDeck.cards,
                         overrides: storedDeck.overrides || {},
+                        commander_filter: commanderFilter,
                     }),
                 };
             }
@@ -98,21 +106,74 @@
             });
     }
 
+    function renderCommanderFilter(commanders) {
+        var div = document.getElementById('commander-filter');
+        if (!commanders || commanders.length < 2) {
+            div.style.display = 'none';
+            return;
+        }
+        var html = '<strong>Analyze for:</strong> ';
+        html += '<label style="margin-right:1rem;"><input type="radio" name="cmd-filter" value="all"'
+            + (commanderFilter === null || commanderFilter === 'all' ? ' checked' : '')
+            + '> Both partners</label>';
+        commanders.forEach(function(c, idx) {
+            html += '<label style="margin-right:1rem;"><input type="radio" name="cmd-filter" value="' + idx + '"'
+                + (commanderFilter === String(idx) ? ' checked' : '')
+                + '> Only ' + c.name + ' (' + c.cmc + ')</label>';
+        });
+        div.innerHTML = html;
+        div.style.display = '';
+        div.querySelectorAll('input[name="cmd-filter"]').forEach(function(r) {
+            r.addEventListener('change', function() {
+                commanderFilter = r.value === 'all' ? null : r.value;
+                document.getElementById('mana-model-loading').style.display = '';
+                document.getElementById('mana-model-loading').textContent = 'Loading mana model analysis...';
+                document.getElementById('mana-model-content').style.display = 'none';
+                loadManaModel();
+            });
+        });
+    }
+
     function renderManaModel(data) {
         document.getElementById('mana-model-loading').style.display = 'none';
         document.getElementById('mana-model-content').style.display = 'block';
 
         var rec = data.recommendation;
         var comp = data.composition;
+        renderCommanderFilter(comp.commanders || []);
         var recDiv = document.getElementById('mana-model-recommendation');
         var delta = rec.recommended_lands - comp.land_count;
         var deltaStr = delta > 0 ? '+' + delta : delta === 0 ? 'no change' : '' + delta;
+
+        var commanderLabel = '';
+        if (comp.commanders && comp.commanders.length >= 2) {
+            var active = data.active_commander_cmcs || [];
+            if (active.length === comp.commanders.length) {
+                commanderLabel = ' | Commanders: ' + comp.commanders.map(function(c) {
+                    return c.name + ' (' + c.cmc + ')';
+                }).join(' + ');
+            } else {
+                // Only one active -- show which.
+                var only = comp.commanders.find(function(c) { return c.cmc === active[0]; });
+                commanderLabel = ' | Commander: ' + (only ? only.name : '?') + ' (' + active[0] + ')';
+            }
+        } else if (comp.commander_name) {
+            commanderLabel = ' | Commander: ' + comp.commander_name + ' (CMC ' + comp.commander_cmc + ')';
+        }
+
+        var partnerLine = '';
+        if (rec.partner_castable_prob !== undefined) {
+            partnerLine = '<br><small>P(both partners castable on curve): '
+                + (rec.partner_castable_prob * 100).toFixed(1) + '%</small>';
+        }
+
         recDiv.innerHTML =
             '<strong>Recommendation:</strong> ' + rec.recommended_lands + ' lands'
             + ' (currently ' + comp.land_count + ', ' + deltaStr + ')'
             + '<br><small>Avg CMC: ' + comp.avg_cmc + ' | Ramp: ' + comp.ramp_cards + ' | Draw: ' + comp.draw_cards
-            + (comp.commander_name ? ' | Commander: ' + comp.commander_name + ' (CMC ' + comp.commander_cmc + ')' : '')
-            + '</small>';
+            + commanderLabel
+            + '</small>'
+            + partnerLine;
 
         var tbody = document.querySelector('#mana-model-table tbody');
         tbody.innerHTML = '';

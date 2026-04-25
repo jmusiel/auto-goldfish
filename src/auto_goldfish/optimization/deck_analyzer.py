@@ -24,8 +24,12 @@ class DeckComposition:
     avg_cmc: float = 0.0
     ramp_cards: int = 0
     draw_cards: int = 0
+    # Primary commander (first encountered) -- kept for backwards compat.
     commander_cmc: int = 0
     commander_name: str = ""
+    # All commanders found, in deck order. For partner pairs both are listed.
+    commander_cmcs: List[int] = field(default_factory=list)
+    commander_names: List[str] = field(default_factory=list)
 
 
 def analyze_deck_composition(
@@ -49,8 +53,8 @@ def analyze_deck_composition(
     cmc_counts: Counter[int] = Counter()
     ramp_cards = 0
     draw_cards = 0
-    commander_cmc = 0
-    commander_name = ""
+    commander_cmcs: List[int] = []
+    commander_names: List[str] = []
     total_cmc = 0
     nonland_count = 0
 
@@ -64,8 +68,8 @@ def analyze_deck_composition(
         qty = card.get("quantity", 1)
 
         if card.get("commander", False):
-            commander_cmc = cmc
-            commander_name = name
+            commander_cmcs.append(cmc)
+            commander_names.append(name)
 
         if is_land:
             land_count += qty
@@ -97,8 +101,10 @@ def analyze_deck_composition(
         avg_cmc=round(avg_cmc, 2),
         ramp_cards=ramp_cards,
         draw_cards=draw_cards,
-        commander_cmc=commander_cmc,
-        commander_name=commander_name,
+        commander_cmc=commander_cmcs[0] if commander_cmcs else 0,
+        commander_name=commander_names[0] if commander_names else "",
+        commander_cmcs=commander_cmcs,
+        commander_names=commander_names,
     )
 
 

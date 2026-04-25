@@ -12,6 +12,7 @@ from auto_goldfish.optimization.mana_model import (
     mulligan_probability,
     optimal_land_count,
     prob_at_least,
+    prob_both_partners_castable,
 )
 
 
@@ -213,3 +214,81 @@ class TestLandCountComparison:
         assert len(result[0]["mana_table"]) == 5
         assert "mulligan_rate" in result[0]
         assert "land_ratio" in result[0]
+
+
+# ---------------------------------------------------------------------------
+# Partner commander joint-castable tests
+# ---------------------------------------------------------------------------
+
+class TestPartnerCastable:
+    def test_more_lands_means_higher_joint_prob(self):
+        p_low = prob_both_partners_castable(99, 30, 3, 4)
+        p_high = prob_both_partners_castable(99, 40, 3, 4)
+        assert p_high > p_low
+
+    def test_joint_le_marginal_for_higher_cmc(self):
+        """P(both) <= P(at least cmc_b lands by turn cmc_b)."""
+        N, K, a, b = 99, 36, 3, 5
+        p_both = prob_both_partners_castable(N, K, a, b)
+        p_b_only = prob_at_least(b, N, K, 7 + b - 1)
+        assert p_both <= p_b_only + 1e-9
+
+    def test_equal_cmcs_collapses_to_marginal(self):
+        """When cmc_a == cmc_b, P(both castable) = P(>=cmc lands by turn cmc)."""
+        N, K, c = 99, 36, 4
+        p_both = prob_both_partners_castable(N, K, c, c)
+        p_marginal = prob_at_least(c, N, K, 7 + c - 1)
+        assert abs(p_both - p_marginal) < 1e-9
+
+    def test_zero_cmc_returns_zero(self):
+        """Edge case: missing CMC inputs return 0 (no commander)."""
+        assert prob_both_partners_castable(99, 36, 0, 4) == 0.0
+        assert prob_both_partners_castable(99, 36, 3, 0) == 0.0
+
+    def test_order_independence(self):
+        """Result is symmetric in cmc_a and cmc_b."""
+        assert (
+            prob_both_partners_castable(99, 36, 3, 5)
+            == prob_both_partners_castable(99, 36, 5, 3)
+        )
+
+
+class TestOptimalLandCountWithPartners:
+    def test_partner_branch_returns_partner_prob(self):
+        """When 2+ commanders, result includes partner_castable_prob."""
+        result = optimal_land_count(
+            deck_size=99,
+            cmc_distribution={2: 10, 3: 20, 4: 15},
+            commander_cmcs=[3, 5],
+        )
+        assert "partner_castable_prob" in result
+        assert 0.0 <= result["partner_castable_prob"] <= 1.0
+
+    def test_single_commander_no_partner_field(self):
+        """Single commander -- no partner_castable_prob in output."""
+        result = optimal_land_count(
+            deck_size=99,
+            cmc_distribution={2: 10, 3: 20, 4: 15},
+            commander_cmc=4,
+        )
+        assert "partner_castable_prob" not in result
+
+    def test_legacy_commander_cmc_unchanged(self):
+        """commander_cmc kwarg still works for backwards compat."""
+        legacy = optimal_land_count(deck_size=99, commander_cmc=5)
+        modern = optimal_land_count(deck_size=99, commander_cmcs=[5])
+        assert legacy["recommended_lands"] == modern["recommended_lands"]
+
+    def test_expensive_partners_recommend_more_lands(self):
+        """A high-CMC partner pair should push the recommendation higher."""
+        cheap = optimal_land_count(
+            deck_size=99,
+            cmc_distribution={2: 25, 3: 15},
+            commander_cmcs=[2, 3],
+        )
+        expensive = optimal_land_count(
+            deck_size=99,
+            cmc_distribution={2: 25, 3: 15},
+            commander_cmcs=[5, 7],
+        )
+        assert expensive["recommended_lands"] >= cheap["recommended_lands"]
