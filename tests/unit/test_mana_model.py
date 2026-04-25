@@ -9,7 +9,6 @@ from auto_goldfish.optimization.mana_model import (
     hypergeometric_cdf,
     hypergeometric_pmf,
     land_count_comparison,
-    mulligan_adjusted_land_prob,
     mulligan_probability,
     optimal_land_count,
     prob_at_least,
@@ -141,13 +140,6 @@ class TestMulligan:
         """Very few lands should give high mulligan rate."""
         p = mulligan_probability(99, 10, keep_range=(2, 5))
         assert p > 0.5
-
-    def test_mulligan_adjusted_less_than_keep(self):
-        """Mulligan-adjusted expected mana should be <= keep-7 expected mana."""
-        for t in [3, 5]:
-            e_adj = mulligan_adjusted_land_prob(t, 99, 36)
-            e_keep = expected_mana_on_turn(t, 99, 36)
-            assert e_adj <= e_keep + 0.01
 
 
 # ---------------------------------------------------------------------------

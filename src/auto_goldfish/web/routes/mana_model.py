@@ -10,6 +10,7 @@ from auto_goldfish.decklist.loader import get_deckpath, load_decklist, load_over
 from auto_goldfish.effects.card_database import DEFAULT_REGISTRY
 from auto_goldfish.optimization.deck_analyzer import analyze_deck_composition
 from auto_goldfish.optimization.mana_model import (
+    adjusted_expected_mana,
     expected_mana_table,
     land_count_comparison,
     mulligan_probability,
@@ -28,7 +29,7 @@ def page(deck_name: str):
     """
     if request.method == "POST":
         try:
-            body = request.get_json(force=True)
+            body = request.get_json(force=True, silent=True) or {}
         except Exception:
             abort(400)
         deck_list = body.get("cards", [])
@@ -63,7 +64,7 @@ def analysis(deck_name: str):
     """
     if request.method == "POST":
         try:
-            body = request.get_json(force=True)
+            body = request.get_json(force=True, silent=True) or {}
         except Exception:
             abort(400)
         deck_list = body.get("cards", [])
@@ -128,10 +129,7 @@ def analysis(deck_name: str):
 @bp.route("/api/calculate", methods=["POST"])
 def calculate():
     """Ad-hoc calculation for interactive what-if sliders."""
-    try:
-        body = request.get_json(force=True)
-    except Exception:
-        abort(400)
+    body = request.get_json(force=True, silent=True) or {}
 
     deck_size = body.get("deck_size", 99)
     land_count = body.get("land_count", 36)
@@ -140,11 +138,22 @@ def calculate():
     draw_cards = body.get("draw_cards", 0)
 
     table = expected_mana_table(deck_size, land_count, max_turn)
+    if ramp_cards or draw_cards:
+        for row in table:
+            row["expected_mana"] = round(
+                adjusted_expected_mana(
+                    row["turn"], deck_size, land_count,
+                    ramp_cards=ramp_cards, draw_cards=draw_cards,
+                ),
+                3,
+            )
     p_mull = mulligan_probability(deck_size, land_count)
 
     return jsonify({
         "deck_size": deck_size,
         "land_count": land_count,
+        "ramp_cards": ramp_cards,
+        "draw_cards": draw_cards,
         "mana_table": table,
         "mulligan_rate": round(p_mull, 4),
     })

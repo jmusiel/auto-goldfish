@@ -32,6 +32,11 @@
         </div>
         <div>
             <h3>Land Count Comparison</h3>
+            <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.5rem; flex-wrap:wrap;">
+                <label>Add column: <input type="number" id="comparison-add-input" min="20" max="60" placeholder="e.g. 38" style="width:5rem;"></label>
+                <button type="button" class="btn btn-secondary btn-sm" id="comparison-add-btn">Add</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="comparison-reset-btn" title="Restore the default comparison">Reset</button>
+            </div>
             <table class="mana-table" id="mana-model-comparison">
                 <thead><tr id="mana-comparison-header"></tr></thead>
                 <tbody id="mana-comparison-body"></tbody>
@@ -46,7 +51,11 @@
         <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
             <label>Lands: <input type="number" id="whatif-lands" value="{{ land_count }}" min="10" max="60" style="width:4rem;"></label>
             <label>Deck Size: <input type="number" id="whatif-decksize" value="{{ deck_size }}" min="40" max="120" style="width:4rem;"></label>
+            <label title="Number of ramp spells (Sol Ring, Llanowar Elves, etc.)">Ramp: <input type="number" id="whatif-ramp" value="0" min="0" max="40" style="width:4rem;"></label>
+            <label title="Number of card-draw spells">Draw: <input type="number" id="whatif-draw" value="0" min="0" max="40" style="width:4rem;"></label>
             <button type="button" class="btn btn-secondary btn-sm" id="whatif-btn">Calculate</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="whatif-share-btn" title="Copy a link to this scenario">Copy link</button>
+            <span id="whatif-share-status" class="hint" style="margin-left:0.25rem;"></span>
         </div>
         <div id="whatif-result" style="margin-top:0.5rem;"></div>
     </div>
@@ -56,6 +65,11 @@
 (function() {
     var deckName = {{ deck_name | tojson }};
     var isLocal = {{ 'true' if is_local is defined and is_local else 'false' }};
+    var MAX_COMPARISON_COLS = 6;
+    var COMPARISON_STORAGE_KEY = 'manaModel.comparisonCols.' + deckName;
+
+    // Comparison state: { cols: [{land_count, mana_table, mulligan_rate}, ...], deckSize, recommended }
+    var comparisonState = {cols: [], deckSize: 99, recommended: 36};
 
     function loadManaModel() {
         var url = '/mana-model/api/' + encodeURIComponent(deckName) + '/analysis';
@@ -110,27 +124,18 @@
             tbody.appendChild(tr);
         });
 
-        var headerRow = document.getElementById('mana-comparison-header');
-        var compBody = document.getElementById('mana-comparison-body');
-        headerRow.innerHTML = '<th>Turn</th>';
-        data.comparison.forEach(function(c) {
-            var th = document.createElement('th');
-            th.textContent = c.land_count + ' lands';
-            if (c.land_count === rec.recommended_lands) th.style.fontWeight = 'bold';
-            headerRow.appendChild(th);
-        });
+        comparisonState.deckSize = comp.deck_size;
+        comparisonState.recommended = rec.recommended_lands;
 
-        var maxTurns = data.comparison[0].mana_table.length;
-        compBody.innerHTML = '';
-        for (var t = 0; t < maxTurns; t++) {
-            var tr = document.createElement('tr');
-            tr.innerHTML = '<td>' + (t + 1) + '</td>';
-            data.comparison.forEach(function(c) {
-                var td = document.createElement('td');
-                td.textContent = c.mana_table[t].expected_mana;
-                tr.appendChild(td);
-            });
-            compBody.appendChild(tr);
+        var saved = loadComparisonCols();
+        if (saved && saved.length) {
+            // Hydrate from cache by recomputing each saved column.
+            comparisonState.cols = [];
+            renderComparison();
+            saved.forEach(function(lc) { addComparisonCol(lc, /*persist=*/false); });
+        } else {
+            comparisonState.cols = data.comparison.slice();
+            renderComparison();
         }
 
         var mullDiv = document.getElementById('mana-model-mulligan');
@@ -138,22 +143,35 @@
             + 'Current (' + comp.land_count + ' lands): ' + (data.mulligan.current_rate * 100).toFixed(1) + '%'
             + ' | Recommended (' + rec.recommended_lands + ' lands): ' + (data.mulligan.recommended_rate * 100).toFixed(1) + '%';
 
-        document.getElementById('whatif-lands').value = comp.land_count;
-        document.getElementById('whatif-decksize').value = comp.deck_size;
+        // Defaults: don't overwrite values pre-populated from the query string.
+        var params = new URLSearchParams(window.location.search);
+        if (!params.has('lands')) document.getElementById('whatif-lands').value = comp.land_count;
+        if (!params.has('deck')) document.getElementById('whatif-decksize').value = comp.deck_size;
+        if (!params.has('ramp')) document.getElementById('whatif-ramp').value = comp.ramp_cards || 0;
+        if (!params.has('draw')) document.getElementById('whatif-draw').value = comp.draw_cards || 0;
+
+        if (params.has('lands') || params.has('deck') || params.has('ramp') || params.has('draw')) {
+            runWhatIf();
+        }
     }
 
-    document.getElementById('whatif-btn').addEventListener('click', function() {
+    function runWhatIf() {
         var lands = parseInt(document.getElementById('whatif-lands').value);
         var deckSize = parseInt(document.getElementById('whatif-decksize').value);
+        var ramp = parseInt(document.getElementById('whatif-ramp').value) || 0;
+        var draw = parseInt(document.getElementById('whatif-draw').value) || 0;
         fetch('/mana-model/api/calculate', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({deck_size: deckSize, land_count: lands}),
+            body: JSON.stringify({deck_size: deckSize, land_count: lands, ramp_cards: ramp, draw_cards: draw}),
         })
         .then(function(r) { return r.json(); })
         .then(function(data) {
-            var html = '<strong>Mulligan rate:</strong> ' + (data.mulligan_rate * 100).toFixed(1) + '%<br>';
-            html += '<table class="mana-table"><thead><tr><th>Turn</th><th>Expected Mana</th><th>On Curve</th><th>Screw</th></tr></thead><tbody>';
+            var html = '<strong>Mulligan rate:</strong> ' + (data.mulligan_rate * 100).toFixed(1) + '%';
+            if (ramp || draw) {
+                html += ' <small>(expected mana includes ramp=' + ramp + ', draw=' + draw + ')</small>';
+            }
+            html += '<br><table class="mana-table"><thead><tr><th>Turn</th><th>Expected Mana</th><th>On Curve</th><th>Screw</th></tr></thead><tbody>';
             data.mana_table.forEach(function(row) {
                 html += '<tr><td>' + row.turn + '</td><td>' + row.expected_mana + '</td>'
                     + '<td>' + (row.prob_on_curve * 100).toFixed(1) + '%</td>'
@@ -165,8 +183,153 @@
         .catch(function(err) {
             document.getElementById('whatif-result').textContent = 'Error: ' + err.message;
         });
+    }
+
+    function loadComparisonCols() {
+        try {
+            var raw = localStorage.getItem(COMPARISON_STORAGE_KEY);
+            if (!raw) return null;
+            var parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed.filter(function(n) { return typeof n === 'number'; }) : null;
+        } catch (e) { return null; }
+    }
+
+    function saveComparisonCols() {
+        try {
+            var lcs = comparisonState.cols.map(function(c) { return c.land_count; });
+            localStorage.setItem(COMPARISON_STORAGE_KEY, JSON.stringify(lcs));
+        } catch (e) { /* ignore quota errors */ }
+    }
+
+    function clearComparisonCols() {
+        try { localStorage.removeItem(COMPARISON_STORAGE_KEY); } catch (e) {}
+    }
+
+    function renderComparison() {
+        var headerRow = document.getElementById('mana-comparison-header');
+        var compBody = document.getElementById('mana-comparison-body');
+        headerRow.innerHTML = '<th>Turn</th>';
+        comparisonState.cols.forEach(function(c) {
+            var th = document.createElement('th');
+            var label = c.land_count + ' lands';
+            if (c.land_count === comparisonState.recommended) {
+                th.style.fontWeight = 'bold';
+                label += ' (rec)';
+            }
+            th.innerHTML = label
+                + ' <button type="button" class="btn btn-secondary btn-sm" '
+                + 'style="padding:0 0.4rem; line-height:1;" title="Remove column" '
+                + 'data-lc="' + c.land_count + '">&times;</button>';
+            headerRow.appendChild(th);
+        });
+        // Wire up remove buttons.
+        headerRow.querySelectorAll('button[data-lc]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                removeComparisonCol(parseInt(btn.getAttribute('data-lc')));
+            });
+        });
+
+        compBody.innerHTML = '';
+        if (comparisonState.cols.length === 0) return;
+        var maxTurns = comparisonState.cols[0].mana_table.length;
+        for (var t = 0; t < maxTurns; t++) {
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td>' + (t + 1) + '</td>';
+            comparisonState.cols.forEach(function(c) {
+                var td = document.createElement('td');
+                td.textContent = c.mana_table[t].expected_mana;
+                tr.appendChild(td);
+            });
+            compBody.appendChild(tr);
+        }
+    }
+
+    function addComparisonCol(landCount, persist) {
+        if (!Number.isInteger(landCount) || landCount < 20 || landCount > comparisonState.deckSize - 10) {
+            return false;
+        }
+        if (comparisonState.cols.some(function(c) { return c.land_count === landCount; })) {
+            return false;
+        }
+        if (comparisonState.cols.length >= MAX_COMPARISON_COLS) {
+            return false;
+        }
+        return fetch('/mana-model/api/calculate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({deck_size: comparisonState.deckSize, land_count: landCount}),
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            comparisonState.cols.push({
+                land_count: landCount,
+                mana_table: data.mana_table,
+                mulligan_rate: data.mulligan_rate,
+            });
+            comparisonState.cols.sort(function(a, b) { return a.land_count - b.land_count; });
+            renderComparison();
+            if (persist !== false) saveComparisonCols();
+        });
+    }
+
+    function removeComparisonCol(landCount) {
+        comparisonState.cols = comparisonState.cols.filter(function(c) { return c.land_count !== landCount; });
+        renderComparison();
+        saveComparisonCols();
+    }
+
+    function applyQueryStringDefaults() {
+        var params = new URLSearchParams(window.location.search);
+        ['lands', 'deck', 'ramp', 'draw'].forEach(function(key) {
+            if (!params.has(key)) return;
+            var elId = ({lands: 'whatif-lands', deck: 'whatif-decksize', ramp: 'whatif-ramp', draw: 'whatif-draw'})[key];
+            var v = parseInt(params.get(key));
+            if (!isNaN(v)) document.getElementById(elId).value = v;
+        });
+    }
+
+    document.getElementById('whatif-btn').addEventListener('click', runWhatIf);
+
+    document.getElementById('comparison-add-btn').addEventListener('click', function() {
+        var input = document.getElementById('comparison-add-input');
+        var lc = parseInt(input.value);
+        if (!isNaN(lc)) {
+            var ok = addComparisonCol(lc, true);
+            if (ok === false) {
+                alert('Cannot add ' + lc + ' (already present, out of range, or column limit ' + MAX_COMPARISON_COLS + ' reached).');
+            } else {
+                input.value = '';
+            }
+        }
     });
 
+    document.getElementById('comparison-reset-btn').addEventListener('click', function() {
+        clearComparisonCols();
+        location.reload();
+    });
+
+    document.getElementById('whatif-share-btn').addEventListener('click', function() {
+        var lands = parseInt(document.getElementById('whatif-lands').value);
+        var deckSize = parseInt(document.getElementById('whatif-decksize').value);
+        var ramp = parseInt(document.getElementById('whatif-ramp').value) || 0;
+        var draw = parseInt(document.getElementById('whatif-draw').value) || 0;
+        var qs = 'lands=' + lands + '&deck=' + deckSize + '&ramp=' + ramp + '&draw=' + draw;
+        var url = window.location.origin + window.location.pathname + '?' + qs;
+        var status = document.getElementById('whatif-share-status');
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(function() {
+                status.textContent = 'Link copied!';
+                setTimeout(function() { status.textContent = ''; }, 2000);
+            }, function() {
+                status.textContent = url;
+            });
+        } else {
+            status.textContent = url;
+        }
+        history.replaceState(null, '', '?' + qs);
+    });
+
+    applyQueryStringDefaults();
     loadManaModel();
 })();
 </script>

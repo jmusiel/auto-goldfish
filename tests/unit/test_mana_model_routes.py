@@ -144,3 +144,23 @@ class TestCalculateEndpoint:
         data = resp.get_json()
         assert data["deck_size"] == 99
         assert data["land_count"] == 36
+
+    def test_calculate_with_ramp_draw_returns_more_mana(self, client):
+        """Ramp/draw should increase expected_mana on later turns vs baseline."""
+        baseline = client.post(
+            "/mana-model/api/calculate",
+            data=json.dumps({"deck_size": 99, "land_count": 36, "max_turn": 6}),
+            content_type="application/json",
+        ).get_json()
+        boosted = client.post(
+            "/mana-model/api/calculate",
+            data=json.dumps({"deck_size": 99, "land_count": 36, "max_turn": 6,
+                             "ramp_cards": 10, "draw_cards": 10}),
+            content_type="application/json",
+        ).get_json()
+        assert boosted["mana_table"][4]["expected_mana"] > baseline["mana_table"][4]["expected_mana"]
+
+    def test_calculate_handles_empty_body(self, client):
+        """No body should not 500 -- should fall back to defaults."""
+        resp = client.post("/mana-model/api/calculate")
+        assert resp.status_code == 200

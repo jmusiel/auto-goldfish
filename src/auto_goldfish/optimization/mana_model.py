@@ -9,6 +9,25 @@ from __future__ import annotations
 from math import comb
 from typing import Any, Dict, List, Optional, Tuple
 
+# Mulligan keep range: hands with 2-5 lands are kept, others mulliganed.
+DEFAULT_KEEP_RANGE: Tuple[int, int] = (2, 5)
+
+# Land-count search bounds for the optimization sweep.
+DEFAULT_SEARCH_RANGE: Tuple[int, int] = (25, 45)
+
+# Composite score weights (must sum to 1.0).
+SCORE_WEIGHT_CURVE = 0.35
+SCORE_WEIGHT_MANA = 0.25
+SCORE_WEIGHT_MULLIGAN = 0.20
+SCORE_WEIGHT_FLOOD = 0.20
+
+# Fraction of draw spells assumed to fire by mid-game (conservative).
+DRAW_EARLY_FRACTION = 0.5
+
+# Flood threshold: 7+ lands drawn by turn 5 (in 11 cards seen).
+FLOOD_LAND_COUNT = 7
+FLOOD_TURN = 5
+
 
 # ---------------------------------------------------------------------------
 # Core hypergeometric distribution
@@ -91,7 +110,7 @@ def expected_mana_table(
 # ---------------------------------------------------------------------------
 
 def mulligan_probability(
-    N: int, K: int, keep_range: Tuple[int, int] = (2, 5)
+    N: int, K: int, keep_range: Tuple[int, int] = DEFAULT_KEEP_RANGE
 ) -> float:
     """Probability of mulliganing a 7-card hand.
 
@@ -102,34 +121,6 @@ def mulligan_probability(
         for lands in range(keep_range[0], keep_range[1] + 1)
     )
     return 1.0 - p_keep
-
-
-def mulligan_adjusted_land_prob(
-    turn: int, N: int, K: int,
-    keep_range: Tuple[int, int] = (2, 5),
-) -> float:
-    """Weighted expected mana accounting for mulligan (keep 7 vs keep 6).
-
-    v1 conservative approximation:
-    - Keep hand: see 7 + (T-1) cards
-    - Mulligan hand: see 6 + (T-1) cards (put one back, draw same number of turns)
-    Weighted by P(keep) and P(mull).
-    """
-    p_mull = mulligan_probability(N, K, keep_range)
-    p_keep = 1.0 - p_mull
-
-    e_keep = expected_mana_on_turn(turn, N, K)
-
-    # Mulligan: effectively see one fewer card
-    cards_seen_mull = 6 + turn - 1
-    if cards_seen_mull > N:
-        cards_seen_mull = N
-    e_mull = 0.0
-    for lands in range(cards_seen_mull + 1):
-        p = hypergeometric_pmf(lands, N, K, cards_seen_mull)
-        e_mull += p * min(lands, turn)
-
-    return p_keep * e_keep + p_mull * e_mull
 
 
 # ---------------------------------------------------------------------------
@@ -175,7 +166,7 @@ def adjusted_expected_mana(
     # Draw contribution: extra cards seen improve land probability
     draw_bonus = 0.0
     if draw_cards > 0 and turn > 1:
-        extra_cards = draw_cards * avg_draw_amount * 0.5  # conservative: not all drawn early
+        extra_cards = draw_cards * avg_draw_amount * DRAW_EARLY_FRACTION
         augmented_seen = min(7 + turn - 1 + extra_cards, N)
         e_augmented = 0.0
         # Approximate with fractional cards_seen via interpolation
@@ -210,7 +201,7 @@ def optimal_land_count(
     ramp_cards: int = 0,
     draw_cards: int = 0,
     commander_cmc: int = 0,
-    search_range: Tuple[int, int] = (25, 45),
+    search_range: Tuple[int, int] = DEFAULT_SEARCH_RANGE,
 ) -> Dict[str, Any]:
     """Find the optimal land count by sweeping K and scoring each.
 
@@ -308,17 +299,16 @@ def _score_land_count(
     p_mull = mulligan_probability(N, K)
     mull_score = 1.0 - p_mull
 
-    # 4. Flood penalty: P(too many lands) on turn 5
-    cards_t5 = min(11, N)
-    p_flood = prob_at_least(7, N, K, cards_t5)  # 7+ lands in 11 cards
+    # 4. Flood penalty: P(too many lands) by the flood turn
+    cards_at_flood = min(7 + FLOOD_TURN - 1, N)
+    p_flood = prob_at_least(FLOOD_LAND_COUNT, N, K, cards_at_flood)
     flood_score = 1.0 - p_flood
 
-    # Weighted composite
     return (
-        0.35 * curve_score
-        + 0.25 * mana_score
-        + 0.20 * mull_score
-        + 0.20 * flood_score
+        SCORE_WEIGHT_CURVE * curve_score
+        + SCORE_WEIGHT_MANA * mana_score
+        + SCORE_WEIGHT_MULLIGAN * mull_score
+        + SCORE_WEIGHT_FLOOD * flood_score
     )
 
 
