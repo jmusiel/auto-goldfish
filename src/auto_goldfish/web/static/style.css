@@ -90,7 +90,7 @@ a:hover { text-decoration: underline; }
 .deck-card .deck-stats { color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem; }
 .deck-card .deck-description { color: #94a3b8; font-size: 0.8rem; margin-bottom: 0.75rem; font-style: italic; }
 .section-description { color: #64748b; font-size: 0.95rem; margin-top: -0.5rem; margin-bottom: 1rem; }
-.deck-actions { display: flex; gap: 0.5rem; }
+.deck-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 
 .empty-state { color: #64748b; margin-top: 2rem; font-size: 1.05rem; }
 

@@ -53,8 +53,9 @@
         <p class="deck-description">{{ deck.description }}</p>
         {% endif %}
         <div class="deck-actions">
-            <a href="{{ url_for('decks.view_deck', name=deck.name) }}" class="btn btn-secondary">View</a>
-            <a href="{{ url_for('simulation.config', deck_name=deck.name) }}" class="btn btn-primary">Simulate</a>
+            <a href="{{ url_for('decks.view_deck', name=deck.name) }}" class="btn btn-secondary btn-sm">View</a>
+            <a href="{{ url_for('mana_model.page', deck_name=deck.name) }}" class="btn btn-secondary btn-sm">Mana Model</a>
+            <a href="{{ url_for('simulation.config', deck_name=deck.name) }}" class="btn btn-primary btn-sm">Simulate</a>
         </div>
     </div>
     {% endfor %}
@@ -117,8 +118,9 @@
                 + cmdrHtml
                 + '<p class="deck-stats">' + deck.card_count + ' cards &middot; ' + deck.land_count + ' lands</p>'
                 + '<div class="deck-actions">'
-                + '<button class="btn btn-secondary" onclick="navigateToDeckView(\'' + deck.name.replace(/'/g, "\\'") + '\')">View</button>'
-                + '<button class="btn btn-primary" onclick="navigateToSim(\'' + deck.name.replace(/'/g, "\\'") + '\')">Simulate</button>'
+                + '<button class="btn btn-secondary btn-sm" onclick="navigateToDeckView(\'' + deck.name.replace(/'/g, "\\'") + '\')">View</button>'
+                + '<button class="btn btn-secondary btn-sm" onclick="navigateToManaModel(\'' + deck.name.replace(/'/g, "\\'") + '\')">Mana Model</button>'
+                + '<button class="btn btn-primary btn-sm" onclick="navigateToSim(\'' + deck.name.replace(/'/g, "\\'") + '\')">Simulate</button>'
                 + '<button class="btn btn-danger btn-sm" onclick="deleteLocalDeck(\'' + deck.name.replace(/'/g, "\\'") + '\')">Delete</button>'
                 + '</div>';
             grid.appendChild(card);
