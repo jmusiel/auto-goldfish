@@ -1,6 +1,6 @@
 # auto_goldfish
 
-A Hyperband-scheduled Monte Carlo global optimizer for goldfishing commander games.
+A factored Monte Carlo optimizer with CRN-paired marginal analysis for goldfishing commander decks.
 
 Runs "goldfishing" simulations (playing games without an opponent) to evaluate deck performance, mana curves, and consistency metrics across thousands of games.
 
