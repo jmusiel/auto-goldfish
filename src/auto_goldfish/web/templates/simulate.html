@@ -52,102 +52,55 @@
     </div>
 
     {% if wizard_cards is defined and wizard_cards %}
-    <button type="button" class="btn btn-primary" id="label-cards-btn" onclick="labelerOpen(WIZARD_CARDS)" style="margin-bottom:1rem;">Label Cards</button>
+    <div class="label-banner">
+        <div class="label-banner-text">
+            <strong>{{ wizard_cards | length }} card{{ 's' if wizard_cards | length != 1 else '' }} still need{{ '' if wizard_cards | length != 1 else 's' }} labels.</strong>
+            <span class="label-banner-hint">Unlabeled cards default to "no effects", which can skew ramp/draw recommendations.</span>
+        </div>
+        <div class="label-banner-actions">
+            <button type="button" class="btn btn-primary btn-sm" id="label-cards-btn" onclick="labelerOpen(WIZARD_CARDS)">Open Card Labeler</button>
+        </div>
+    </div>
     {% elif all_nonland_cards is defined and all_nonland_cards %}
-    <button type="button" class="btn btn-secondary" id="label-cards-btn" onclick="labelerOpen(ALL_NONLAND_CARDS)" style="margin-bottom:1rem;">Label Cards</button>
-    {% endif %}
-
-    <!-- Card Effects Editor -->
-    {% if card_effects is defined and card_effects %}
-    {% set with_effects = card_effects | selectattr('has_effects') | list %}
-    {% set without_effects = card_effects | rejectattr('has_effects') | list %}
-    <details class="effects-editor">
-        <summary class="effects-summary">
-            <h2>Card Effects</h2>
-            <span class="effects-count">{{ with_effects | length }} of {{ card_effects | length }} non-land cards have effects</span>
-        </summary>
-
-        {% if with_effects %}
-        <details class="effects-group" open>
-            <summary class="effects-group-summary">Cards with Effects ({{ with_effects | length }})</summary>
-            <div class="effects-card-list">
-                {% for card in with_effects %}
-                <div class="effects-card" data-card-name="{{ card.name }}">
-                    <div class="effects-card-header">
-                        <span class="effects-card-name">{{ card.name }}</span>
-                        <span class="effects-card-cmc">CMC {{ card.cmc }}</span>
-                        <span class="effects-card-badges">{{ card.effects_display }}</span>
-                        <span class="override-checkmark" style="display:none;">&#10003;</span>
-                        <button type="button" class="btn btn-secondary btn-sm override-toggle" onclick="toggleOverride(this)">Override</button>
-                    </div>
-                    <div class="override-panel" style="display:none;">
-                        <div class="override-effects-list"></div>
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="addEffectRow(this)">+ Add Category</button>
-                        <div class="override-metadata">
-                            <label>priority <input type="number" class="meta-priority" value="0" min="0" max="10" style="width:3rem"></label>
-                            <label>override_cmc <input type="number" class="meta-override-cmc" value="" placeholder="-" min="0" max="20" style="width:3rem"></label>
-                        </div>
-                        <div class="override-actions">
-                            <button type="button" class="btn btn-primary btn-sm" onclick="saveOverride(this)">Save</button>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="removeOverride(this)">Remove Override</button>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </details>
-        {% endif %}
-
-        {% if without_effects %}
-        <details class="effects-group">
-            <summary class="effects-group-summary">Cards without Effects ({{ without_effects | length }})</summary>
-            <div class="effects-card-list">
-                {% for card in without_effects %}
-                <div class="effects-card" data-card-name="{{ card.name }}">
-                    <div class="effects-card-header">
-                        <span class="effects-card-name">{{ card.name }}</span>
-                        <span class="effects-card-cmc">CMC {{ card.cmc }}</span>
-                        <span class="effects-card-badges no-effects">No effects</span>
-                        <span class="override-checkmark" style="display:none;">&#10003;</span>
-                        <button type="button" class="btn btn-secondary btn-sm override-toggle" onclick="toggleOverride(this)">Add Effect</button>
-                    </div>
-                    <div class="override-panel" style="display:none;">
-                        <div class="override-effects-list"></div>
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="addEffectRow(this)">+ Add Category</button>
-                        <div class="override-metadata">
-                            <label>priority <input type="number" class="meta-priority" value="0" min="0" max="10" style="width:3rem"></label>
-                            <label>override_cmc <input type="number" class="meta-override-cmc" value="" placeholder="-" min="0" max="20" style="width:3rem"></label>
-                        </div>
-                        <div class="override-actions">
-                            <button type="button" class="btn btn-primary btn-sm" onclick="saveOverride(this)">Save</button>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="removeOverride(this)">Remove Override</button>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </details>
-        {% endif %}
-    </details>
+    <div class="label-banner label-banner-clean">
+        <div class="label-banner-text">
+            <strong>All cards labeled.</strong>
+            <span class="label-banner-hint">Revisit labels any time, or edit individual effects below.</span>
+        </div>
+        <div class="label-banner-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="label-cards-btn" onclick="labelerOpen(ALL_NONLAND_CARDS)">Re-open Card Labeler</button>
+        </div>
+    </div>
     {% endif %}
 
     <input type="hidden" id="effect-overrides-input" value="{}">
+
+    <!-- Optimize-for tile picker -->
+    <div class="optimize-picker">
+        <div class="optimize-picker-legend">What should we optimize for?</div>
+        <div class="optimize-tiles" id="optimize-tiles">
+            <div class="opt-tile selected" data-target="karsten_ecms" tabindex="0" role="radio" aria-checked="true">
+                <div class="opt-tile-title">Karsten-ECMS <span class="opt-tile-default-tag">Default</span></div>
+                <div class="opt-tile-desc">Mana spent compounded forward across remaining turns. Best general-purpose target.</div>
+            </div>
+            <div class="opt-tile" data-target="floor_performance" tabindex="0" role="radio" aria-checked="false">
+                <div class="opt-tile-title">Floor performance</div>
+                <div class="opt-tile-desc">Average mana spent in the worst 25% of games. Picks for consistency.</div>
+            </div>
+            <div class="opt-tile" data-target="mana" tabindex="0" role="radio" aria-checked="false">
+                <div class="opt-tile-title">Total mana</div>
+                <div class="opt-tile-desc">Raw mana spent across all turns. Picks for raw power.</div>
+            </div>
+        </div>
+        <div class="optimize-picker-hint">Other targets (consistency, spells cast) are available under <em>Advanced settings</em>.</div>
+        <input type="hidden" id="optimize-target" name="optimize_target" value="karsten_ecms">
+    </div>
 
     <!-- Core Parameters (always visible) -->
     <div class="form-row">
         <div class="form-group">
             <label for="turns">Turns (max {{ max_turns }}) <span class="info-tip" data-tip="Number of turns to simulate each game. More turns means longer games but slower simulations.">i</span></label>
             <input type="number" id="turns" name="turns" value="8" min="1" max="{{ max_turns }}">
-        </div>
-        <div class="form-group">
-            <label for="optimize-target">Optimize for <span class="info-tip" data-tip="The metric used to rank land counts and card candidates. Floor Performance maximizes average mana spent in the worst 25% of games; Mana maximizes total mana spent; Consistency maximizes worst-case reliability (left-tail ratio); Spells Cast maximizes spells played per game; Karsten-ECMS compounds mana spent forward through remaining turns.">i</span></label>
-            <select id="optimize-target" name="optimize_target">
-                <option value="floor_performance" selected>Floor performance (worst 25% of games)</option>
-                <option value="mana">Total mana spent</option>
-                <option value="consistency">Consistency (left-tail ratio)</option>
-                <option value="spells_cast">Number of spells cast</option>
-                <option value="karsten_ecms">Karsten-ECMS (compounded mana spent)</option>
-            </select>
         </div>
     </div>
 
@@ -227,150 +180,242 @@
             </div>
         </div>
 
-        <details class="settings-group">
-            <summary>Draw Candidates</summary>
-            <label style="display:block;"><input type="checkbox" checked data-candidate="draw_1cmc_1"> 1 Mana Draw 1</label>
-            <label style="display:block;"><input type="checkbox" data-candidate="draw_2cmc_1"> 2 Mana Draw 1</label>
-            <label style="display:block;"><input type="checkbox" checked data-candidate="draw_2cmc_2"> 2 Mana Draw 2</label>
-            <label style="display:block;"><input type="checkbox" checked data-candidate="draw_4cmc_3"> 4 Mana Draw 3</label>
-            <label style="display:block;"><input type="checkbox" checked data-candidate="draw_3cmc_1pt"> 3 Mana Draw 1/turn</label>
-            <label style="display:block;">
-                <input type="checkbox" data-candidate="draw_custom" id="draw-custom-toggle"> Custom:
-                <input type="number" id="custom-draw-cmc" placeholder="CMC" min="0" max="10" style="width:60px" disabled>
-                mana, draw
-                <input type="number" id="custom-draw-amount" placeholder="N" min="1" max="5" style="width:50px" disabled>
-            </label>
-        </details>
-
-        <details class="settings-group">
-            <summary>Ramp Candidates</summary>
-            <label style="display:block;"><input type="checkbox" checked data-candidate="ramp_2cmc_1"> 2 Mana Ramp +1</label>
-            <label style="display:block;"><input type="checkbox" data-candidate="ramp_3cmc_1"> 3 Mana Ramp +1</label>
-            <label style="display:block;"><input type="checkbox" checked data-candidate="ramp_4cmc_2"> 4 Mana Ramp +2</label>
-            <label style="display:block;">
-                <input type="checkbox" data-candidate="ramp_custom" id="ramp-custom-toggle"> Custom:
-                <input type="number" id="custom-ramp-cmc" placeholder="CMC" min="0" max="10" style="width:60px" disabled>
-                mana, ramp +
-                <input type="number" id="custom-ramp-amount" placeholder="N" min="1" max="5" style="width:50px" disabled>
-            </label>
-        </details>
     </div>
 
-    <!-- Play Strategy (collapsible) -->
+    <!-- Advanced settings (merges old Play Strategy + Advanced + candidate checklists) -->
     <details class="settings-group">
-        <summary>Play Strategy</summary>
-        <div class="form-row">
-            <div class="form-group">
-                <label for="mana-mode">Consider mana spent on <span class="info-tip" data-tip="Which spell types count toward the 'mana spent' metric and percentiles. Value-only counts spells with no effects; Value + Draw includes draw spells; Total counts everything including ramp.">i</span></label>
-                <select id="mana-mode" name="mana_mode">
-                    <option value="value" selected>Value spells only</option>
-                    <option value="value_draw">Value + Draw spells</option>
-                    <option value="total">All spells (incl. Ramp)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="mulligan">Mulligan Strategy <span class="info-tip" data-tip="How the simulator decides whether to mulligan an opening hand. Default keeps 3-4 land hands; Curve Aware also considers spell costs.">i</span></label>
-                <select id="mulligan" name="mulligan">
-                    <option value="default" selected>Default (3-4 lands)</option>
-                    <option value="curve_aware">Curve Aware</option>
+        <summary>Advanced settings</summary>
+
+        <div class="adv-sub">
+            <h3>Other optimization targets</h3>
+            <div class="form-group" style="margin-bottom:0;">
+                <label for="optimize-target-extra">Switch to a non-default target <span class="info-tip" data-tip="Selecting a target here clears the tile selection above and overrides what's optimized.">i</span></label>
+                <select id="optimize-target-extra">
+                    <option value="" selected>— Use selected tile above —</option>
+                    <option value="consistency">Consistency (left-tail ratio)</option>
+                    <option value="spells_cast">Number of spells cast</option>
                 </select>
             </div>
         </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label for="spell-priority">Spell Priority <span class="info-tip" data-tip="The order in which spells are considered for casting each turn. Default sorts by card priority then CMC. Category options (Ramp/Draw/Value First) prioritize that type. Highest CMC plays expensive spells first.">i</span></label>
-                <select id="spell-priority" name="spell_priority">
-                    <option value="priority_then_cmc" selected>Default (Priority + CMC)</option>
-                    <option value="ramp_first">Ramp First</option>
-                    <option value="draw_first">Draw First</option>
-                    <option value="value_first">Value First</option>
-                    <option value="highest_cmc_first">Highest CMC First</option>
-                </select>
+
+        <div class="adv-sub">
+            <h3>Play strategy</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="mana-mode">Consider mana spent on <span class="info-tip" data-tip="Which spell types count toward the 'mana spent' metric and percentiles. Value-only counts spells with no effects; Value + Draw includes draw spells; Total counts everything including ramp.">i</span></label>
+                    <select id="mana-mode" name="mana_mode">
+                        <option value="value" selected>Value spells only</option>
+                        <option value="value_draw">Value + Draw spells</option>
+                        <option value="total">All spells (incl. Ramp)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="mulligan">Mulligan Strategy <span class="info-tip" data-tip="How the simulator decides whether to mulligan an opening hand. Default keeps 3-4 land hands; Curve Aware also considers spell costs.">i</span></label>
+                    <select id="mulligan" name="mulligan">
+                        <option value="default" selected>Default (3-4 lands)</option>
+                        <option value="curve_aware">Curve Aware</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="mana-efficiency">Mana Efficiency <span class="info-tip" data-tip="How the simulator selects which combination of spells to cast. Greedy plays them in priority order; Maximize Mana Spent uses a knapsack solver to waste the least mana; Maximize Spell Count casts as many spells as possible.">i</span></label>
-                <select id="mana-efficiency" name="mana_efficiency">
-                    <option value="greedy" selected>Greedy (default)</option>
-                    <option value="mana_efficient">Maximize Mana Spent</option>
-                    <option value="spell_count">Maximize Spell Count</option>
-                </select>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="spell-priority">Spell Priority <span class="info-tip" data-tip="The order in which spells are considered for casting each turn. Default sorts by card priority then CMC. Category options (Ramp/Draw/Value First) prioritize that type. Highest CMC plays expensive spells first.">i</span></label>
+                    <select id="spell-priority" name="spell_priority">
+                        <option value="priority_then_cmc" selected>Default (Priority + CMC)</option>
+                        <option value="ramp_first">Ramp First</option>
+                        <option value="draw_first">Draw First</option>
+                        <option value="value_first">Value First</option>
+                        <option value="highest_cmc_first">Highest CMC First</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="mana-efficiency">Mana Efficiency <span class="info-tip" data-tip="How the simulator selects which combination of spells to cast. Greedy plays them in priority order; Maximize Mana Spent uses a knapsack solver to waste the least mana; Maximize Spell Count casts as many spells as possible.">i</span></label>
+                    <select id="mana-efficiency" name="mana_efficiency">
+                        <option value="greedy" selected>Greedy (default)</option>
+                        <option value="mana_efficient">Maximize Mana Spent</option>
+                        <option value="spell_count">Maximize Spell Count</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="ramp-cutoff-turn">Ramp Cutoff Turn <span class="info-tip" data-tip="After this turn, ramp spells are deprioritized so value spells are cast first. Set to 'Always play ramp' to never deprioritize.">i</span></label>
+                    <select id="ramp-cutoff-turn" name="ramp_cutoff_turn">
+                        <option value="0" selected>Always play ramp</option>
+                        <option value="3">After turn 3</option>
+                        <option value="4">After turn 4</option>
+                        <option value="5">After turn 5</option>
+                        <option value="6">After turn 6</option>
+                        <option value="7">After turn 7</option>
+                        <option value="8">After turn 8</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="min-cost-floor">Min Spell Cost <span class="info-tip" data-tip="The minimum mana cost a spell can be reduced to by cost-reduction effects. Set to 0 to allow spells to become free.">i</span></label>
+                    <select id="min-cost-floor" name="min_cost_floor">
+                        <option value="1" selected>1 (default)</option>
+                        <option value="0">0 (allow free spells)</option>
+                    </select>
+                </div>
             </div>
         </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label for="ramp-cutoff-turn">Ramp Cutoff Turn <span class="info-tip" data-tip="After this turn, ramp spells are deprioritized so value spells are cast first. Set to 'Always play ramp' to never deprioritize.">i</span></label>
-                <select id="ramp-cutoff-turn" name="ramp_cutoff_turn">
-                    <option value="0" selected>Always play ramp</option>
-                    <option value="3">After turn 3</option>
-                    <option value="4">After turn 4</option>
-                    <option value="5">After turn 5</option>
-                    <option value="6">After turn 6</option>
-                    <option value="7">After turn 7</option>
-                    <option value="8">After turn 8</option>
-                </select>
+
+        <div class="adv-sub">
+            <h3>Draw &amp; ramp candidate pool</h3>
+            <div class="adv-sub-cols">
+                <div>
+                    <strong>Draw candidates</strong>
+                    <label style="display:block;"><input type="checkbox" checked data-candidate="draw_1cmc_1"> 1 Mana Draw 1</label>
+                    <label style="display:block;"><input type="checkbox" data-candidate="draw_2cmc_1"> 2 Mana Draw 1</label>
+                    <label style="display:block;"><input type="checkbox" checked data-candidate="draw_2cmc_2"> 2 Mana Draw 2</label>
+                    <label style="display:block;"><input type="checkbox" checked data-candidate="draw_4cmc_3"> 4 Mana Draw 3</label>
+                    <label style="display:block;"><input type="checkbox" checked data-candidate="draw_3cmc_1pt"> 3 Mana Draw 1/turn</label>
+                    <label style="display:block;">
+                        <input type="checkbox" data-candidate="draw_custom" id="draw-custom-toggle"> Custom:
+                        <input type="number" id="custom-draw-cmc" placeholder="CMC" min="0" max="10" style="width:60px" disabled>
+                        mana, draw
+                        <input type="number" id="custom-draw-amount" placeholder="N" min="1" max="5" style="width:50px" disabled>
+                    </label>
+                </div>
+                <div>
+                    <strong>Ramp candidates</strong>
+                    <label style="display:block;"><input type="checkbox" checked data-candidate="ramp_2cmc_1"> 2 Mana Ramp +1</label>
+                    <label style="display:block;"><input type="checkbox" data-candidate="ramp_3cmc_1"> 3 Mana Ramp +1</label>
+                    <label style="display:block;"><input type="checkbox" checked data-candidate="ramp_4cmc_2"> 4 Mana Ramp +2</label>
+                    <label style="display:block;">
+                        <input type="checkbox" data-candidate="ramp_custom" id="ramp-custom-toggle"> Custom:
+                        <input type="number" id="custom-ramp-cmc" placeholder="CMC" min="0" max="10" style="width:60px" disabled>
+                        mana, ramp +
+                        <input type="number" id="custom-ramp-amount" placeholder="N" min="1" max="5" style="width:50px" disabled>
+                    </label>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="min-cost-floor">Min Spell Cost <span class="info-tip" data-tip="The minimum mana cost a spell can be reduced to by cost-reduction effects. Set to 0 to allow spells to become free.">i</span></label>
-                <select id="min-cost-floor" name="min_cost_floor">
-                    <option value="1" selected>1 (default)</option>
-                    <option value="0">0 (allow free spells)</option>
-                </select>
+        </div>
+
+        <div class="adv-sub">
+            <h3>Engine</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="algorithm">Optimizer Algorithm <span class="info-tip" data-tip="Factored evaluates each change independently (land count, draw, ramp) with adaptive sampling — fast and interpretable. Racing uses CRN-paired sequential elimination over the full config space. Hyperband uses successive halving (slower but most exhaustive).">i</span></label>
+                    <select id="algorithm" name="algorithm">
+                        <option value="factored" selected>Factored (recommended)</option>
+                        <option value="racing">Racing (fast)</option>
+                        <option value="hyperband">Hyperband (classic)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="seed">Seed (optional) <span class="info-tip" data-tip="Fixed random seed for reproducible results. Leave empty for a random seed each run.">i</span></label>
+                    <input type="number" id="seed" name="seed" placeholder="Random">
+                </div>
+                <div class="form-group">
+                    <label for="record_results">Record detail <span class="info-tip" data-tip="Granularity of recorded mana distribution percentiles. Quartile is fastest; Centile gives the most detail.">i</span></label>
+                    <select id="record_results" name="record_results">
+                        <option value="quartile" selected>Quartile</option>
+                        <option value="decile">Decile</option>
+                        <option value="centile">Centile</option>
+                    </select>
+                </div>
+            </div>
+            <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                <input type="checkbox" id="swap-mode" style="width:auto;">
+                Swap mode <span class="info-tip" data-tip="Instead of adding draw/ramp candidates to the deck, replace existing cards that have no registered effects.">i</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                <input type="checkbox" id="include-hyperband" style="width:auto;">
+                Include hyperband candidates <span class="info-tip" data-tip="Also evaluate top Hyperband survivors alongside regression-predicted configs. Shows source tags (regression/hyperband/baseline) on results. Uses more compute.">i</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                <input type="checkbox" id="override-fidelity" style="width:auto;">
+                Override fidelity preset <span class="info-tip" data-tip="Manually set simulation counts instead of using the preset. For advanced users who want fine-grained control.">i</span>
+            </label>
+            <div id="fidelity-overrides" style="display:none;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="sims">Final evaluation sims <span class="info-tip" data-tip="Number of games simulated for each top configuration in the final evaluation pass.">i</span></label>
+                        <input type="number" id="sims" name="sims" value="500" min="100" max="{{ max_sims }}" step="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="hyperband-max-sims">Sims per candidate (Hyperband R) <span class="info-tip" data-tip="Maximum simulations per candidate during Hyperband selection. Higher values give more accurate comparisons but take longer.">i</span></label>
+                        <input type="number" id="hyperband-max-sims" value="500" min="50" max="{{ max_sims }}" step="50">
+                    </div>
+                </div>
             </div>
         </div>
     </details>
 
-    <!-- Advanced (collapsible) -->
-    <details class="settings-group">
-        <summary>Advanced</summary>
-        <div class="form-row">
-            <div class="form-group">
-                <label for="seed">Seed (optional) <span class="info-tip" data-tip="Fixed random seed for reproducible results. Leave empty for a random seed each run.">i</span></label>
-                <input type="number" id="seed" name="seed" placeholder="Random">
-            </div>
-            <div class="form-group">
-                <label for="record_results">Record Detail Level <span class="info-tip" data-tip="Granularity of recorded mana distribution percentiles. Quartile is fastest; Centile gives the most detail.">i</span></label>
-                <select id="record_results" name="record_results">
-                    <option value="quartile" selected>Quartile</option>
-                    <option value="decile">Decile</option>
-                    <option value="centile">Centile</option>
-                </select>
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label for="algorithm">Optimizer Algorithm <span class="info-tip" data-tip="Factored evaluates each change independently (land count, draw, ramp) with adaptive sampling — fast and interpretable. Racing uses CRN-paired sequential elimination over the full config space. Hyperband uses successive halving (slower but most exhaustive).">i</span></label>
-                <select id="algorithm" name="algorithm">
-                    <option value="factored" selected>Factored (recommended)</option>
-                    <option value="racing">Racing (fast)</option>
-                    <option value="hyperband">Hyperband (classic)</option>
-                </select>
-            </div>
-        </div>
-        <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
-            <input type="checkbox" id="swap-mode" style="width:auto;">
-            Swap mode <span class="info-tip" data-tip="Instead of adding draw/ramp candidates to the deck, replace existing cards that have no registered effects.">i</span>
-        </label>
-        <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
-            <input type="checkbox" id="include-hyperband" style="width:auto;">
-            Include hyperband candidates <span class="info-tip" data-tip="Also evaluate top Hyperband survivors alongside regression-predicted configs. Shows source tags (regression/hyperband/baseline) on results. Uses more compute.">i</span>
-        </label>
-        <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
-            <input type="checkbox" id="override-fidelity" style="width:auto;">
-            Override fidelity preset <span class="info-tip" data-tip="Manually set simulation counts instead of using the preset. For advanced users who want fine-grained control.">i</span>
-        </label>
-        <div id="fidelity-overrides" style="display:none;">
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="sims">Final evaluation sims <span class="info-tip" data-tip="Number of games simulated for each top configuration in the final evaluation pass.">i</span></label>
-                    <input type="number" id="sims" name="sims" value="500" min="100" max="{{ max_sims }}" step="100">
+    <!-- Card Effects editor — full per-card override list, kept collapsed and demoted -->
+    {% if card_effects is defined and card_effects %}
+    {% set with_effects = card_effects | selectattr('has_effects') | list %}
+    {% set without_effects = card_effects | rejectattr('has_effects') | list %}
+    <details class="effects-editor" id="effects-editor-block">
+        <summary class="effects-summary">
+            <h2>Edit individual card effects</h2>
+            <span class="effects-count">{{ with_effects | length }} of {{ card_effects | length }} non-land cards have effects</span>
+        </summary>
+
+        {% if with_effects %}
+        <details class="effects-group">
+            <summary class="effects-group-summary">Cards with Effects ({{ with_effects | length }})</summary>
+            <div class="effects-card-list">
+                {% for card in with_effects %}
+                <div class="effects-card" data-card-name="{{ card.name }}">
+                    <div class="effects-card-header">
+                        <span class="effects-card-name">{{ card.name }}</span>
+                        <span class="effects-card-cmc">CMC {{ card.cmc }}</span>
+                        <span class="effects-card-badges">{{ card.effects_display }}</span>
+                        <span class="override-checkmark" style="display:none;">&#10003;</span>
+                        <button type="button" class="btn btn-secondary btn-sm override-toggle" onclick="toggleOverride(this)">Override</button>
+                    </div>
+                    <div class="override-panel" style="display:none;">
+                        <div class="override-effects-list"></div>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="addEffectRow(this)">+ Add Category</button>
+                        <div class="override-metadata">
+                            <label>priority <input type="number" class="meta-priority" value="0" min="0" max="10" style="width:3rem"></label>
+                            <label>override_cmc <input type="number" class="meta-override-cmc" value="" placeholder="-" min="0" max="20" style="width:3rem"></label>
+                        </div>
+                        <div class="override-actions">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="saveOverride(this)">Save</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="removeOverride(this)">Remove Override</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="hyperband-max-sims">Sims per candidate (Hyperband R) <span class="info-tip" data-tip="Maximum simulations per candidate during Hyperband selection. Higher values give more accurate comparisons but take longer.">i</span></label>
-                    <input type="number" id="hyperband-max-sims" value="500" min="50" max="{{ max_sims }}" step="50">
-                </div>
+                {% endfor %}
             </div>
-        </div>
+        </details>
+        {% endif %}
+
+        {% if without_effects %}
+        <details class="effects-group">
+            <summary class="effects-group-summary">Cards without Effects ({{ without_effects | length }})</summary>
+            <div class="effects-card-list">
+                {% for card in without_effects %}
+                <div class="effects-card" data-card-name="{{ card.name }}">
+                    <div class="effects-card-header">
+                        <span class="effects-card-name">{{ card.name }}</span>
+                        <span class="effects-card-cmc">CMC {{ card.cmc }}</span>
+                        <span class="effects-card-badges no-effects">No effects</span>
+                        <span class="override-checkmark" style="display:none;">&#10003;</span>
+                        <button type="button" class="btn btn-secondary btn-sm override-toggle" onclick="toggleOverride(this)">Add Effect</button>
+                    </div>
+                    <div class="override-panel" style="display:none;">
+                        <div class="override-effects-list"></div>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="addEffectRow(this)">+ Add Category</button>
+                        <div class="override-metadata">
+                            <label>priority <input type="number" class="meta-priority" value="0" min="0" max="10" style="width:3rem"></label>
+                            <label>override_cmc <input type="number" class="meta-override-cmc" value="" placeholder="-" min="0" max="20" style="width:3rem"></label>
+                        </div>
+                        <div class="override-actions">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="saveOverride(this)">Save</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="removeOverride(this)">Remove Override</button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </details>
+        {% endif %}
     </details>
+    {% endif %}
 
     <small class="hint" id="local-sim-hint">
         Simulation runs in your browser via WebAssembly.
@@ -437,6 +482,50 @@
 
     minSlider.addEventListener('input', update);
     maxSlider.addEventListener('input', update);
+})();
+
+// Optimize-for tile picker — clicking a tile sets the hidden input value;
+// the "Other targets" select inside Advanced clears tiles and overrides.
+(function() {
+    const tiles = document.querySelectorAll('#optimize-tiles .opt-tile');
+    const hidden = document.getElementById('optimize-target');
+    const extra = document.getElementById('optimize-target-extra');
+    if (!tiles.length || !hidden) return;
+
+    function selectTile(tile) {
+        tiles.forEach(t => {
+            t.classList.toggle('selected', t === tile);
+            t.setAttribute('aria-checked', t === tile ? 'true' : 'false');
+        });
+        hidden.value = tile.dataset.target;
+        if (extra) extra.value = '';
+    }
+    function clearTiles() {
+        tiles.forEach(t => {
+            t.classList.remove('selected');
+            t.setAttribute('aria-checked', 'false');
+        });
+    }
+
+    tiles.forEach(tile => {
+        tile.addEventListener('click', () => selectTile(tile));
+        tile.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectTile(tile); }
+        });
+    });
+
+    if (extra) {
+        extra.addEventListener('change', () => {
+            if (extra.value) {
+                clearTiles();
+                hidden.value = extra.value;
+            } else {
+                // Reset to Karsten default
+                const def = document.querySelector('#optimize-tiles .opt-tile[data-target="karsten_ecms"]');
+                if (def) selectTile(def);
+            }
+        });
+    }
 })();
 </script>
 
@@ -1418,13 +1507,7 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
         }
     });
 
-    // Auto-show labeler if there are wizard cards to label
-    if (WIZARD_CARDS.length > 0) {
-        const autoShowCards = WIZARD_CARDS.filter(function(c) { return c.priority_group <= 2; });
-        if (autoShowCards.length > 0) {
-            labelerOpen(autoShowCards);
-        }
-    }
+    // Wizard is opt-in: open via the labeler banner button, not on page load.
 })();
 </script>
 {% endif %}
