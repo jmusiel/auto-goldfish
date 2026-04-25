@@ -181,8 +181,8 @@ class TestRunOptimizationDispatch:
     never exercised the FactoredOptimizer despite the form selection.
     """
 
-    def _make_optimization_config(self, algorithm: str) -> str:
-        return json.dumps({
+    def _make_optimization_config(self, algorithm: str, **extra) -> str:
+        cfg = {
             "turns": 3,
             "sims": 5,
             "seed": 42,
@@ -192,7 +192,9 @@ class TestRunOptimizationDispatch:
             "enabled_candidates": [],
             "max_draw_additions": 0,
             "max_ramp_additions": 0,
-        })
+        }
+        cfg.update(extra)
+        return json.dumps(cfg)
 
     @pytest.mark.parametrize(
         "algorithm,expected_module,expected_class",
@@ -206,7 +208,7 @@ class TestRunOptimizationDispatch:
         """Each algorithm string must instantiate the matching optimizer class."""
         import importlib
 
-        captured = {"class_name": None}
+        captured = {"class_name": None, "kwargs": None}
 
         for mod_path, cls_name in [
             ("auto_goldfish.optimization.factored_optimizer", "FactoredOptimizer"),
@@ -222,6 +224,7 @@ class TestRunOptimizationDispatch:
 
                 def recording_init(self, *args, **kwargs):
                     captured["class_name"] = _name
+                    captured["kwargs"] = kwargs
                     original_init(self, *args, **kwargs)
 
                 return recording_init
@@ -233,3 +236,30 @@ class TestRunOptimizationDispatch:
         run_optimization(deck_json, config_json)
 
         assert captured["class_name"] == expected_class
+
+    def _patch_factored(self, monkeypatch):
+        """Capture kwargs passed to FactoredOptimizer."""
+        import auto_goldfish.optimization.factored_optimizer as ff
+
+        captured = {"kwargs": None}
+        original_init = ff.FactoredOptimizer.__init__
+
+        def recording_init(self, *args, **kwargs):
+            captured["kwargs"] = kwargs
+            original_init(self, *args, **kwargs)
+
+        monkeypatch.setattr(ff.FactoredOptimizer, "__init__", recording_init)
+        return captured
+
+    def test_factored_algorithm_forwards_mixed_combos_default_true(self, monkeypatch):
+        captured = self._patch_factored(monkeypatch)
+        run_optimization(_make_deck_json(), self._make_optimization_config("factored"))
+        assert captured["kwargs"]["mixed_combos"] is True
+
+    def test_factored_algorithm_forwards_mixed_combos_when_false(self, monkeypatch):
+        captured = self._patch_factored(monkeypatch)
+        run_optimization(
+            _make_deck_json(),
+            self._make_optimization_config("factored", mixed_combos=False),
+        )
+        assert captured["kwargs"]["mixed_combos"] is False

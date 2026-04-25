@@ -325,6 +325,10 @@
                 Include hyperband candidates <span class="info-tip" data-tip="Also evaluate top Hyperband survivors alongside regression-predicted configs. Shows source tags (regression/hyperband/baseline) on results. Uses more compute.">i</span>
             </label>
             <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                <input type="checkbox" id="mixed-combos" checked style="width:auto;">
+                Mixed ramp/draw combos <span class="info-tip" data-tip="Test pairs of two distinct draw or ramp spells (e.g. 1x 2-mana draw + 1x 4-mana draw), not just two copies of the single best card. Factored optimizer only. Slightly increases simulation budget.">i</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
                 <input type="checkbox" id="override-fidelity" style="width:auto;">
                 Override fidelity preset <span class="info-tip" data-tip="Manually set simulation counts instead of using the preset. For advanced users who want fine-grained control.">i</span>
             </label>
@@ -1907,6 +1911,7 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
             max_draw_additions: parseInt(document.getElementById('max-draw-additions').value) || 0,
             max_ramp_additions: parseInt(document.getElementById('max-ramp-additions').value) || 0,
             algorithm: document.getElementById('algorithm').value,
+            mixed_combos: document.getElementById('mixed-combos').checked,
         };
 
         // Custom draw
