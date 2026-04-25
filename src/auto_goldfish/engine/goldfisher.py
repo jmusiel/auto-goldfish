@@ -200,9 +200,7 @@ def _format_pool_label(cmc: int, effect_desc: str) -> str:
 
 
 # Per-copy marginal analysis tunables.
-_MARGINAL_MIN_BUCKET = 30   # smaller of two buckets must have >=30 games to be "significant"
-_MARGINAL_RARE_FLOOR = 5    # absolute floor; below this we treat the count as physically rare
-_MARGINAL_RARE_FRAC = 0.005  # also rare if count appears in <0.5% of games
+_MARGINAL_MIN_BUCKET = 30   # both buckets must have >=30 games or we skip the pill
 _MARGINAL_MAX_K = 4         # stop evaluating beyond the 4th copy
 _MARGINAL_CI_Z = 1.645      # 90% normal CI
 _SATURATION_THRESHOLD = 0.1  # marginal magnitude below this rounds to "saturated"
@@ -217,15 +215,12 @@ def _compute_marginal_impacts(
 
     Uses exact-count buckets: marginal_k = E[mana | drew=k] - E[mana | drew=k-1].
     Each entry has effect, ci, n_curr, n_prev, and a 'noise' flag when the 90%
-    CI straddles zero or either bucket falls below the minimum sample size.
+    CI straddles zero.
 
-    Skips emission entirely when either bucket is "rare" -- i.e., this draw
-    count is essentially impossible given the deck composition (e.g., drawing
-    exactly 1 of a 60-copy pool). Showing "too noisy" pills there would
-    incorrectly suggest more sims would help.
+    Skips emission entirely whenever either bucket has fewer than
+    _MARGINAL_MIN_BUCKET games. The badge already conveys the high-level
+    verdict, and individual under-sampled pills add clutter without insight.
     """
-    n_games = len(count_per_game)
-    rare_floor = max(_MARGINAL_RARE_FLOOR, int(n_games * _MARGINAL_RARE_FRAC))
     out: list[dict] = []
     for k in range(1, max_k + 1):
         mask_curr = count_per_game == k
@@ -233,21 +228,7 @@ def _compute_marginal_impacts(
         n_curr = int(mask_curr.sum())
         n_prev = int(mask_prev.sum())
 
-        # Skip k values where either side of the comparison is too rare to
-        # be a meaningful baseline -- not "noisy", but unreachable.
-        if min(n_curr, n_prev) < rare_floor:
-            continue
-
         if min(n_curr, n_prev) < _MARGINAL_MIN_BUCKET:
-            out.append({
-                "k": k,
-                "effect": None,
-                "ci": None,
-                "n_curr": n_curr,
-                "n_prev": n_prev,
-                "noise": True,
-                "reason": "small_sample",
-            })
             continue
 
         mean_curr = float(mana_arr[mask_curr].mean())

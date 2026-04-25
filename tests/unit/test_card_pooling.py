@@ -198,45 +198,35 @@ class TestMarginalImpacts:
         # Later copies should be near zero -> noise
         assert result[3]["noise"] is True
 
-    def test_small_sample_marked_noise(self):
-        # Bucket 4 has only 5 samples — below the min threshold
+    def test_undersampled_buckets_skipped(self):
+        # Bucket 4 has only 5 samples — below the 30-game min. The pill is
+        # dropped entirely rather than emitted as "small_sample" noise.
         rng = np.random.default_rng(2)
         counts = np.concatenate([
             np.full(200, 0), np.full(200, 1), np.full(200, 2), np.full(200, 3), np.full(5, 4)
         ])
         mana = rng.normal(8.0, 1.0, size=counts.size)
         result = _compute_marginal_impacts(counts, mana, max_k=4)
-        assert result[3]["noise"] is True
-        assert result[3]["reason"] == "small_sample"
-        assert result[3]["effect"] is None
+        emitted_k = [m["k"] for m in result]
+        assert emitted_k == [1, 2, 3]
+        assert all(m["effect"] is not None for m in result)
 
-    def test_rare_buckets_are_trimmed_not_emitted(self):
-        # Simulate a 60-copy always-drawn pool: counts concentrated around k=7,
-        # with k=1..4 essentially never occurring. Those leading buckets should
-        # not appear at all in the output (rather than being emitted as
-        # "small_sample" noise, which is misleading).
+    def test_always_drawn_pool_only_emits_modal_range(self):
+        # 60-copy always-drawn pool: counts concentrate around k=7, leading
+        # buckets are vanishingly rare. Only k where both buckets clear the
+        # 30-game floor should appear.
         rng = np.random.default_rng(7)
         counts = np.concatenate([
-            np.full(0, 1),     # k=1: never
-            np.full(1, 2),     # k=2: ~vanishingly rare
-            np.full(2, 3),     # k=3: ~vanishingly rare
-            np.full(50, 6),    # k=6: realistic
-            np.full(200, 7),   # k=7: modal
-            np.full(150, 8),   # k=8: realistic
+            np.full(1, 2),
+            np.full(2, 3),
+            np.full(50, 6),
+            np.full(200, 7),
+            np.full(150, 8),
         ])
-        # Total games = 403, so rare_floor = max(5, ceil(0.005 * 403)) = 5
         mana = rng.normal(10.0, 1.0, size=counts.size)
         result = _compute_marginal_impacts(counts, mana, max_k=8)
         emitted_k = [m["k"] for m in result]
-        # k=2 and k=3 have <5 games → trimmed, not "noise"
-        assert 2 not in emitted_k
-        assert 3 not in emitted_k
-        # k=6 (n=50) needs k=5 baseline (n=0) → trimmed
-        assert 6 not in emitted_k
-        # k=7 (n=200) vs k=6 (n=50) → emit
-        assert 7 in emitted_k
-        # k=8 (n=150) vs k=7 (n=200) → emit
-        assert 8 in emitted_k
+        assert emitted_k == [7, 8]
 
     def test_negative_marginal_detected(self):
         # Each copy makes things worse: 9 -> 8 -> 7 -> 6
