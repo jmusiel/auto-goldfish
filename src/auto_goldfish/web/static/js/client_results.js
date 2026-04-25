@@ -257,44 +257,109 @@ const ClientResults = (function() {
         return html;
     }
 
+    const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'];
+    function ordinal(k) { return ORDINALS[k] || (k + 'th'); }
+
     function renderCardPerformance(results) {
         const cp = results[0].card_performance;
         if (!cp || !cp.high_performing) return '';
 
         let html = '<h2>Card Performance</h2>';
-        html += '<p class="card-perf-summary">Impact of drawing each card on average mana spent across '
-            + cp.total_games + ' games. '
-            + 'Impact = average mana spent in games where the card was drawn minus games where it was not. '
-            + 'Positive values mean drawing the card increased total mana output.</p>';
+        html += '<details class="card-perf-help">'
+            + '<summary>How to read this table</summary>'
+            + '<p>Spells with the same mana cost and same simulator-relevant effects are pooled into a single archetype, since they\'re interchangeable to the simulator. The example shown is just one card from the pool.</p>'
+            + '<ul class="card-perf-help-list">'
+            + '<li><strong>Impact</strong> — Average mana spent in games where you drew at least one copy of this spell, minus games where you didn\'t. Positive = the deck does more when this is in your opening hand or draws.</li>'
+            + '<li><strong>Each extra copy</strong> — How much the 1st, 2nd, 3rd… copy adds on top of the previous count. "+0.50" on the 2nd means having two in hand spends 0.50 more mana than just one. Marked "too noisy" when there aren\'t enough games to be confident.</li>'
+            + '<li><strong>Recommendation</strong> — A plain-English read of the per-copy trend: add more, you have enough, cut copies, or there isn\'t enough data.</li>'
+            + '<li><sup class="always-drawn">∑</sup> means the spell appeared in nearly every game (so there is no "drew none" comparison group). The Impact shown is the sum of the per-copy effects that were statistically significant.</li>'
+            + '</ul>'
+            + '<p><em>Lands are excluded, except for MDFCs (cards with both a land face and a spell face).</em></p>'
+            + '</details>';
+        html += '<p class="card-perf-summary">Impact of drawing each spell on average mana spent across '
+            + cp.total_games + ' games.</p>';
         html += '<div class="card-perf-grid">';
+
+        function renderMarginals(card) {
+            if (!card.marginals || !card.marginals.length) return '';
+            const parts = card.marginals.map(m => {
+                const ord = ordinal(m.k);
+                if (m.noise) {
+                    const tip = ord + ' copy: signal too small to detect an effect (only '
+                        + m.n_curr + ' games drew exactly ' + m.k + ').';
+                    return '<span class="marginal noise" title="' + escapeHtml(tip) + '">'
+                        + ord + ': too noisy</span>';
+                }
+                const cls = m.effect > 0 ? 'pos' : 'neg';
+                const sign = m.effect >= 0 ? '+' : '';
+                const tip = 'Drawing the ' + ord + ' copy changes total mana spent by '
+                    + sign + fmt(m.effect, 2) + ' on average (90% CI ±' + fmt(m.ci, 2)
+                    + ', based on ' + m.n_curr + ' games).';
+                return '<span class="marginal ' + cls + '" title="' + escapeHtml(tip) + '">'
+                    + ord + ': ' + sign + fmt(m.effect, 2) + '</span>';
+            });
+            return '<div class="marginals">' + parts.join('') + '</div>';
+        }
+
+        function renderBadge(card) {
+            const sat = card.saturation || {};
+            if (sat.badge === 'scaling') {
+                return '<span class="sat-badge sat-scaling" title="Every extra copy you draw is still adding measurable mana. More copies would likely help.">↑ Add more</span>';
+            }
+            if (sat.badge === 'saturated') {
+                const tip = 'Past copy ' + sat.saturates_at + ", additional copies don't add measurable value. "
+                    + sat.saturates_at + ' is roughly the sweet spot.';
+                return '<span class="sat-badge sat-saturated" title="' + escapeHtml(tip) + '">≈ Enough at ' + sat.saturates_at + '</span>';
+            }
+            if (sat.badge === 'crowding') {
+                return '<span class="sat-badge sat-crowding" title="Drawing extra copies actually hurts (they crowd your hand or compete for mana). Consider running fewer.">↓ Cut copies</span>';
+            }
+            if (sat.badge === 'unclear') {
+                return '<span class="sat-badge sat-unclear" title="Not enough games drew this spell at varying counts to give a confident verdict. Try running more simulations.">? Need more data</span>';
+            }
+            return '';
+        }
+
+        function renderRow(card, i, scoreClass) {
+            const label = escapeHtml(card.label || card.name);
+            const copies = card.copies || 1;
+            const tip = card.always_drawn
+                ? 'Drawn in nearly every game, so there is no "didn\'t draw it" group to compare against. Score shown is the sum of the per-copy effects that were statistically significant.'
+                : 'Average mana spent in games that drew this spell (' + fmt(card.mean_with, 2)
+                    + ") minus games that didn't (" + fmt(card.mean_without, 2) + ').';
+            const marker = card.always_drawn ? '<sup class="always-drawn">∑</sup>' : '';
+            let row = '<tr><td>' + (i + 1) + '</td>';
+            row += '<td style="text-align:left"><div>' + label + '</div>';
+            row += '<small>e.g. ' + cardLink(card.name) + '</small></td>';
+            row += '<td>' + copies + '</td>';
+            row += '<td>' + escapeHtml(card.cost) + '</td>';
+            row += '<td class="' + scoreClass + '" title="' + escapeHtml(tip) + '">' + (card.score >= 0 ? '+' : '') + fmt(card.score, 2) + marker + '</td>';
+            row += '<td style="text-align:left">' + renderMarginals(card) + '</td>';
+            row += '<td>' + renderBadge(card) + '</td></tr>';
+            return row;
+        }
+
+        const headerCells = '<th>#</th>'
+            + '<th>Spell</th>'
+            + '<th title="How many copies of this spell (or simulator-equivalent variants) are in the deck.">Copies</th>'
+            + '<th title="Average mana actually paid when this spell was cast across all simulated games.">Avg cost</th>'
+            + '<th title="Average mana spent in games that drew at least one copy minus games that drew none. Positive = the deck performs better with this spell in hand.">Impact</th>'
+            + '<th title="Per-copy effect: how much more (or less) mana the deck spends when you draw the 1st, 2nd, 3rd … copy compared to having one fewer. Hover any pill for details.">Each extra copy <span class="help-icon" aria-hidden="true">?</span></th>'
+            + '<th title="Plain-English verdict on whether to add more copies, you have enough, cut copies, or there isn\'t enough data yet.">Recommendation <span class="help-icon" aria-hidden="true">?</span></th>';
 
         // High performers
         html += '<div><h3>Top Performers</h3><div class="table-wrap"><table class="stats-table">';
-        html += '<thead><tr><th>#</th><th>Card</th><th>Cost</th><th>Effects</th>';
-        html += '<th>Avg With</th><th>Avg Without</th><th>Impact</th></tr></thead><tbody>';
+        html += '<thead><tr>' + headerCells + '</tr></thead><tbody>';
         cp.high_performing.forEach((card, i) => {
-            html += '<tr><td>' + (i + 1) + '</td>';
-            html += '<td style="text-align:left">' + cardLink(card.name) + '</td>';
-            html += '<td>' + escapeHtml(card.cost) + '</td>';
-            html += '<td style="text-align:left">' + escapeHtml(card.effects) + '</td>';
-            html += '<td>' + fmt(card.mean_with, 2) + '</td>';
-            html += '<td>' + fmt(card.mean_without, 2) + '</td>';
-            html += '<td class="score-positive">' + (card.score >= 0 ? '+' : '') + fmt(card.score, 2) + '</td></tr>';
+            html += renderRow(card, i, 'score-positive');
         });
         html += '</tbody></table></div></div>';
 
         // Low performers
         html += '<div><h3>Low Performers</h3><div class="table-wrap"><table class="stats-table">';
-        html += '<thead><tr><th>#</th><th>Card</th><th>Cost</th><th>Effects</th>';
-        html += '<th>Avg With</th><th>Avg Without</th><th>Impact</th></tr></thead><tbody>';
+        html += '<thead><tr>' + headerCells + '</tr></thead><tbody>';
         cp.low_performing.forEach((card, i) => {
-            html += '<tr><td>' + (i + 1) + '</td>';
-            html += '<td style="text-align:left">' + cardLink(card.name) + '</td>';
-            html += '<td>' + escapeHtml(card.cost) + '</td>';
-            html += '<td style="text-align:left">' + escapeHtml(card.effects) + '</td>';
-            html += '<td>' + fmt(card.mean_with, 2) + '</td>';
-            html += '<td>' + fmt(card.mean_without, 2) + '</td>';
-            html += '<td class="score-negative">' + (card.score >= 0 ? '+' : '') + fmt(card.score, 2) + '</td></tr>';
+            html += renderRow(card, i, 'score-negative');
         });
         html += '</tbody></table></div></div></div>';
         return html;

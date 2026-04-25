@@ -180,6 +180,127 @@ def _has_effects(card: Card) -> bool:
     return bool(eff.on_play or eff.per_turn or eff.cast_trigger or eff.mana_function)
 
 
+def _card_equivalence_key(card: Card) -> tuple[int, str]:
+    """Return a canonical key identifying simulator-equivalent cards.
+
+    Two cards with the same key behave identically in the simulator: same cmc
+    and same registered effects. Card type (creature vs sorcery vs artifact)
+    is intentionally ignored so the UI can refer to everything as a "spell".
+    """
+    eff = getattr(card, "_cached_effects", None)
+    effect_desc = eff.describe_effects() if eff else ""
+    return (card.cmc, effect_desc)
+
+
+def _format_pool_label(cmc: int, effect_desc: str) -> str:
+    """Render a human-readable label for a pool, e.g. '2-mana spell: Draw 2 cards'."""
+    if effect_desc:
+        return f"{cmc}-mana spell: {effect_desc}"
+    return f"{cmc}-mana spell (no effects)"
+
+
+# Per-copy marginal analysis tunables.
+_MARGINAL_MIN_BUCKET = 30   # smaller of two buckets must have >=30 games to be "significant"
+_MARGINAL_RARE_FLOOR = 5    # absolute floor; below this we treat the count as physically rare
+_MARGINAL_RARE_FRAC = 0.005  # also rare if count appears in <0.5% of games
+_MARGINAL_MAX_K = 4         # stop evaluating beyond the 4th copy
+_MARGINAL_CI_Z = 1.645      # 90% normal CI
+_SATURATION_THRESHOLD = 0.1  # marginal magnitude below this rounds to "saturated"
+
+
+def _compute_marginal_impacts(
+    count_per_game: np.ndarray,
+    mana_arr: np.ndarray,
+    max_k: int,
+) -> list[dict]:
+    """Return marginal impact of the k-th copy for k=1..max_k.
+
+    Uses exact-count buckets: marginal_k = E[mana | drew=k] - E[mana | drew=k-1].
+    Each entry has effect, ci, n_curr, n_prev, and a 'noise' flag when the 90%
+    CI straddles zero or either bucket falls below the minimum sample size.
+
+    Skips emission entirely when either bucket is "rare" -- i.e., this draw
+    count is essentially impossible given the deck composition (e.g., drawing
+    exactly 1 of a 60-copy pool). Showing "too noisy" pills there would
+    incorrectly suggest more sims would help.
+    """
+    n_games = len(count_per_game)
+    rare_floor = max(_MARGINAL_RARE_FLOOR, int(n_games * _MARGINAL_RARE_FRAC))
+    out: list[dict] = []
+    for k in range(1, max_k + 1):
+        mask_curr = count_per_game == k
+        mask_prev = count_per_game == k - 1
+        n_curr = int(mask_curr.sum())
+        n_prev = int(mask_prev.sum())
+
+        # Skip k values where either side of the comparison is too rare to
+        # be a meaningful baseline -- not "noisy", but unreachable.
+        if min(n_curr, n_prev) < rare_floor:
+            continue
+
+        if min(n_curr, n_prev) < _MARGINAL_MIN_BUCKET:
+            out.append({
+                "k": k,
+                "effect": None,
+                "ci": None,
+                "n_curr": n_curr,
+                "n_prev": n_prev,
+                "noise": True,
+                "reason": "small_sample",
+            })
+            continue
+
+        mean_curr = float(mana_arr[mask_curr].mean())
+        mean_prev = float(mana_arr[mask_prev].mean())
+        var_curr = float(mana_arr[mask_curr].var(ddof=1))
+        var_prev = float(mana_arr[mask_prev].var(ddof=1))
+        effect = mean_curr - mean_prev
+        se = float(np.sqrt(var_curr / n_curr + var_prev / n_prev))
+        ci = _MARGINAL_CI_Z * se
+        noise = abs(effect) < ci  # CI straddles zero
+
+        out.append({
+            "k": k,
+            "effect": round(effect, 3),
+            "ci": round(ci, 3),
+            "n_curr": n_curr,
+            "n_prev": n_prev,
+            "noise": noise,
+            "reason": "ci_straddles_zero" if noise else None,
+        })
+    return out
+
+
+def _classify_saturation(marginals: list[dict]) -> dict:
+    """Return saturation badge + suggested copy count from a marginal series.
+
+    Categories:
+      * scaling   -- last evaluated marginal still significantly positive
+      * saturated -- positive at k=1, then noise/near-zero
+      * crowding  -- a marginal is significantly negative
+      * unclear   -- not enough signal to classify
+    """
+    significant = [m for m in marginals if not m["noise"] and m["effect"] is not None]
+    if not significant:
+        return {"badge": "unclear", "saturates_at": None}
+
+    if any(m["effect"] < -_SATURATION_THRESHOLD for m in significant):
+        # First k where marginal goes meaningfully negative
+        crowd_k = next(
+            m["k"] for m in significant if m["effect"] < -_SATURATION_THRESHOLD
+        )
+        return {"badge": "crowding", "saturates_at": crowd_k - 1}
+
+    last_sig = significant[-1]
+    last_eval = marginals[-1]
+    # Still positive at the last evaluated copy → scaling
+    if last_sig is last_eval and last_sig["effect"] > _SATURATION_THRESHOLD:
+        return {"badge": "scaling", "saturates_at": None}
+
+    # Positive then went to noise: saturates where signal ended
+    return {"badge": "saturated", "saturates_at": last_sig["k"]}
+
+
 def _card_to_dict(card: Card) -> dict:
     """Serialize a Card back to a dict for worker reconstruction."""
     return {
@@ -975,56 +1096,112 @@ class Goldfisher:
         drawn_cards_per_game: list[set] | None = None,
         card_mana_spent_list: list[list] | None = None,
     ) -> Dict[str, Any]:
-        """Measure each card's causal impact on game quality.
+        """Measure each pool's causal impact on game quality.
 
-        For each card, compares the average mana spent in games where the
-        card was drawn vs games where it was not. Since drawing is random
-        (shuffled deck), this is a natural experiment that isolates the
-        card's contribution from confounds like mana availability.
+        Cards that are simulator-equivalent (same cmc, same effect signature,
+        same simulator-relevant types) are pooled together — e.g. all 5-mana
+        vanilla spells, or all 2-mana "draw 2" sorceries. For each pool, we
+        compare the average mana spent in games where any pool member was
+        drawn vs games where none were drawn. Pooling tightens estimates for
+        otherwise-rare cards and exposes archetype-level signals.
         """
         if not drawn_cards_per_game or len(mana_spent_list) < 100:
             return {}
 
         n_games = len(mana_spent_list)
         mana_arr = np.array(mana_spent_list, dtype=float)
-        overall_mean = float(np.mean(mana_arr))
 
-        # Score each non-land spell card
-        scores = []
+        # Group spells by simulator-equivalence signature. Pure lands are
+        # excluded; MDFCs (cards with both land and spell faces) are kept
+        # because their spell side affects mana spent.
+        groups: Dict[tuple, list[int]] = {}
         for k, card in enumerate(self.decklist):
-            if card.land or not card.spell:
+            if not card.spell:
                 continue
+            sig = _card_equivalence_key(card)
+            groups.setdefault(sig, []).append(k)
 
-            # Split games into drawn vs not-drawn
-            drawn_mask = np.array([k in drawn_cards_per_game[i] for i in range(n_games)])
+        scores = []
+        for sig, indices in groups.items():
+            cmc, effect_desc = sig
+
+            # Per-game pool count: how many pool members were drawn this game
+            index_set = set(indices)
+            count_per_game = np.fromiter(
+                (len(index_set & drawn_cards_per_game[i]) for i in range(n_games)),
+                dtype=int,
+                count=n_games,
+            )
+            drawn_mask = count_per_game >= 1
             n_drawn = int(drawn_mask.sum())
             n_not_drawn = n_games - n_drawn
 
-            if n_drawn < 20 or n_not_drawn < 20:
-                continue  # Need enough games in both groups
+            if n_drawn < 20:
+                continue  # No "drew at least one" group to measure
+            always_drawn = n_not_drawn < 20
+            copies = len(indices)
+            if always_drawn and copies < 2:
+                continue  # Singleton always drawn → no comparison group available
 
             mean_with = float(np.mean(mana_arr[drawn_mask]))
-            mean_without = float(np.mean(mana_arr[~drawn_mask]))
-            impact = mean_with - mean_without
 
-            effects_desc = ""
-            if card._cached_effects:
-                effects_desc = card._cached_effects.describe_effects()
+            marginals: list[dict] = []
+            saturation = {"badge": "single", "saturates_at": None}
+            if copies >= 2:
+                # Always-drawn pools have empty bucket k=0, so the early k bins
+                # are small-sample noise. Extend max_k to where the data lives:
+                # one above the most-populated count.
+                max_k = min(copies, _MARGINAL_MAX_K)
+                if always_drawn:
+                    modal_k = int(np.bincount(count_per_game).argmax())
+                    max_k = min(copies, max(max_k, modal_k + 1))
+                marginals = _compute_marginal_impacts(
+                    count_per_game,
+                    mana_arr,
+                    max_k=max_k,
+                )
+                saturation = _classify_saturation(marginals)
 
-            # Use average mana actually spent when cast (accounts for discounts)
-            avg_cost = card.cmc
-            if card_mana_spent_list and card_mana_spent_list[k]:
-                avg_cost = round(float(np.mean(card_mana_spent_list[k])), 1)
+            if always_drawn:
+                # Sum significant per-copy marginals stand in for "with vs without"
+                sig_effects = [
+                    m["effect"] for m in marginals
+                    if not m["noise"] and m["effect"] is not None
+                ]
+                if not sig_effects:
+                    continue  # No usable signal for an always-drawn pool
+                impact = sum(sig_effects)
+                mean_without = 0.0  # sentinel — not displayed when always_drawn
+            else:
+                mean_without = float(np.mean(mana_arr[~drawn_mask]))
+                impact = mean_with - mean_without
+
+            # Pooled average mana actually spent across all member casts
+            pooled_spent: list[float] = []
+            if card_mana_spent_list:
+                for k in indices:
+                    if card_mana_spent_list[k]:
+                        pooled_spent.extend(card_mana_spent_list[k])
+            avg_cost = round(float(np.mean(pooled_spent)), 1) if pooled_spent else cmc
+
+            # Deterministic example (alphabetical first)
+            sorted_members = sorted(indices, key=lambda k: self.decklist[k].name)
+            example_card = self.decklist[sorted_members[0]]
 
             scores.append({
-                "name": card.name,
+                "name": example_card.name,
+                "label": _format_pool_label(cmc, effect_desc),
+                "copies": copies,
                 "cost": avg_cost,
-                "cmc": card.cmc,
-                "effects": effects_desc,
+                "cmc": cmc,
+                "effects": effect_desc,
                 "mean_with": round(mean_with, 2),
                 "mean_without": round(mean_without, 2),
                 "score": round(impact, 4),
                 "drawn_pct": round(n_drawn / n_games, 4),
+                "always_drawn": always_drawn,
+                "marginals": marginals,
+                "saturation": saturation,
             })
 
         # Sort and pick top/bottom 10

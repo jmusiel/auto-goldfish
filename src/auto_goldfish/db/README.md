@@ -21,7 +21,7 @@ DeckRow              -- saved decks (id, name, created_at)
 DeckCardRow          -- deck <-> card join with effect label + user_edited flag
 SimulationRunRow     -- one simulation run (job_id, config params, optimal_land_count)
 SimulationResultRow  -- per-land-count stats (mean_mana, consistency, CIs, percentiles)
-CardPerformanceRow   -- bottom 10 cards with effects at optimal land count (top/low rates, score)
+CardPerformanceRow   -- bottom 10 archetype pools with effects at optimal land count (stored against the example card)
 ```
 
 Tables are created automatically via `init_db()` on app startup.

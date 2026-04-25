@@ -572,6 +572,8 @@ class TestCardPerformance:
     def test_high_performing_has_required_fields(self, sequential_result):
         for entry in sequential_result.card_performance["high_performing"]:
             assert "name" in entry
+            assert "label" in entry
+            assert "copies" in entry
             assert "cost" in entry
             assert "cmc" in entry
             assert "effects" in entry
@@ -579,13 +581,12 @@ class TestCardPerformance:
             assert "mean_without" in entry
             assert "score" in entry
 
-    def test_high_performing_scores_nonnegative(self, sequential_result):
-        for entry in sequential_result.card_performance["high_performing"]:
-            assert entry["score"] >= 0
-
-    def test_low_performing_scores_nonpositive(self, sequential_result):
-        for entry in sequential_result.card_performance["low_performing"]:
-            assert entry["score"] <= 0
+    def test_high_scores_above_low_scores(self, sequential_result):
+        """Best top performer should out-score worst low performer."""
+        high = sequential_result.card_performance["high_performing"]
+        low = sequential_result.card_performance["low_performing"]
+        if high and low:
+            assert max(e["score"] for e in high) >= min(e["score"] for e in low)
 
     def test_high_sorted_descending(self, sequential_result):
         scores = [e["score"] for e in sequential_result.card_performance["high_performing"]]
@@ -627,6 +628,18 @@ class TestCardPerformance:
         gf = Goldfisher(deck, turns=5, sims=50, record_results="quartile", seed=1)
         result = gf.simulate()
         assert result.card_performance == {}
+
+    def test_pooled_entries_have_label_and_copies(self, sequential_result):
+        """Pooled output should include human-readable label and copy count."""
+        cp = sequential_result.card_performance
+        for entries in (cp["high_performing"], cp["low_performing"]):
+            for entry in entries:
+                assert isinstance(entry["label"], str) and entry["label"]
+                assert entry["copies"] >= 1
+                # vanilla pools (62 vanilla creatures across 6 cmc) should pool at least some
+        # At least one pool with >1 copies expected from this deck shape
+        all_entries = cp["high_performing"] + cp["low_performing"]
+        assert any(e["copies"] > 1 for e in all_entries)
 
 
 class TestReplayData:

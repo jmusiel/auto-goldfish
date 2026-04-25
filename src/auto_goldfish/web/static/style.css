@@ -304,8 +304,71 @@ a:hover { text-decoration: underline; }
     font-size: 0.9rem;
     margin-bottom: 1rem;
 }
+.card-perf-help {
+    margin: 0.5rem 0 1rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.88rem;
+    color: #334155;
+}
+.card-perf-help summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #1e293b;
+}
+.card-perf-help[open] summary { margin-bottom: 0.5rem; }
+.card-perf-help-list {
+    margin: 0.4rem 0 0.4rem 1.1rem;
+    padding: 0;
+    line-height: 1.5;
+}
+.card-perf-help-list li { margin-bottom: 0.3rem; }
+.help-icon {
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    line-height: 13px;
+    border-radius: 50%;
+    background: #cbd5e1;
+    color: #fff;
+    font-size: 0.7rem;
+    text-align: center;
+    margin-left: 0.25rem;
+    cursor: help;
+    font-weight: 600;
+    vertical-align: middle;
+}
 .score-positive { color: #16a34a; font-weight: 600; }
 .score-negative { color: #dc2626; font-weight: 600; }
+
+/* Per-copy marginals + saturation badges */
+.marginals { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.marginal {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.78rem;
+    padding: 0.05rem 0.35rem;
+    border-radius: 3px;
+    background: #f1f5f9;
+    color: #334155;
+    white-space: nowrap;
+}
+.marginal.pos { background: #dcfce7; color: #166534; }
+.marginal.neg { background: #fee2e2; color: #991b1b; }
+.marginal.noise { background: #e2e8f0; color: #64748b; font-style: italic; }
+.sat-badge {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.1rem 0.45rem;
+    border-radius: 3px;
+    white-space: nowrap;
+}
+.sat-scaling { background: #dcfce7; color: #166534; }
+.sat-saturated { background: #fef3c7; color: #92400e; }
+.sat-crowding { background: #fee2e2; color: #991b1b; }
+.sat-unclear { background: #e2e8f0; color: #64748b; }
+sup.always-drawn { color: #64748b; font-size: 0.7em; margin-left: 2px; cursor: help; }
 
 /* Deck score stat block */
 .deck-score-section {
