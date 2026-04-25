@@ -268,13 +268,28 @@ def _classify_saturation(marginals: list[dict]) -> dict:
       * saturated -- positive at k=1, then noise/near-zero
       * crowding  -- a marginal is significantly negative
       * unclear   -- not enough signal to classify
+
+    Directional badges (`scaling`, `crowding`) require leading evidence: the
+    first emitted marginal must itself be significantly directional. A lone
+    late-k significant marginal isn't enough to recommend "add more" or "cut
+    copies" — we don't know the value of earlier copies.
     """
     significant = [m for m in marginals if not m["noise"] and m["effect"] is not None]
     if not significant:
         return {"badge": "unclear", "saturates_at": None}
 
+    first_emitted = marginals[0]
+    # Directional badges require leading evidence — if the first emitted
+    # marginal is itself noise, we have no idea what the early copies do, so
+    # neither "add more" nor "cut copies" is groundable. Especially relevant
+    # because high-k positives are inflated by selection bias (games that
+    # drew enough cards to reach the kth copy also tend to spend more mana
+    # for unrelated reasons).
+    leading_sig = significant[0] is first_emitted
+
     if any(m["effect"] < -_SATURATION_THRESHOLD for m in significant):
-        # First k where marginal goes meaningfully negative
+        if not leading_sig:
+            return {"badge": "unclear", "saturates_at": None}
         crowd_k = next(
             m["k"] for m in significant if m["effect"] < -_SATURATION_THRESHOLD
         )
@@ -282,11 +297,11 @@ def _classify_saturation(marginals: list[dict]) -> dict:
 
     last_sig = significant[-1]
     last_eval = marginals[-1]
-    # Still positive at the last evaluated copy → scaling
     if last_sig is last_eval and last_sig["effect"] > _SATURATION_THRESHOLD:
+        if not (leading_sig and first_emitted["effect"] > _SATURATION_THRESHOLD):
+            return {"badge": "unclear", "saturates_at": None}
         return {"badge": "scaling", "saturates_at": None}
 
-    # Positive then went to noise: saturates where signal ended
     return {"badge": "saturated", "saturates_at": last_sig["k"]}
 
 

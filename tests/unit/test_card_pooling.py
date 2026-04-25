@@ -340,6 +340,44 @@ class TestSaturationBadge:
         sat = _classify_saturation(marginals)
         assert sat["badge"] == "unclear"
 
+    def test_late_only_positive_is_unclear_not_scaling(self):
+        # Leading marginals are noise, only k=4 is sig+. Without leading
+        # evidence we can't claim "add more" — the late signal is likely
+        # confounded by selection on cards-drawn (games that drew enough
+        # to reach the kth copy also tend to spend more mana).
+        marginals = [
+            {"k": 1, "effect": 0.10, "noise": True, "ci": 0.4},
+            {"k": 2, "effect": -0.05, "noise": True, "ci": 0.3},
+            {"k": 3, "effect": 0.08, "noise": True, "ci": 0.4},
+            {"k": 4, "effect": 1.50, "noise": False, "ci": 0.5},
+        ]
+        sat = _classify_saturation(marginals)
+        assert sat["badge"] == "unclear"
+
+    def test_late_only_negative_is_unclear_not_crowding(self):
+        # Symmetric case: leading marginals noise, only k=4 sig negative.
+        # Without leading evidence, "cut copies" isn't groundable either.
+        marginals = [
+            {"k": 1, "effect": -0.05, "noise": True, "ci": 0.4},
+            {"k": 2, "effect": 0.05, "noise": True, "ci": 0.3},
+            {"k": 3, "effect": -0.08, "noise": True, "ci": 0.4},
+            {"k": 4, "effect": -1.20, "noise": False, "ci": 0.5},
+        ]
+        sat = _classify_saturation(marginals)
+        assert sat["badge"] == "unclear"
+
+    def test_transition_crowding_still_works(self):
+        # k=1 sig+, then k=2 sig-: leading is significant (positive), so
+        # the transition to negative is real evidence — still crowding.
+        marginals = [
+            {"k": 1, "effect": 0.50, "noise": False, "ci": 0.2},
+            {"k": 2, "effect": -0.40, "noise": False, "ci": 0.2},
+            {"k": 3, "effect": -0.60, "noise": False, "ci": 0.2},
+        ]
+        sat = _classify_saturation(marginals)
+        assert sat["badge"] == "crowding"
+        assert sat["saturates_at"] == 1
+
 
 class TestAlwaysDrawnPools:
     """Pools drawn in nearly every game still surface via marginal-derived score."""
