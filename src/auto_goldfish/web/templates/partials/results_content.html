@@ -133,7 +133,7 @@
             {% for m in card.marginals %}
                 {% set ord = _ordinal[m.k] if m.k < _ordinal|length else (m.k|string + 'th') %}
                 {% if m.noise %}
-                    <span class="marginal noise" title="{{ ord }} copy: 90% CI overlaps zero, so the effect is too small to distinguish from chance ({{ m.n_curr }} games drew exactly {{ m.k }}).">{{ ord }}: too noisy</span>
+                    <span class="marginal noise" title="{{ ord }} copy: 90% CI overlaps zero, so the effect is too small to distinguish from chance ({{ m.n_curr }} games drew exactly {{ m.k }}).">{{ ord }}: —</span>
                 {% else %}
                     <span class="marginal {{ 'pos' if m.effect > 0 else 'neg' }}" title="Drawing the {{ ord }} copy changes total mana spent by {{ '%+.2f'|format(m.effect) }} on average (90% CI ±{{ '%.2f'|format(m.ci) }}, based on {{ m.n_curr }} games).">{{ ord }}: {{ "%+.2f"|format(m.effect) }}</span>
                 {% endif %}
@@ -169,7 +169,7 @@
     </p>
     <ul class="card-perf-help-list">
         <li><strong>Impact</strong> — Average mana spent in games where you drew at least one copy of this spell, minus games where you didn't. Positive = the deck does more when this is in your opening hand or draws.</li>
-        <li><strong>Each extra copy</strong> — How much the {{ "1st" }}, 2nd, 3rd&hellip; copy adds on top of the previous count. "+0.50" on the 2nd means having two in hand spends 0.50 more mana than just one. Marked "too noisy" when the 90% CI overlaps zero. Ordinals the deck rarely realizes are not shown.</li>
+        <li><strong>Each extra copy</strong> — How much the {{ "1st" }}, 2nd, 3rd&hellip; copy adds on top of the previous count. "+0.50" on the 2nd means having two in hand spends 0.50 more mana than just one. A faded "—" means the 90% CI overlaps zero (effect indistinguishable from chance); ordinals the deck rarely realizes are not shown at all.</li>
         <li><strong>Recommendation</strong> — A plain-English read of the per-copy trend: add more, you have enough, cut copies, or there isn't enough data.</li>
         <li><sup class="always-drawn">∑</sup> means the spell appeared in nearly every game (so there is no "drew none" comparison group). The Impact shown is the sum of the per-copy effects that were statistically significant.</li>
     </ul>

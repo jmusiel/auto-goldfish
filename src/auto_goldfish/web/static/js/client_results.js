@@ -270,7 +270,7 @@ const ClientResults = (function() {
             + '<p>Spells with the same mana cost and same simulator-relevant effects are pooled into a single archetype, since they\'re interchangeable to the simulator. The example shown is just one card from the pool.</p>'
             + '<ul class="card-perf-help-list">'
             + '<li><strong>Impact</strong> — Average mana spent in games where you drew at least one copy of this spell, minus games where you didn\'t. Positive = the deck does more when this is in your opening hand or draws.</li>'
-            + '<li><strong>Each extra copy</strong> — How much the 1st, 2nd, 3rd… copy adds on top of the previous count. "+0.50" on the 2nd means having two in hand spends 0.50 more mana than just one. Marked "too noisy" when the 90% CI overlaps zero. Ordinals the deck rarely realizes are not shown.</li>'
+            + '<li><strong>Each extra copy</strong> — How much the 1st, 2nd, 3rd… copy adds on top of the previous count. "+0.50" on the 2nd means having two in hand spends 0.50 more mana than just one. A faded "—" means the 90% CI overlaps zero (effect indistinguishable from chance); ordinals the deck rarely realizes are not shown at all.</li>'
             + '<li><strong>Recommendation</strong> — A plain-English read of the per-copy trend: add more, you have enough, cut copies, or there isn\'t enough data.</li>'
             + '<li><sup class="always-drawn">∑</sup> means the spell appeared in nearly every game (so there is no "drew none" comparison group). The Impact shown is the sum of the per-copy effects that were statistically significant.</li>'
             + '</ul>'
@@ -288,7 +288,7 @@ const ClientResults = (function() {
                     const tip = ord + ' copy: 90% CI overlaps zero, so the effect is too small to distinguish from chance ('
                         + m.n_curr + ' games drew exactly ' + m.k + ').';
                     return '<span class="marginal noise" title="' + escapeHtml(tip) + '">'
-                        + ord + ': too noisy</span>';
+                        + ord + ': —</span>';
                 }
                 const cls = m.effect > 0 ? 'pos' : 'neg';
                 const sign = m.effect >= 0 ? '+' : '';

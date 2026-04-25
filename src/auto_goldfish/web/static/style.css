@@ -356,7 +356,13 @@ a:hover { text-decoration: underline; }
 }
 .marginal.pos { background: #dcfce7; color: #166534; }
 .marginal.neg { background: #fee2e2; color: #991b1b; }
-.marginal.noise { background: #e2e8f0; color: #64748b; font-style: italic; }
+.marginal.noise {
+    background: transparent;
+    color: #94a3b8;
+    padding: 0.1rem 0.2rem;
+    font-size: 0.72rem;
+    font-weight: 400;
+}
 .sat-badge {
     font-size: 0.78rem;
     font-weight: 600;
