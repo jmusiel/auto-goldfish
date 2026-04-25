@@ -1,8 +1,9 @@
 # Vercel serverless function dependencies (server-side only).
-# Heavy simulation deps (numpy, pandas, matplotlib) are excluded —
-# simulations run client-side via Pyodide.
+# The Monte Carlo simulator runs client-side via Pyodide, but server routes
+# (e.g. the hypergeometric mana model) still need numpy for analytical math.
 flask>=3.1
 gunicorn>=23.0
+numpy>=1.26
 psycopg2-binary>=2.9
 python-dotenv>=1.0
 sqlalchemy>=2.0
