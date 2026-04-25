@@ -11,7 +11,7 @@
         {% set stat_defs = [
             ('Consistency', 'consistency', '#eab308', 'How rarely the deck bricks'),
             ('Acceleration', 'acceleration', '#ef4444', 'Early-game mana deployment'),
-            ('Surge', 'surge', '#8b5cf6', 'Late-game acceleration'),
+            ('Snowball', 'snowball', '#8b5cf6', 'How much advantage compounds over time'),
             ('Toughness', 'toughness', '#22c55e', 'Structural redundancy of the decklist'),
             ('Efficiency', 'efficiency', '#3b82f6', 'Mana utilization per turn'),
             ('Reach', 'reach', '#f97316', 'Peak mana output and ceiling'),
@@ -402,10 +402,10 @@
                 new Chart(scoreCanvas, {
                     type: 'radar',
                     data: {
-                        labels: ['Consistency', 'Acceleration', 'Surge', 'Toughness', 'Efficiency', 'Reach'],
+                        labels: ['Consistency', 'Acceleration', 'Snowball', 'Toughness', 'Efficiency', 'Reach'],
                         datasets: [{
                             label: 'Deck Stats',
-                            data: [ds.consistency, ds.acceleration, ds.surge, ds.toughness, ds.efficiency, ds.reach],
+                            data: [ds.consistency, ds.acceleration, ds.snowball, ds.toughness, ds.efficiency, ds.reach],
                             backgroundColor: 'rgba(59, 130, 246, 0.2)',
                             borderColor: '#3b82f6',
                             borderWidth: 2,

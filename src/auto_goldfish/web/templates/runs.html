@@ -15,7 +15,7 @@
             <th data-col="4" data-type="number" class="sortable">Lands</th>
             <th data-col="5" data-type="number" class="sortable stat-col-consistency">Consistency</th>
             <th data-col="6" data-type="number" class="sortable stat-col-acceleration">Acceleration</th>
-            <th data-col="7" data-type="number" class="sortable stat-col-surge">Surge</th>
+            <th data-col="7" data-type="number" class="sortable stat-col-snowball">Snowball</th>
             <th data-col="8" data-type="number" class="sortable stat-col-toughness">Toughness</th>
             <th data-col="9" data-type="number" class="sortable stat-col-efficiency">Efficiency</th>
             <th data-col="10" data-type="number" class="sortable stat-col-reach">Reach</th>
@@ -32,7 +32,7 @@
             <td>{{ run.optimal_land_count or '—' }}</td>
             <td class="stat-cell-consistency">{{ run.consistency if run.consistency is not none else '—' }}</td>
             <td class="stat-cell-acceleration">{{ run.acceleration if run.acceleration is not none else '—' }}</td>
-            <td class="stat-cell-surge">{{ run.surge if run.surge is not none else '—' }}</td>
+            <td class="stat-cell-snowball">{{ run.snowball if run.snowball is not none else '—' }}</td>
             <td class="stat-cell-toughness">{{ run.toughness if run.toughness is not none else '—' }}</td>
             <td class="stat-cell-efficiency">{{ run.efficiency if run.efficiency is not none else '—' }}</td>
             <td class="stat-cell-reach">{{ run.reach if run.reach is not none else '—' }}</td>
@@ -65,11 +65,11 @@
 
 <script>
 const RUNS_DATA = {{ runs | tojson }};
-const STAT_KEYS = ['consistency', 'acceleration', 'surge', 'toughness', 'efficiency', 'reach'];
+const STAT_KEYS = ['consistency', 'acceleration', 'snowball', 'toughness', 'efficiency', 'reach'];
 const STAT_COLORS = {
     consistency: '#eab308',
     acceleration: '#ef4444',
-    surge: '#8b5cf6',
+    snowball: '#8b5cf6',
     toughness: '#22c55e',
     efficiency: '#3b82f6',
     reach: '#f97316',

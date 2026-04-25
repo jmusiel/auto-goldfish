@@ -13,7 +13,7 @@ from auto_goldfish.metrics.deck_score import (
     _compute_consistency,
     _compute_efficiency,
     _compute_reach,
-    _compute_surge,
+    _compute_snowball,
     _compute_toughness,
     _scale,
     compute_deck_score,
@@ -186,23 +186,23 @@ class TestEfficiency:
         assert _compute_efficiency(result, 10) == 1
 
 
-class TestSurge:
+class TestSnowball:
     def test_strong_acceleration(self):
         result = _make_result(
             mean_mana_per_turn=[0.5, 1.0, 1.5, 2.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],
         )
-        assert _compute_surge(result, 10) >= 7
+        assert _compute_snowball(result, 10) >= 7
 
     def test_flat_curve(self):
         result = _make_result(
             mean_mana_per_turn=[2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0],
         )
-        score = _compute_surge(result, 10)
+        score = _compute_snowball(result, 10)
         assert score <= 6
 
     def test_short_game_returns_5(self):
         result = _make_result(mean_mana_per_turn=[1.0, 2.0, 3.0])
-        assert _compute_surge(result, 3) == 5
+        assert _compute_snowball(result, 3) == 5
 
 
 # ---------------------------------------------------------------------------
@@ -225,7 +225,7 @@ class TestComputeDeckScore:
         score = compute_deck_score(_make_result(), turns=10)
         keys = set(score.as_dict().keys())
         assert keys == {
-            "consistency", "acceleration", "surge",
+            "consistency", "acceleration", "snowball",
             "toughness", "efficiency", "reach",
         }
 
@@ -233,7 +233,7 @@ class TestComputeDeckScore:
         score = compute_deck_score(_make_result(), turns=10)
         block = score.format_block()
         for stat in [
-            "CONSISTENCY", "ACCELERATION", "SURGE",
+            "CONSISTENCY", "ACCELERATION", "SNOWBALL",
             "TOUGHNESS", "EFFICIENCY", "REACH",
         ]:
             assert stat in block
@@ -266,8 +266,8 @@ class TestStatAnchors:
     def test_default_anchors_match_historical_values(self):
         assert DEFAULT_ANCHORS.consistency == (0.0, 1.0)
         assert DEFAULT_ANCHORS.acceleration == (1.0, 14.0)
-        assert DEFAULT_ANCHORS.surge_ratio == (0.5, 4.0)
-        assert DEFAULT_ANCHORS.surge_late_avg_norm == (1.0, 8.0)
+        assert DEFAULT_ANCHORS.snowball_ratio == (0.5, 4.0)
+        assert DEFAULT_ANCHORS.snowball_late_avg_norm == (1.0, 8.0)
         assert DEFAULT_ANCHORS.toughness == (0.55, 1.00)
         assert DEFAULT_ANCHORS.efficiency == (0.0, 1.0)
         assert DEFAULT_ANCHORS.reach_norm == (5.0, 45.0)
@@ -283,7 +283,7 @@ class TestComputeRawStats:
         assert isinstance(raw, DeckRawStats)
         keys = set(raw.as_dict().keys())
         assert keys == {
-            "consistency", "acceleration", "surge",
+            "consistency", "acceleration", "snowball",
             "toughness", "efficiency", "reach",
         }
 
@@ -336,15 +336,15 @@ class TestScoreFromRaw:
         custom_score = score_from_raw(raw, custom)
         default_score = score_from_raw(raw, DEFAULT_ANCHORS)
         # Only consistency should differ.
-        for stat in ["acceleration", "surge", "toughness", "efficiency", "reach"]:
+        for stat in ["acceleration", "snowball", "toughness", "efficiency", "reach"]:
             assert getattr(custom_score, stat) == getattr(default_score, stat)
 
-    def test_short_game_surge_returns_5(self):
-        """No late-game data => Surge falls back to neutral 5."""
+    def test_short_game_snowball_returns_5(self):
+        """No late-game data => Snowball falls back to neutral 5."""
         result = _make_result(mean_mana_per_turn=[3.0, 4.0])
         raw = compute_raw_stats(result, turns=2)
         score = score_from_raw(raw)
-        assert score.surge == 5
+        assert score.snowball == 5
 
     def test_compute_deck_score_accepts_anchors_kwarg(self):
         """compute_deck_score forwards the anchors arg to score_from_raw."""

@@ -213,7 +213,7 @@ class TestMigration:
 
         cols = {c["name"] for c in inspect(engine).get_columns("simulation_results")}
         for raw_col in [
-            "raw_consistency", "raw_acceleration", "raw_surge",
+            "raw_consistency", "raw_acceleration", "raw_snowball",
             "raw_toughness", "raw_efficiency", "raw_reach",
         ]:
             assert raw_col in cols, f"{raw_col} not added by migration"

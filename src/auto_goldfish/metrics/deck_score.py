@@ -5,7 +5,9 @@ profile:
 
 - **Consistency**: How rarely the deck has terrible games.
 - **Acceleration**: How quickly the deck deploys mana in early turns.
-- **Surge**: How well the deck sustains and accelerates output over time.
+- **Snowball**: How much advantage compounds over time -- the late-game
+  mana curve climbs steeply relative to the early game and lands on a
+  high plateau.
 - **Toughness**: Structural redundancy of the decklist (mana sources,
   card draw, low-cost plays, and a controlled curve). A deck with broad
   redundancy can absorb a missing piece without falling apart.
@@ -41,8 +43,8 @@ class StatAnchors:
 
     consistency: Tuple[float, float] = (0.0, 1.0)
     acceleration: Tuple[float, float] = (1.0, 14.0)
-    surge_ratio: Tuple[float, float] = (0.5, 4.0)
-    surge_late_avg_norm: Tuple[float, float] = (1.0, 8.0)
+    snowball_ratio: Tuple[float, float] = (0.5, 4.0)
+    snowball_late_avg_norm: Tuple[float, float] = (1.0, 8.0)
     toughness: Tuple[float, float] = (0.55, 1.00)
     efficiency: Tuple[float, float] = (0.0, 1.0)
     reach_norm: Tuple[float, float] = (5.0, 45.0)
@@ -56,26 +58,27 @@ class DeckRawStats:
     """Unscaled composite values that feed each CASTER stat's _scale call.
 
     Six floats are persistable to ``simulation_results`` for later
-    distribution analysis and on-the-fly anchor calibration. Surge has two
-    underlying inputs (a ratio and a late-game average); only the ratio
-    is exposed at the top level here. ``surge_late_avg_norm`` is kept on
-    the dataclass for completeness but is not currently persisted.
+    distribution analysis and on-the-fly anchor calibration. Snowball
+    has two underlying inputs (a ratio and a late-game average); only
+    the ratio is exposed at the top level here.
+    ``snowball_late_avg_norm`` is kept on the dataclass for completeness
+    but is not currently persisted.
     """
 
     consistency: float
     acceleration: float
-    surge: float                # late/early acceleration ratio
+    snowball: float                # late/early acceleration ratio
     toughness: float
     efficiency: float
-    reach: float                # turn-factor-normalized
-    surge_late_avg_norm: float  # turn-factor-normalized late-game avg
+    reach: float                   # turn-factor-normalized
+    snowball_late_avg_norm: float  # turn-factor-normalized late-game avg
 
     def as_dict(self) -> Dict[str, float]:
         """Return only the six top-level raw values (DB persistence shape)."""
         return {
             "consistency": self.consistency,
             "acceleration": self.acceleration,
-            "surge": self.surge,
+            "snowball": self.snowball,
             "toughness": self.toughness,
             "efficiency": self.efficiency,
             "reach": self.reach,
@@ -88,7 +91,7 @@ class DeckScore:
 
     consistency: int
     acceleration: int
-    surge: int
+    snowball: int
     toughness: int
     efficiency: int
     reach: int
@@ -97,7 +100,7 @@ class DeckScore:
         return {
             "consistency": self.consistency,
             "acceleration": self.acceleration,
-            "surge": self.surge,
+            "snowball": self.snowball,
             "toughness": self.toughness,
             "efficiency": self.efficiency,
             "reach": self.reach,
@@ -153,8 +156,8 @@ def compute_raw_stats(result: SimulationResult, turns: int = 10) -> DeckRawStats
     return DeckRawStats(
         consistency=_raw_consistency(result, turns),
         acceleration=_raw_acceleration(result, turns),
-        surge=_raw_surge_ratio(result),
-        surge_late_avg_norm=_raw_surge_late_avg_norm(result, turns),
+        snowball=_raw_snowball_ratio(result),
+        snowball_late_avg_norm=_raw_snowball_late_avg_norm(result, turns),
         toughness=_raw_toughness(result),
         efficiency=_raw_efficiency(result, turns),
         reach=_raw_reach_norm(result, turns),
@@ -163,17 +166,17 @@ def compute_raw_stats(result: SimulationResult, turns: int = 10) -> DeckRawStats
 
 def score_from_raw(raw: DeckRawStats, anchors: StatAnchors = DEFAULT_ANCHORS) -> DeckScore:
     """Apply 1--10 scaling using the given anchors."""
-    if raw.surge_late_avg_norm <= 0.0:
+    if raw.snowball_late_avg_norm <= 0.0:
         # No late-game data (short game or all-mulligan); neutral score.
-        surge = 5
+        snowball = 5
     else:
-        accel_score = _scale(raw.surge, *anchors.surge_ratio)
-        late_power = _scale(raw.surge_late_avg_norm, *anchors.surge_late_avg_norm)
-        surge = _clamp(0.5 * accel_score + 0.5 * late_power)
+        accel_score = _scale(raw.snowball, *anchors.snowball_ratio)
+        late_power = _scale(raw.snowball_late_avg_norm, *anchors.snowball_late_avg_norm)
+        snowball = _clamp(0.5 * accel_score + 0.5 * late_power)
     return DeckScore(
         consistency=_scale(raw.consistency, *anchors.consistency),
         acceleration=_scale(raw.acceleration, *anchors.acceleration),
-        surge=surge,
+        snowball=snowball,
         toughness=_scale(raw.toughness, *anchors.toughness),
         efficiency=_scale(raw.efficiency, *anchors.efficiency),
         reach=_scale(raw.reach, *anchors.reach_norm),
@@ -205,7 +208,7 @@ def _raw_acceleration(result: SimulationResult, turns: int) -> float:
     return float(sum(result.mean_mana_per_turn[:early_turns]))
 
 
-def _raw_surge_ratio(result: SimulationResult) -> float:
+def _raw_snowball_ratio(result: SimulationResult) -> float:
     """Late-game / early-game mean-mana ratio (the acceleration term)."""
     mpt = result.mean_mana_per_turn
     if len(mpt) < 4:
@@ -219,7 +222,7 @@ def _raw_surge_ratio(result: SimulationResult) -> float:
     return float(late_avg / early_avg)
 
 
-def _raw_surge_late_avg_norm(result: SimulationResult, turns: int) -> float:
+def _raw_snowball_late_avg_norm(result: SimulationResult, turns: int) -> float:
     """Mean mana per turn for late-game turns, normalized to a 10-turn game."""
     mpt = result.mean_mana_per_turn
     if len(mpt) < 4:
@@ -276,7 +279,7 @@ def _compute_acceleration(result: SimulationResult, turns: int) -> int:
     return _scale(_raw_acceleration(result, turns), *DEFAULT_ANCHORS.acceleration)
 
 
-def _compute_surge(result: SimulationResult, turns: int) -> int:
+def _compute_snowball(result: SimulationResult, turns: int) -> int:
     mpt = result.mean_mana_per_turn
     if len(mpt) < 4:
         return 5
@@ -288,9 +291,9 @@ def _compute_surge(result: SimulationResult, turns: int) -> int:
     if early_avg <= 0:
         return 5
 
-    accel_score = _scale(_raw_surge_ratio(result), *DEFAULT_ANCHORS.surge_ratio)
+    accel_score = _scale(_raw_snowball_ratio(result), *DEFAULT_ANCHORS.snowball_ratio)
     late_power = _scale(
-        _raw_surge_late_avg_norm(result, turns), *DEFAULT_ANCHORS.surge_late_avg_norm
+        _raw_snowball_late_avg_norm(result, turns), *DEFAULT_ANCHORS.snowball_late_avg_norm
     )
     return _clamp(0.5 * accel_score + 0.5 * late_power)
 

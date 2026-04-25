@@ -241,7 +241,7 @@ class TestSaveSimulationRun:
         results[0]["deck_raw"] = {
             "consistency": 0.62,
             "acceleration": 7.5,
-            "surge": 1.8,
+            "snowball": 1.8,
             "toughness": 0.81,
             "efficiency": 0.55,
             "reach": 22.0,
@@ -254,7 +254,7 @@ class TestSaveSimulationRun:
         row = db_session.execute(select(SimulationResultRow)).scalar_one()
         assert row.raw_consistency == pytest.approx(0.62)
         assert row.raw_acceleration == pytest.approx(7.5)
-        assert row.raw_surge == pytest.approx(1.8)
+        assert row.raw_snowball == pytest.approx(1.8)
         assert row.raw_toughness == pytest.approx(0.81)
         assert row.raw_efficiency == pytest.approx(0.55)
         assert row.raw_reach == pytest.approx(22.0)

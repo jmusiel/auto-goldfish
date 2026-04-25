@@ -3,7 +3,7 @@
 For each calibration deck, this script:
   1. Runs a Goldfisher simulation.
   2. Extracts the *raw* inputs that feed each of the six CASTER stat
-     formulas (Consistency, Acceleration, Surge, Toughness, Efficiency,
+     formulas (Consistency, Acceleration, Snowball, Toughness, Efficiency,
      Reach).
   3. Computes the *scaled* 1-10 score using the current bounds.
   4. Writes one CSV row with both raw and scaled values plus deck metadata.
@@ -246,7 +246,7 @@ def _raw_efficiency(result: SimulationResult, turns: int) -> Tuple[float, float,
     return composite, utilization, mid_score
 
 
-def _raw_surge(result: SimulationResult, turns: int) -> Tuple[float, float, float]:
+def _raw_snowball(result: SimulationResult, turns: int) -> Tuple[float, float, float]:
     """Returns (acceleration_ratio, late_avg_normalized, early_avg)."""
     mpt = result.mean_mana_per_turn
     if len(mpt) < 4:
@@ -281,9 +281,9 @@ CSV_FIELDS = [
     "raw_toughness_curve_norm",
     "raw_efficiency_composite", "raw_efficiency_utilization",
     "raw_efficiency_mid",
-    "raw_surge_acceleration", "raw_surge_late_avg_norm",
+    "raw_snowball_acceleration", "raw_snowball_late_avg_norm",
     # Scaled 1-10 scores (CASTER)
-    "consistency", "acceleration", "surge", "toughness", "efficiency", "reach",
+    "consistency", "acceleration", "snowball", "toughness", "efficiency", "reach",
 ]
 
 
@@ -293,7 +293,7 @@ def build_row(
     raw_cons, c_tail, c_bad, c_std = _raw_consistency(result, turns)
     raw_tough, t_mana, t_draw, t_early, t_curve = _raw_toughness(result)
     raw_eff, e_util, e_mid = _raw_efficiency(result, turns)
-    raw_surge_accel, raw_surge_late, _ = _raw_surge(result, turns)
+    raw_snowball_accel, raw_snowball_late, _ = _raw_snowball(result, turns)
     score = compute_deck_score(result, turns=turns)
 
     return {
@@ -326,11 +326,11 @@ def build_row(
         "raw_efficiency_composite": round(raw_eff, 4),
         "raw_efficiency_utilization": round(e_util, 4),
         "raw_efficiency_mid": round(e_mid, 4),
-        "raw_surge_acceleration": round(raw_surge_accel, 4),
-        "raw_surge_late_avg_norm": round(raw_surge_late, 4),
+        "raw_snowball_acceleration": round(raw_snowball_accel, 4),
+        "raw_snowball_late_avg_norm": round(raw_snowball_late, 4),
         "consistency": score.consistency,
         "acceleration": score.acceleration,
-        "surge": score.surge,
+        "snowball": score.snowball,
         "toughness": score.toughness,
         "efficiency": score.efficiency,
         "reach": score.reach,
@@ -376,11 +376,11 @@ def load_or_fetch(deck: CalibrationDeck, skip_fetch: bool, verbose: bool) -> Opt
 
 PERCENTILES = [0, 10, 50, 90, 100]
 
-SCALED_STATS = ["consistency", "acceleration", "surge", "toughness", "efficiency", "reach"]
+SCALED_STATS = ["consistency", "acceleration", "snowball", "toughness", "efficiency", "reach"]
 RAW_KEYS = [
     ("consistency", "raw_consistency_composite"),
     ("acceleration", "raw_acceleration"),
-    ("surge", "raw_surge_acceleration"),
+    ("snowball", "raw_snowball_acceleration"),
     ("toughness", "raw_toughness_composite"),
     ("efficiency", "raw_efficiency_composite"),
     ("reach", "raw_reach"),
@@ -555,7 +555,7 @@ def main() -> int:
         rows.append(row)
         print(
             f"  -> C={row['consistency']} A={row['acceleration']} "
-            f"S={row['surge']} T={row['toughness']} "
+            f"S={row['snowball']} T={row['toughness']} "
             f"E={row['efficiency']} R={row['reach']}  "
             f"({elapsed:.1f}s)"
         )

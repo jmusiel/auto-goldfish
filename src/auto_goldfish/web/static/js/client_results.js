@@ -90,7 +90,7 @@ const ClientResults = (function() {
         const stats = [
             {name: 'Consistency', key: 'consistency', color: '#eab308', desc: 'How rarely the deck bricks'},
             {name: 'Acceleration', key: 'acceleration', color: '#ef4444', desc: 'Early-game mana deployment'},
-            {name: 'Surge', key: 'surge', color: '#8b5cf6', desc: 'Late-game acceleration'},
+            {name: 'Snowball', key: 'snowball', color: '#8b5cf6', desc: 'How much advantage compounds over time'},
             {name: 'Toughness', key: 'toughness', color: '#22c55e', desc: 'Structural redundancy of the decklist'},
             {name: 'Efficiency', key: 'efficiency', color: '#3b82f6', desc: 'Mana utilization per turn'},
             {name: 'Reach', key: 'reach', color: '#f97316', desc: 'Peak mana output and ceiling'},
@@ -125,8 +125,8 @@ const ClientResults = (function() {
         const canvas = document.getElementById('deckScoreRadar');
         if (!canvas) return;
 
-        const labels = ['Consistency', 'Acceleration', 'Surge', 'Toughness', 'Efficiency', 'Reach'];
-        const values = [score.consistency, score.acceleration, score.surge, score.toughness, score.efficiency, score.reach];
+        const labels = ['Consistency', 'Acceleration', 'Snowball', 'Toughness', 'Efficiency', 'Reach'];
+        const values = [score.consistency, score.acceleration, score.snowball, score.toughness, score.efficiency, score.reach];
 
         new Chart(canvas, {
             type: 'radar',

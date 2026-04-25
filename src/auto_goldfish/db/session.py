@@ -46,24 +46,28 @@ def _migrate(engine) -> None:
                 ))
             logger.info("Migrated simulation_results: added mean_spells_cast column")
         # Rename CASTER score columns from old names if present (idempotent).
-        score_renames = [
+        # Multiple historical names map onto current ones; the S stat went
+        # momentum -> surge -> snowball, so handle both legacy hops.
+        column_renames = [
             ("score_speed", "score_acceleration"),
             ("score_power", "score_reach"),
             ("score_resilience", "score_toughness"),
-            ("score_momentum", "score_surge"),
+            ("score_momentum", "score_snowball"),
+            ("score_surge", "score_snowball"),
+            ("raw_surge", "raw_snowball"),
         ]
-        pending = [(o, n) for (o, n) in score_renames if o in cols and n not in cols]
+        pending = [(o, n) for (o, n) in column_renames if o in cols and n not in cols]
         if pending:
             with engine.begin() as conn:
                 for old, new in pending:
                     conn.execute(text(
                         f"ALTER TABLE simulation_results RENAME COLUMN {old} TO {new}"
                     ))
-            logger.info("Migrated simulation_results: renamed score columns %s", pending)
+            logger.info("Migrated simulation_results: renamed columns %s", pending)
             cols = {c["name"] for c in inspect(engine).get_columns("simulation_results")}
 
         score_cols = [
-            "score_consistency", "score_acceleration", "score_surge",
+            "score_consistency", "score_acceleration", "score_snowball",
             "score_toughness", "score_efficiency", "score_reach",
         ]
         missing = [c for c in score_cols if c not in cols]
@@ -75,7 +79,7 @@ def _migrate(engine) -> None:
             cols = {c["name"] for c in inspect(engine).get_columns("simulation_results")}
 
         raw_cols = [
-            "raw_consistency", "raw_acceleration", "raw_surge",
+            "raw_consistency", "raw_acceleration", "raw_snowball",
             "raw_toughness", "raw_efficiency", "raw_reach",
         ]
         missing_raw = [c for c in raw_cols if c not in cols]

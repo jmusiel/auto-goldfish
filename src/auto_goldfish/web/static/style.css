@@ -1122,7 +1122,7 @@ h2 { font-size: 1.15rem; margin-bottom: 0.75rem; }
 /* Stat column header colors (CASTER) */
 .stat-col-consistency { color: #eab308 !important; }
 .stat-col-acceleration { color: #ef4444 !important; }
-.stat-col-surge { color: #8b5cf6 !important; }
+.stat-col-snowball { color: #8b5cf6 !important; }
 .stat-col-toughness { color: #22c55e !important; }
 .stat-col-efficiency { color: #3b82f6 !important; }
 .stat-col-reach { color: #f97316 !important; }
@@ -1130,7 +1130,7 @@ h2 { font-size: 1.15rem; margin-bottom: 0.75rem; }
 /* Stat cell value styling */
 .stat-cell-consistency,
 .stat-cell-acceleration,
-.stat-cell-surge,
+.stat-cell-snowball,
 .stat-cell-toughness,
 .stat-cell-efficiency,
 .stat-cell-reach {
