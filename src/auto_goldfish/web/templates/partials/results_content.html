@@ -126,13 +126,56 @@
 </table>
 </div>
 
+{% set _ordinal = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'] %}
+{% macro render_marginals(card) %}
+    {% if card.marginals %}
+        <div class="marginals">
+            {% for m in card.marginals %}
+                {% set ord = _ordinal[m.k] if m.k < _ordinal|length else (m.k|string + 'th') %}
+                {% if m.noise %}
+                    <span class="marginal noise" data-tip="{{ ord }} copy: 90% CI overlaps zero, so the effect is too small to distinguish from chance ({{ m.n_curr }} games drew exactly {{ m.k }}).">{{ ord }}: —</span>
+                {% else %}
+                    <span class="marginal {{ 'pos' if m.effect > 0 else 'neg' }}" data-tip="Drawing the {{ ord }} copy changes total mana spent by {{ '%+.2f'|format(m.effect) }} on average (90% CI ±{{ '%.2f'|format(m.ci) }}, based on {{ m.n_curr }} games).">{{ ord }}: {{ "%+.2f"|format(m.effect) }}</span>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endmacro %}
+{% macro impact_tip(card) -%}
+    {%- if card.always_drawn -%}
+        Drawn in nearly every game, so there is no "didn't draw it" group to compare against. Score shown is the sum of the per-copy effects that were statistically significant.
+    {%- else -%}
+        Average mana spent in games that drew this spell ({{ '%.2f'|format(card.mean_with) }}) minus games that didn't ({{ '%.2f'|format(card.mean_without) }}).
+    {%- endif -%}
+{%- endmacro %}
+{% macro render_badge(card) %}
+    {% set sat = card.saturation or {} %}
+    {% if sat.badge == 'scaling' %}
+        <span class="sat-badge sat-scaling" data-tip="Every extra copy you draw is still adding measurable mana. More copies would likely help.">↑ Add more</span>
+    {% elif sat.badge == 'saturated' %}
+        <span class="sat-badge sat-saturated" data-tip="Past copy {{ sat.saturates_at }}, additional copies don't add measurable value. {{ sat.saturates_at }} is roughly the sweet spot.">≈ Enough at {{ sat.saturates_at }}</span>
+    {% elif sat.badge == 'crowding' %}
+        <span class="sat-badge sat-crowding" data-tip="Drawing extra copies actually hurts (they crowd your hand or compete for mana). Consider running fewer.">↓ Cut copies</span>
+    {% elif sat.badge == 'unclear' %}
+        <span class="sat-badge sat-unclear" data-tip="Not enough games drew this spell at varying counts to give a confident verdict. Try running more simulations.">? Need more data</span>
+    {% endif %}
+{% endmacro %}
 {% if results[0].card_performance and results[0].card_performance.high_performing %}
 <h2>Card Performance</h2>
-<p class="card-perf-summary">
-    Impact of drawing each card on average mana spent across {{ results[0].card_performance.total_games }} games.
-    Impact = average mana spent in games where the card was drawn minus games where it was not.
-    Positive values mean drawing the card increased total mana output.
-</p>
+<details class="card-perf-help">
+    <summary>How to read this table</summary>
+    <p>
+        Spells with the same mana cost and same simulator-relevant effects are pooled into a single archetype, since they're interchangeable to the simulator. The example shown is just one card from the pool.
+    </p>
+    <ul class="card-perf-help-list">
+        <li><strong>Impact</strong> — Average mana spent in games where you drew at least one copy of this spell, minus games where you didn't. Positive = the deck does more when this is in your opening hand or draws.</li>
+        <li><strong>Each extra copy</strong> — How much the {{ "1st" }}, 2nd, 3rd&hellip; copy adds on top of the previous count. "+0.50" on the 2nd means having two in hand spends 0.50 more mana than just one. A faded "—" means the 90% CI overlaps zero (effect indistinguishable from chance); ordinals the deck rarely realizes are not shown at all.</li>
+        <li><strong>Recommendation</strong> — A plain-English read of the per-copy trend: add more, you have enough, cut copies, or there isn't enough data.</li>
+        <li><sup class="always-drawn">∑</sup> means the spell appeared in nearly every game (so there is no "drew none" comparison group). The Impact shown is the sum of the per-copy effects that were statistically significant.</li>
+    </ul>
+    <p><em>Lands are excluded, except for MDFCs (cards with both a land face and a spell face).</em></p>
+</details>
+<p class="card-perf-summary">Impact of drawing each spell on average mana spent across {{ results[0].card_performance.total_games }} games{% if results[0].card_performance.supplemental_games %} (+{{ results[0].card_performance.supplemental_games }} supplemental games for marginal precision){% endif %}.</p>
 <div class="card-perf-grid">
     <div>
         <h3>Top Performers</h3>
@@ -141,24 +184,27 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Card</th>
-                    <th>Cost</th>
-                    <th>Effects</th>
-                    <th>Avg With</th>
-                    <th>Avg Without</th>
-                    <th>Impact</th>
+                    <th>Spell</th>
+                    <th title="How many copies of this spell (or simulator-equivalent variants) are in the deck.">Copies</th>
+                    <th title="Average mana actually paid when this spell was cast across all simulated games.">Avg cost</th>
+                    <th title="Average mana spent in games that drew at least one copy minus games that drew none. Positive = the deck performs better with this spell in hand.">Impact</th>
+                    <th data-tip="Per-copy effect: how much more (or less) mana the deck spends when you draw the 1st, 2nd, 3rd … copy compared to having one fewer. Hover any pill for details.">Each extra copy <span class="help-icon" aria-hidden="true">?</span></th>
+                    <th data-tip="Plain-English verdict on whether to add more copies, you have enough, cut copies, or there isn't enough data yet.">Recommendation <span class="help-icon" aria-hidden="true">?</span></th>
                 </tr>
             </thead>
             <tbody>
                 {% for card in results[0].card_performance.high_performing %}
                 <tr>
                     <td>{{ loop.index }}</td>
-                    <td style="text-align:left"><a href="https://scryfall.com/search?exact={{ card.name|urlencode }}" target="_blank" class="card-link" data-card-name="{{ card.name }}">{{ card.name }}</a></td>
+                    <td style="text-align:left">
+                        <div>{{ card.label or card.name }}</div>
+                        <small>e.g. <a href="https://scryfall.com/search?exact={{ card.name|urlencode }}" target="_blank" class="card-link" data-card-name="{{ card.name }}">{{ card.name }}</a></small>
+                    </td>
+                    <td>{{ card.copies or 1 }}</td>
                     <td>{{ card.cost }}</td>
-                    <td style="text-align:left">{{ card.effects }}</td>
-                    <td>{{ "%.2f"|format(card.mean_with) }}</td>
-                    <td>{{ "%.2f"|format(card.mean_without) }}</td>
-                    <td class="score-positive">{{ "%+.2f"|format(card.score) }}</td>
+                    <td class="score-positive" title="{{ impact_tip(card) }}">{{ "%+.2f"|format(card.score) }}{% if card.always_drawn %}<sup class="always-drawn">∑</sup>{% endif %}</td>
+                    <td style="text-align:left">{{ render_marginals(card) }}</td>
+                    <td>{{ render_badge(card) }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -172,24 +218,27 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Card</th>
-                    <th>Cost</th>
-                    <th>Effects</th>
-                    <th>Avg With</th>
-                    <th>Avg Without</th>
-                    <th>Impact</th>
+                    <th>Spell</th>
+                    <th title="How many copies of this spell (or simulator-equivalent variants) are in the deck.">Copies</th>
+                    <th title="Average mana actually paid when this spell was cast across all simulated games.">Avg cost</th>
+                    <th title="Average mana spent in games that drew at least one copy minus games that drew none. Positive = the deck performs better with this spell in hand.">Impact</th>
+                    <th data-tip="Per-copy effect: how much more (or less) mana the deck spends when you draw the 1st, 2nd, 3rd … copy compared to having one fewer. Hover any pill for details.">Each extra copy <span class="help-icon" aria-hidden="true">?</span></th>
+                    <th data-tip="Plain-English verdict on whether to add more copies, you have enough, cut copies, or there isn't enough data yet.">Recommendation <span class="help-icon" aria-hidden="true">?</span></th>
                 </tr>
             </thead>
             <tbody>
                 {% for card in results[0].card_performance.low_performing %}
                 <tr>
                     <td>{{ loop.index }}</td>
-                    <td style="text-align:left"><a href="https://scryfall.com/search?exact={{ card.name|urlencode }}" target="_blank" class="card-link" data-card-name="{{ card.name }}">{{ card.name }}</a></td>
+                    <td style="text-align:left">
+                        <div>{{ card.label or card.name }}</div>
+                        <small>e.g. <a href="https://scryfall.com/search?exact={{ card.name|urlencode }}" target="_blank" class="card-link" data-card-name="{{ card.name }}">{{ card.name }}</a></small>
+                    </td>
+                    <td>{{ card.copies or 1 }}</td>
                     <td>{{ card.cost }}</td>
-                    <td style="text-align:left">{{ card.effects }}</td>
-                    <td>{{ "%.2f"|format(card.mean_with) }}</td>
-                    <td>{{ "%.2f"|format(card.mean_without) }}</td>
-                    <td class="score-negative">{{ "%+.2f"|format(card.score) }}</td>
+                    <td class="score-negative" title="{{ impact_tip(card) }}">{{ "%+.2f"|format(card.score) }}{% if card.always_drawn %}<sup class="always-drawn">∑</sup>{% endif %}</td>
+                    <td style="text-align:left">{{ render_marginals(card) }}</td>
+                    <td>{{ render_badge(card) }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

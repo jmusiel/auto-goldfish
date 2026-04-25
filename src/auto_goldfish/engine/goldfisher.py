@@ -6,6 +6,7 @@ No CLI code here -- returns structured ``SimulationResult``.
 
 from __future__ import annotations
 
+import math
 import os
 import random
 from collections import defaultdict
@@ -178,6 +179,130 @@ def _has_effects(card: Card) -> bool:
     if eff is None:
         return False
     return bool(eff.on_play or eff.per_turn or eff.cast_trigger or eff.mana_function)
+
+
+def _card_equivalence_key(card: Card) -> tuple[int, str]:
+    """Return a canonical key identifying simulator-equivalent cards.
+
+    Two cards with the same key behave identically in the simulator: same cmc
+    and same registered effects. Card type (creature vs sorcery vs artifact)
+    is intentionally ignored so the UI can refer to everything as a "spell".
+    """
+    eff = getattr(card, "_cached_effects", None)
+    effect_desc = eff.describe_effects() if eff else ""
+    return (card.cmc, effect_desc)
+
+
+def _format_pool_label(cmc: int, effect_desc: str) -> str:
+    """Render a human-readable label for a pool, e.g. '2-mana spell: Draw 2 cards'."""
+    if effect_desc:
+        return f"{cmc}-mana spell: {effect_desc}"
+    return f"{cmc}-mana spell (no effects)"
+
+
+# Per-copy marginal analysis tunables.
+_MARGINAL_MIN_BUCKET = 30   # both buckets must have >=30 games or we skip the pill
+_MARGINAL_MAX_K = 4         # stop evaluating beyond the 4th copy
+_MARGINAL_CI_Z = 1.645      # 90% normal CI
+_SATURATION_THRESHOLD = 0.1  # marginal magnitude below this rounds to "saturated"
+
+# Top-up tunables: when a pool's k=1 or k=2 marginal has too few games in
+# either bucket, we run additional natural goldfishing games (rejection
+# sampling) to fill them. _TOPUP_CAP_FACTOR caps total extras as a multiple
+# of the original sim count.
+_TOPUP_TARGET_KS = (1, 2)
+_TOPUP_CAP_FACTOR = 2.0
+
+
+def _compute_marginal_impacts(
+    count_per_game: np.ndarray,
+    mana_arr: np.ndarray,
+    max_k: int,
+) -> list[dict]:
+    """Return marginal impact of the k-th copy for k=1..max_k.
+
+    Uses exact-count buckets: marginal_k = E[mana | drew=k] - E[mana | drew=k-1].
+    Each entry has effect, ci, n_curr, n_prev, and a 'noise' flag when the 90%
+    CI straddles zero.
+
+    Skips emission entirely whenever either bucket has fewer than
+    _MARGINAL_MIN_BUCKET games. The badge already conveys the high-level
+    verdict, and individual under-sampled pills add clutter without insight.
+    """
+    out: list[dict] = []
+    for k in range(1, max_k + 1):
+        mask_curr = count_per_game == k
+        mask_prev = count_per_game == k - 1
+        n_curr = int(mask_curr.sum())
+        n_prev = int(mask_prev.sum())
+
+        if min(n_curr, n_prev) < _MARGINAL_MIN_BUCKET:
+            continue
+
+        mean_curr = float(mana_arr[mask_curr].mean())
+        mean_prev = float(mana_arr[mask_prev].mean())
+        var_curr = float(mana_arr[mask_curr].var(ddof=1))
+        var_prev = float(mana_arr[mask_prev].var(ddof=1))
+        effect = mean_curr - mean_prev
+        se = float(np.sqrt(var_curr / n_curr + var_prev / n_prev))
+        ci = _MARGINAL_CI_Z * se
+        noise = abs(effect) < ci  # CI straddles zero
+
+        out.append({
+            "k": k,
+            "effect": round(effect, 3),
+            "ci": round(ci, 3),
+            "n_curr": n_curr,
+            "n_prev": n_prev,
+            "noise": noise,
+            "reason": "ci_straddles_zero" if noise else None,
+        })
+    return out
+
+
+def _classify_saturation(marginals: list[dict]) -> dict:
+    """Return saturation badge + suggested copy count from a marginal series.
+
+    Categories:
+      * scaling   -- last evaluated marginal still significantly positive
+      * saturated -- positive at k=1, then noise/near-zero
+      * crowding  -- a marginal is significantly negative
+      * unclear   -- not enough signal to classify
+
+    Directional badges (`scaling`, `crowding`) require leading evidence: the
+    first emitted marginal must itself be significantly directional. A lone
+    late-k significant marginal isn't enough to recommend "add more" or "cut
+    copies" — we don't know the value of earlier copies.
+    """
+    significant = [m for m in marginals if not m["noise"] and m["effect"] is not None]
+    if not significant:
+        return {"badge": "unclear", "saturates_at": None}
+
+    first_emitted = marginals[0]
+    # Directional badges require leading evidence — if the first emitted
+    # marginal is itself noise, we have no idea what the early copies do, so
+    # neither "add more" nor "cut copies" is groundable. Especially relevant
+    # because high-k positives are inflated by selection bias (games that
+    # drew enough cards to reach the kth copy also tend to spend more mana
+    # for unrelated reasons).
+    leading_sig = significant[0] is first_emitted
+
+    if any(m["effect"] < -_SATURATION_THRESHOLD for m in significant):
+        if not leading_sig:
+            return {"badge": "unclear", "saturates_at": None}
+        crowd_k = next(
+            m["k"] for m in significant if m["effect"] < -_SATURATION_THRESHOLD
+        )
+        return {"badge": "crowding", "saturates_at": crowd_k - 1}
+
+    last_sig = significant[-1]
+    last_eval = marginals[-1]
+    if last_sig is last_eval and last_sig["effect"] > _SATURATION_THRESHOLD:
+        if not (leading_sig and first_emitted["effect"] > _SATURATION_THRESHOLD):
+            return {"badge": "unclear", "saturates_at": None}
+        return {"badge": "scaling", "saturates_at": None}
+
+    return {"badge": "saturated", "saturates_at": last_sig["k"]}
 
 
 def _card_to_dict(card: Card) -> dict:
@@ -975,56 +1100,147 @@ class Goldfisher:
         drawn_cards_per_game: list[set] | None = None,
         card_mana_spent_list: list[list] | None = None,
     ) -> Dict[str, Any]:
-        """Measure each card's causal impact on game quality.
+        """Measure each pool's causal impact on game quality.
 
-        For each card, compares the average mana spent in games where the
-        card was drawn vs games where it was not. Since drawing is random
-        (shuffled deck), this is a natural experiment that isolates the
-        card's contribution from confounds like mana availability.
+        Cards that are simulator-equivalent (same cmc, same effect signature,
+        same simulator-relevant types) are pooled together — e.g. all 5-mana
+        vanilla spells, or all 2-mana "draw 2" sorceries. For each pool, we
+        compare the average mana spent in games where any pool member was
+        drawn vs games where none were drawn. Pooling tightens estimates for
+        otherwise-rare cards and exposes archetype-level signals.
         """
         if not drawn_cards_per_game or len(mana_spent_list) < 100:
             return {}
 
         n_games = len(mana_spent_list)
         mana_arr = np.array(mana_spent_list, dtype=float)
-        overall_mean = float(np.mean(mana_arr))
 
-        # Score each non-land spell card
-        scores = []
+        # Group spells by simulator-equivalence signature. Pure lands are
+        # excluded; MDFCs (cards with both land and spell faces) are kept
+        # because their spell side affects mana spent.
+        groups: Dict[tuple, list[int]] = {}
         for k, card in enumerate(self.decklist):
-            if card.land or not card.spell:
+            if not card.spell:
                 continue
+            sig = _card_equivalence_key(card)
+            groups.setdefault(sig, []).append(k)
 
-            # Split games into drawn vs not-drawn
-            drawn_mask = np.array([k in drawn_cards_per_game[i] for i in range(n_games)])
+        # Compute initial per-pool draw counts.
+        count_arrays: dict[tuple, np.ndarray] = {}
+        for sig, indices in groups.items():
+            index_set = set(indices)
+            count_arrays[sig] = np.fromiter(
+                (len(index_set & drawn_cards_per_game[i]) for i in range(n_games)),
+                dtype=int,
+                count=n_games,
+            )
+
+        # Top-up: run extra natural goldfishing games when k=1/k=2 buckets
+        # are underfilled. Each extra game contributes draw counts to *every*
+        # pool, so one shared batch can fill many pools at once. Skipped when
+        # there are no candidate buckets within the cap.
+        n_supplemental = self._plan_topup_budget(groups, count_arrays, n_games)
+        if n_supplemental > 0:
+            extra_data = _worker_run_batch(
+                self._get_deck_dicts(),
+                self.turns,
+                n_supplemental,
+                base_seed=self.seed,
+                game_offset=n_games,
+                capture_replays=False,
+                extra_config=self._get_worker_config(),
+            )
+            extra_drawn = extra_data["drawn_cards_per_game"]
+            extra_mana = extra_data["mana_spent"]
+            mana_arr = np.concatenate(
+                [mana_arr, np.array(extra_mana, dtype=float)]
+            )
+            for sig, indices in groups.items():
+                index_set = set(indices)
+                extra_counts = np.fromiter(
+                    (len(index_set & extra_drawn[i]) for i in range(n_supplemental)),
+                    dtype=int,
+                    count=n_supplemental,
+                )
+                count_arrays[sig] = np.concatenate(
+                    [count_arrays[sig], extra_counts]
+                )
+
+        n_games_total = n_games + n_supplemental
+        scores = []
+        for sig, indices in groups.items():
+            cmc, effect_desc = sig
+            count_per_game = count_arrays[sig]
+            drawn_mask = count_per_game >= 1
             n_drawn = int(drawn_mask.sum())
-            n_not_drawn = n_games - n_drawn
+            n_not_drawn = n_games_total - n_drawn
 
-            if n_drawn < 20 or n_not_drawn < 20:
-                continue  # Need enough games in both groups
+            if n_drawn < 20:
+                continue  # No "drew at least one" group to measure
+            always_drawn = n_not_drawn < 20
+            copies = len(indices)
+            if always_drawn and copies < 2:
+                continue  # Singleton always drawn → no comparison group available
 
             mean_with = float(np.mean(mana_arr[drawn_mask]))
-            mean_without = float(np.mean(mana_arr[~drawn_mask]))
-            impact = mean_with - mean_without
 
-            effects_desc = ""
-            if card._cached_effects:
-                effects_desc = card._cached_effects.describe_effects()
+            marginals: list[dict] = []
+            saturation = {"badge": "single", "saturates_at": None}
+            if copies >= 2:
+                # Always-drawn pools have empty bucket k=0, so the early k bins
+                # are small-sample noise. Extend max_k to where the data lives:
+                # one above the most-populated count.
+                max_k = min(copies, _MARGINAL_MAX_K)
+                if always_drawn:
+                    modal_k = int(np.bincount(count_per_game).argmax())
+                    max_k = min(copies, max(max_k, modal_k + 1))
+                marginals = _compute_marginal_impacts(
+                    count_per_game,
+                    mana_arr,
+                    max_k=max_k,
+                )
+                saturation = _classify_saturation(marginals)
 
-            # Use average mana actually spent when cast (accounts for discounts)
-            avg_cost = card.cmc
-            if card_mana_spent_list and card_mana_spent_list[k]:
-                avg_cost = round(float(np.mean(card_mana_spent_list[k])), 1)
+            if always_drawn:
+                # Sum significant per-copy marginals stand in for "with vs without"
+                sig_effects = [
+                    m["effect"] for m in marginals
+                    if not m["noise"] and m["effect"] is not None
+                ]
+                if not sig_effects:
+                    continue  # No usable signal for an always-drawn pool
+                impact = sum(sig_effects)
+                mean_without = 0.0  # sentinel — not displayed when always_drawn
+            else:
+                mean_without = float(np.mean(mana_arr[~drawn_mask]))
+                impact = mean_with - mean_without
+
+            # Pooled average mana actually spent across all member casts
+            pooled_spent: list[float] = []
+            if card_mana_spent_list:
+                for k in indices:
+                    if card_mana_spent_list[k]:
+                        pooled_spent.extend(card_mana_spent_list[k])
+            avg_cost = round(float(np.mean(pooled_spent)), 1) if pooled_spent else cmc
+
+            # Deterministic example (alphabetical first)
+            sorted_members = sorted(indices, key=lambda k: self.decklist[k].name)
+            example_card = self.decklist[sorted_members[0]]
 
             scores.append({
-                "name": card.name,
+                "name": example_card.name,
+                "label": _format_pool_label(cmc, effect_desc),
+                "copies": copies,
                 "cost": avg_cost,
-                "cmc": card.cmc,
-                "effects": effects_desc,
+                "cmc": cmc,
+                "effects": effect_desc,
                 "mean_with": round(mean_with, 2),
                 "mean_without": round(mean_without, 2),
                 "score": round(impact, 4),
-                "drawn_pct": round(n_drawn / n_games, 4),
+                "drawn_pct": round(n_drawn / n_games_total, 4),
+                "always_drawn": always_drawn,
+                "marginals": marginals,
+                "saturation": saturation,
             })
 
         # Sort and pick top/bottom 10
@@ -1035,7 +1251,49 @@ class Goldfisher:
             "high_performing": high_performing,
             "low_performing": low_performing,
             "total_games": n_games,
+            "supplemental_games": n_supplemental,
         }
+
+    def _plan_topup_budget(
+        self,
+        groups: Dict[tuple, list[int]],
+        count_arrays: dict,
+        n_games: int,
+    ) -> int:
+        """Decide how many extra games to run for marginal top-up.
+
+        Scans candidate buckets across all pools (k in _TOPUP_TARGET_KS where
+        the smaller adjacent bucket is in [1, _MARGINAL_MIN_BUCKET)). For each
+        candidate, extrapolates how many more natural goldfishing games would
+        push the smaller bucket past the floor. Returns the largest such
+        request that fits within _TOPUP_CAP_FACTOR x n_games (since one shared
+        batch fills every pool simultaneously, running the largest affordable
+        request also resolves all cheaper candidates as a side effect).
+        Returns 0 when nothing is fillable.
+        """
+        cap = int(_TOPUP_CAP_FACTOR * n_games)
+        best = 0
+        for sig, indices in groups.items():
+            copies = len(indices)
+            if copies < 2:
+                continue
+            cpg = count_arrays[sig]
+            for k in _TOPUP_TARGET_KS:
+                if k > copies:
+                    continue
+                n_curr = int((cpg == k).sum())
+                n_prev = int((cpg == k - 1).sum())
+                n_smaller = min(n_curr, n_prev)
+                if n_smaller >= _MARGINAL_MIN_BUCKET:
+                    continue  # already resolved
+                if n_smaller < 1:
+                    continue  # bucket physically rare; rejection won't help
+                p_smaller = n_smaller / n_games
+                needed = (_MARGINAL_MIN_BUCKET - n_smaller) / p_smaller
+                extras = math.ceil(needed)
+                if extras <= cap and extras > best:
+                    best = extras
+        return best
 
     def _get_deck_dicts(self) -> list[dict]:
         """Serialize current decklist + commanders to dicts for workers."""
