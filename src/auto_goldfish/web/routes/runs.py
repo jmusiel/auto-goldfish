@@ -87,24 +87,45 @@ def _load_runs() -> list[dict]:
     return runs
 
 
+_ANCHOR_FIELDS = (
+    "consistency",
+    "acceleration",
+    "snowball_ratio",
+    "snowball_late_avg_norm",
+    "toughness",
+    "efficiency",
+    "reach_norm",
+)
+
+
 def _load_calibration_meta() -> dict | None:
-    """Return the active calibration metadata dict, or None if defaults."""
+    """Return the active calibration metadata + anchors, or None if defaults."""
     try:
         from auto_goldfish.metrics.calibration import get_active_anchors
+        from auto_goldfish.metrics.deck_score import DEFAULT_ANCHORS
     except Exception:
         return None
     try:
-        _, meta = get_active_anchors()
+        active, meta = get_active_anchors()
     except Exception:
         return None
     if meta is None:
         return None
+    anchors = [
+        {
+            "name": field,
+            "default": list(getattr(DEFAULT_ANCHORS, field)),
+            "active": list(getattr(active, field)),
+        }
+        for field in _ANCHOR_FIELDS
+    ]
     return {
         "n_rows": meta.n_rows,
         "n_decks": meta.n_decks,
         "pseudo_count": meta.pseudo_count,
         "low_pct": meta.low_pct,
         "high_pct": meta.high_pct,
+        "anchors": anchors,
     }
 
 
