@@ -1159,3 +1159,104 @@ h2 { font-size: 1.15rem; margin-bottom: 0.75rem; }
     margin-bottom: 0.75rem;
     color: #475569;
 }
+
+/* Card labeler banner (replaces the loud full-width Label Cards button) */
+.label-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    background: #fef9c3;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 0.65rem 1rem;
+    margin-bottom: 1rem;
+}
+.label-banner.label-banner-clean {
+    background: #dcfce7;
+    border-color: #bbf7d0;
+}
+.label-banner-text { flex: 1; font-size: 0.9rem; color: #92400e; }
+.label-banner.label-banner-clean .label-banner-text { color: #166534; }
+.label-banner-text strong { font-weight: 600; }
+.label-banner-hint { color: #a16207; font-weight: 400; }
+.label-banner.label-banner-clean .label-banner-hint { color: #15803d; }
+.label-banner-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+
+/* Optimize-for tile picker */
+.optimize-picker {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+    background: #fff;
+}
+.optimize-picker-legend {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1a1a2e;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+}
+.optimize-tiles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+}
+.opt-tile {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    cursor: pointer;
+    background: #fff;
+    transition: border-color 0.1s, background 0.1s;
+}
+.opt-tile:hover { border-color: #cbd5e1; }
+.opt-tile.selected {
+    border-color: #2563eb;
+    background: #eff6ff;
+}
+.opt-tile-title {
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: #1a1a2e;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.opt-tile-default-tag {
+    font-size: 0.6rem;
+    background: #dbeafe;
+    color: #1d4ed8;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+.opt-tile-desc {
+    font-size: 0.78rem;
+    color: #64748b;
+    margin-top: 0.2rem;
+    line-height: 1.35;
+}
+.optimize-picker-hint {
+    color: #64748b;
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+/* Sub-sections inside the merged Advanced settings disclosure */
+.adv-sub { padding: 0.6rem 0; }
+.adv-sub + .adv-sub { border-top: 1px dashed #e5e7eb; }
+.adv-sub h3 {
+    font-size: 0.78rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+.adv-sub-cols { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+.adv-sub-cols > div { flex: 1; min-width: 180px; }
+.adv-sub-cols strong { display: block; font-size: 0.85rem; margin-bottom: 0.3rem; color: #334155; }
+
