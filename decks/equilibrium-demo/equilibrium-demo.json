@@ -1,0 +1,2315 @@
+[
+  {
+    "name": "Mire Triton",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "Deathtouch\nWhen Mire Triton enters, mill three cards. You gain 1 life for each creature card put into your graveyard this way.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie",
+      "Merfolk"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Commander",
+    "tag": null,
+    "commander": true
+  },
+  {
+    "name": "Swamp",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (2)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (3)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (4)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (5)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (6)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (7)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (8)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (9)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (10)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (11)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (12)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (13)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (14)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (15)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (16)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (17)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (18)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (19)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (20)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (21)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (22)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (23)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (24)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (25)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (26)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (27)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (28)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (29)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (30)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (31)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (32)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (33)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (34)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (35)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (36)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (37)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Black Cat",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie",
+      "Cat"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Black Cat (2)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie",
+      "Cat"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Black Cat (3)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie",
+      "Cat"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Black Cat (4)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie",
+      "Cat"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Black Cat (5)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie",
+      "Cat"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Black Cat (6)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie",
+      "Cat"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Black Cat (7)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie",
+      "Cat"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Black Cat (8)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie",
+      "Cat"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Black Cat (9)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "When Black Cat dies, target opponent discards a card at random.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie",
+      "Cat"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton (2)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton (3)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton (4)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton (5)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton (6)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton (7)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton (8)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reassembling Skeleton (9)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{1}{B}",
+    "text": "{1}{B}: Return Reassembling Skeleton from your graveyard to the battlefield tapped.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Skeleton",
+      "Warrior"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion (2)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion (3)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion (4)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion (5)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion (6)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion (7)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion (8)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Knight of the Ebon Legion (9)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "{1}{B}: Knight of the Ebon Legion gets +2/+1 until end of turn.\nAt the beginning of your end step, if a player lost 4 or more life this turn, put a +1/+1 counter on Knight of the Ebon Legion.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Knight"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Stitcher's Supplier",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Stitcher's Supplier (2)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Stitcher's Supplier (3)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Stitcher's Supplier (4)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Stitcher's Supplier (5)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Stitcher's Supplier (6)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Stitcher's Supplier (7)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Stitcher's Supplier (8)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Stitcher's Supplier (9)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "When Stitcher's Supplier enters and when it dies, mill three cards.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodghast",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodghast (2)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodghast (3)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodghast (4)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodghast (5)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodghast (6)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodghast (7)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodghast (8)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodghast (9)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}{B}",
+    "text": "Bloodghast can't block.\nBloodghast has haste as long as an opponent has 10 or less life.\nLandfall -- Whenever a land you control enters, you may return Bloodghast from your graveyard to the battlefield.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire",
+      "Spirit"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker (2)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker (3)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker (4)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker (5)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker (6)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker (7)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker (8)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bone Picker (9)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{3}{B}",
+    "text": "If a creature died this turn, Bone Picker costs {3} less to cast.\nFlash\nDeathtouch",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Bird"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Carrion Feeder",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Carrion Feeder (2)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Carrion Feeder (3)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Carrion Feeder (4)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Carrion Feeder (5)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Carrion Feeder (6)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Carrion Feeder (7)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Carrion Feeder (8)",
+    "quantity": 1,
+    "oracle_cmc": 2,
+    "cmc": 2,
+    "cost": "{B}",
+    "text": "Carrion Feeder can't block.\nSacrifice another creature: Put a +1/+1 counter on Carrion Feeder.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  }
+]

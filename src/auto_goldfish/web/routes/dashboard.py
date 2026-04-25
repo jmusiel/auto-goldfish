@@ -11,6 +11,26 @@ from auto_goldfish.decklist.loader import get_deckpath
 
 bp = Blueprint("dashboard", __name__)
 
+_DECK_DESCRIPTIONS: dict[str, str] = {
+    "mana-starved-demo": "18 lands with CMC 5-7 spells. Severely under-landed — the optimizer should strongly recommend adding lands.",
+    "overlanded-cantrips-demo": "45 lands with all CMC 1 spells. Way too many lands — the optimizer should recommend cutting lands.",
+    "equilibrium-demo": "37 lands with uniform CMC 2 spells. Already near-optimal — changes should have negligible effect.",
+}
+
+# Pedagogical order: under-landed → balanced → over-landed.
+_DEMO_DECK_ORDER: list[str] = [
+    "mana-starved-demo",
+    "equilibrium-demo",
+    "overlanded-cantrips-demo",
+]
+
+
+def _deck_sort_key(name: str) -> tuple[int, str]:
+    """Sort demo decks in pedagogical order, then everything else alphabetically."""
+    if name in _DEMO_DECK_ORDER:
+        return (0, f"{_DEMO_DECK_ORDER.index(name):03d}")
+    return (1, name)
+
 
 def _list_saved_decks() -> list[dict]:
     """Return metadata for each saved deck."""
@@ -22,7 +42,7 @@ def _list_saved_decks() -> list[dict]:
         return []
 
     decks = []
-    for name in sorted(os.listdir(decks_dir)):
+    for name in sorted(os.listdir(decks_dir), key=_deck_sort_key):
         deck_json = os.path.join(decks_dir, name, f"{name}.json")
         if os.path.isfile(deck_json):
             try:
@@ -42,6 +62,7 @@ def _list_saved_decks() -> list[dict]:
                 "card_count": card_count,
                 "commanders": commanders,
                 "land_count": land_count,
+                "description": _DECK_DESCRIPTIONS.get(name),
             })
     return decks
 

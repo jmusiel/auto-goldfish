@@ -1,0 +1,2276 @@
+[
+  {
+    "name": "Geth, Lord of the Vault",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{5}{B}{B}",
+    "text": "Intimidate\n{X}{B}: Put target artifact or creature card with mana value X in an opponent's graveyard onto the battlefield under your control tapped. Then that player mills X cards.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Commander",
+    "tag": null,
+    "commander": true
+  },
+  {
+    "name": "Swamp",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (2)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (3)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (4)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (5)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (6)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (7)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (8)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (9)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (10)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (11)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (12)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (13)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (14)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (15)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (16)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (17)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Swamp (18)",
+    "quantity": 1,
+    "oracle_cmc": 0,
+    "cmc": 0,
+    "cost": "",
+    "text": "({T}: Add {B}.)",
+    "types": [
+      "Land"
+    ],
+    "sub_types": [
+      "Swamp"
+    ],
+    "super_types": [
+      "Basic"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Land",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Gray Merchant of Asphodel",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "When Gray Merchant of Asphodel enters, each opponent loses X life, where X is your devotion to black. You gain life equal to the life lost this way.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Gray Merchant of Asphodel (2)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "When Gray Merchant of Asphodel enters, each opponent loses X life, where X is your devotion to black. You gain life equal to the life lost this way.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Gray Merchant of Asphodel (3)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "When Gray Merchant of Asphodel enters, each opponent loses X life, where X is your devotion to black. You gain life equal to the life lost this way.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Gray Merchant of Asphodel (4)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "When Gray Merchant of Asphodel enters, each opponent loses X life, where X is your devotion to black. You gain life equal to the life lost this way.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Gray Merchant of Asphodel (5)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "When Gray Merchant of Asphodel enters, each opponent loses X life, where X is your devotion to black. You gain life equal to the life lost this way.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Gray Merchant of Asphodel (6)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "When Gray Merchant of Asphodel enters, each opponent loses X life, where X is your devotion to black. You gain life equal to the life lost this way.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Gray Merchant of Asphodel (7)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "When Gray Merchant of Asphodel enters, each opponent loses X life, where X is your devotion to black. You gain life equal to the life lost this way.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Gray Merchant of Asphodel (8)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "When Gray Merchant of Asphodel enters, each opponent loses X life, where X is your devotion to black. You gain life equal to the life lost this way.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Gray Merchant of Asphodel (9)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "When Gray Merchant of Asphodel enters, each opponent loses X life, where X is your devotion to black. You gain life equal to the life lost this way.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Zombie"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sengir Vampire",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nWhenever a creature dealt damage by Sengir Vampire this turn dies, put a +1/+1 counter on Sengir Vampire.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sengir Vampire (2)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nWhenever a creature dealt damage by Sengir Vampire this turn dies, put a +1/+1 counter on Sengir Vampire.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sengir Vampire (3)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nWhenever a creature dealt damage by Sengir Vampire this turn dies, put a +1/+1 counter on Sengir Vampire.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sengir Vampire (4)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nWhenever a creature dealt damage by Sengir Vampire this turn dies, put a +1/+1 counter on Sengir Vampire.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sengir Vampire (5)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nWhenever a creature dealt damage by Sengir Vampire this turn dies, put a +1/+1 counter on Sengir Vampire.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sengir Vampire (6)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nWhenever a creature dealt damage by Sengir Vampire this turn dies, put a +1/+1 counter on Sengir Vampire.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sengir Vampire (7)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nWhenever a creature dealt damage by Sengir Vampire this turn dies, put a +1/+1 counter on Sengir Vampire.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sengir Vampire (8)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nWhenever a creature dealt damage by Sengir Vampire this turn dies, put a +1/+1 counter on Sengir Vampire.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sengir Vampire (9)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nWhenever a creature dealt damage by Sengir Vampire this turn dies, put a +1/+1 counter on Sengir Vampire.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Vampire"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodgift Demon",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nAt the beginning of your upkeep, target player draws a card and loses 1 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodgift Demon (2)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nAt the beginning of your upkeep, target player draws a card and loses 1 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodgift Demon (3)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nAt the beginning of your upkeep, target player draws a card and loses 1 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodgift Demon (4)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nAt the beginning of your upkeep, target player draws a card and loses 1 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodgift Demon (5)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nAt the beginning of your upkeep, target player draws a card and loses 1 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodgift Demon (6)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nAt the beginning of your upkeep, target player draws a card and loses 1 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodgift Demon (7)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nAt the beginning of your upkeep, target player draws a card and loses 1 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodgift Demon (8)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nAt the beginning of your upkeep, target player draws a card and loses 1 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Bloodgift Demon (9)",
+    "quantity": 1,
+    "oracle_cmc": 5,
+    "cmc": 5,
+    "cost": "{3}{B}{B}",
+    "text": "Flying\nAt the beginning of your upkeep, target player draws a card and loses 1 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Massacre Wurm",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "When Massacre Wurm enters, creatures your opponents control get -2/-2 until end of turn.\nWhenever a creature an opponent controls dies, that player loses 2 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Wurm"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Massacre Wurm (2)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "When Massacre Wurm enters, creatures your opponents control get -2/-2 until end of turn.\nWhenever a creature an opponent controls dies, that player loses 2 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Wurm"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Massacre Wurm (3)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "When Massacre Wurm enters, creatures your opponents control get -2/-2 until end of turn.\nWhenever a creature an opponent controls dies, that player loses 2 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Wurm"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Massacre Wurm (4)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "When Massacre Wurm enters, creatures your opponents control get -2/-2 until end of turn.\nWhenever a creature an opponent controls dies, that player loses 2 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Wurm"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Massacre Wurm (5)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "When Massacre Wurm enters, creatures your opponents control get -2/-2 until end of turn.\nWhenever a creature an opponent controls dies, that player loses 2 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Wurm"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Massacre Wurm (6)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "When Massacre Wurm enters, creatures your opponents control get -2/-2 until end of turn.\nWhenever a creature an opponent controls dies, that player loses 2 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Wurm"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Massacre Wurm (7)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "When Massacre Wurm enters, creatures your opponents control get -2/-2 until end of turn.\nWhenever a creature an opponent controls dies, that player loses 2 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Wurm"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Massacre Wurm (8)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "When Massacre Wurm enters, creatures your opponents control get -2/-2 until end of turn.\nWhenever a creature an opponent controls dies, that player loses 2 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Wurm"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Massacre Wurm (9)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "When Massacre Wurm enters, creatures your opponents control get -2/-2 until end of turn.\nWhenever a creature an opponent controls dies, that player loses 2 life.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Wurm"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reaper from the Abyss",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "Flying\nMorbid -- At the beginning of each end step, if a creature died this turn, you may destroy target non-Demon creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reaper from the Abyss (2)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "Flying\nMorbid -- At the beginning of each end step, if a creature died this turn, you may destroy target non-Demon creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reaper from the Abyss (3)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "Flying\nMorbid -- At the beginning of each end step, if a creature died this turn, you may destroy target non-Demon creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reaper from the Abyss (4)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "Flying\nMorbid -- At the beginning of each end step, if a creature died this turn, you may destroy target non-Demon creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reaper from the Abyss (5)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "Flying\nMorbid -- At the beginning of each end step, if a creature died this turn, you may destroy target non-Demon creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reaper from the Abyss (6)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "Flying\nMorbid -- At the beginning of each end step, if a creature died this turn, you may destroy target non-Demon creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reaper from the Abyss (7)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "Flying\nMorbid -- At the beginning of each end step, if a creature died this turn, you may destroy target non-Demon creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reaper from the Abyss (8)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "Flying\nMorbid -- At the beginning of each end step, if a creature died this turn, you may destroy target non-Demon creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Reaper from the Abyss (9)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{4}{B}{B}",
+    "text": "Flying\nMorbid -- At the beginning of each end step, if a creature died this turn, you may destroy target non-Demon creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Avatar of Woe",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{6}{B}{B}",
+    "text": "If there are ten or more creature cards total in all graveyards, Avatar of Woe costs {6} less to cast.\nFear\n{T}: Destroy target creature. It can't be regenerated.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Avatar"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Avatar of Woe (2)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{6}{B}{B}",
+    "text": "If there are ten or more creature cards total in all graveyards, Avatar of Woe costs {6} less to cast.\nFear\n{T}: Destroy target creature. It can't be regenerated.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Avatar"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Avatar of Woe (3)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{6}{B}{B}",
+    "text": "If there are ten or more creature cards total in all graveyards, Avatar of Woe costs {6} less to cast.\nFear\n{T}: Destroy target creature. It can't be regenerated.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Avatar"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Avatar of Woe (4)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{6}{B}{B}",
+    "text": "If there are ten or more creature cards total in all graveyards, Avatar of Woe costs {6} less to cast.\nFear\n{T}: Destroy target creature. It can't be regenerated.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Avatar"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Avatar of Woe (5)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{6}{B}{B}",
+    "text": "If there are ten or more creature cards total in all graveyards, Avatar of Woe costs {6} less to cast.\nFear\n{T}: Destroy target creature. It can't be regenerated.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Avatar"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Avatar of Woe (6)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{6}{B}{B}",
+    "text": "If there are ten or more creature cards total in all graveyards, Avatar of Woe costs {6} less to cast.\nFear\n{T}: Destroy target creature. It can't be regenerated.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Avatar"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Avatar of Woe (7)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{6}{B}{B}",
+    "text": "If there are ten or more creature cards total in all graveyards, Avatar of Woe costs {6} less to cast.\nFear\n{T}: Destroy target creature. It can't be regenerated.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Avatar"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Avatar of Woe (8)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{6}{B}{B}",
+    "text": "If there are ten or more creature cards total in all graveyards, Avatar of Woe costs {6} less to cast.\nFear\n{T}: Destroy target creature. It can't be regenerated.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Avatar"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Avatar of Woe (9)",
+    "quantity": 1,
+    "oracle_cmc": 6,
+    "cmc": 6,
+    "cost": "{6}{B}{B}",
+    "text": "If there are ten or more creature cards total in all graveyards, Avatar of Woe costs {6} less to cast.\nFear\n{T}: Destroy target creature. It can't be regenerated.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Avatar"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sheoldred, Whispering One",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{5}{B}{B}",
+    "text": "Swampwalk\nAt the beginning of your upkeep, return target creature card from your graveyard to the battlefield.\nAt the beginning of each opponent's upkeep, that player sacrifices a creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Praetor"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sheoldred, Whispering One (2)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{5}{B}{B}",
+    "text": "Swampwalk\nAt the beginning of your upkeep, return target creature card from your graveyard to the battlefield.\nAt the beginning of each opponent's upkeep, that player sacrifices a creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Praetor"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sheoldred, Whispering One (3)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{5}{B}{B}",
+    "text": "Swampwalk\nAt the beginning of your upkeep, return target creature card from your graveyard to the battlefield.\nAt the beginning of each opponent's upkeep, that player sacrifices a creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Praetor"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sheoldred, Whispering One (4)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{5}{B}{B}",
+    "text": "Swampwalk\nAt the beginning of your upkeep, return target creature card from your graveyard to the battlefield.\nAt the beginning of each opponent's upkeep, that player sacrifices a creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Praetor"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sheoldred, Whispering One (5)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{5}{B}{B}",
+    "text": "Swampwalk\nAt the beginning of your upkeep, return target creature card from your graveyard to the battlefield.\nAt the beginning of each opponent's upkeep, that player sacrifices a creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Praetor"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sheoldred, Whispering One (6)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{5}{B}{B}",
+    "text": "Swampwalk\nAt the beginning of your upkeep, return target creature card from your graveyard to the battlefield.\nAt the beginning of each opponent's upkeep, that player sacrifices a creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Praetor"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sheoldred, Whispering One (7)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{5}{B}{B}",
+    "text": "Swampwalk\nAt the beginning of your upkeep, return target creature card from your graveyard to the battlefield.\nAt the beginning of each opponent's upkeep, that player sacrifices a creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Praetor"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sheoldred, Whispering One (8)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{5}{B}{B}",
+    "text": "Swampwalk\nAt the beginning of your upkeep, return target creature card from your graveyard to the battlefield.\nAt the beginning of each opponent's upkeep, that player sacrifices a creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Praetor"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Sheoldred, Whispering One (9)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{5}{B}{B}",
+    "text": "Swampwalk\nAt the beginning of your upkeep, return target creature card from your graveyard to the battlefield.\nAt the beginning of each opponent's upkeep, that player sacrifices a creature.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Praetor"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Lord of the Pit",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{4}{B}{B}{B}",
+    "text": "Flying, trample\nAt the beginning of your upkeep, sacrifice a creature other than Lord of the Pit. If you can't, Lord of the Pit deals 7 damage to you.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Lord of the Pit (2)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{4}{B}{B}{B}",
+    "text": "Flying, trample\nAt the beginning of your upkeep, sacrifice a creature other than Lord of the Pit. If you can't, Lord of the Pit deals 7 damage to you.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Lord of the Pit (3)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{4}{B}{B}{B}",
+    "text": "Flying, trample\nAt the beginning of your upkeep, sacrifice a creature other than Lord of the Pit. If you can't, Lord of the Pit deals 7 damage to you.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Lord of the Pit (4)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{4}{B}{B}{B}",
+    "text": "Flying, trample\nAt the beginning of your upkeep, sacrifice a creature other than Lord of the Pit. If you can't, Lord of the Pit deals 7 damage to you.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Lord of the Pit (5)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{4}{B}{B}{B}",
+    "text": "Flying, trample\nAt the beginning of your upkeep, sacrifice a creature other than Lord of the Pit. If you can't, Lord of the Pit deals 7 damage to you.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Lord of the Pit (6)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{4}{B}{B}{B}",
+    "text": "Flying, trample\nAt the beginning of your upkeep, sacrifice a creature other than Lord of the Pit. If you can't, Lord of the Pit deals 7 damage to you.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Lord of the Pit (7)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{4}{B}{B}{B}",
+    "text": "Flying, trample\nAt the beginning of your upkeep, sacrifice a creature other than Lord of the Pit. If you can't, Lord of the Pit deals 7 damage to you.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Lord of the Pit (8)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{4}{B}{B}{B}",
+    "text": "Flying, trample\nAt the beginning of your upkeep, sacrifice a creature other than Lord of the Pit. If you can't, Lord of the Pit deals 7 damage to you.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Lord of the Pit (9)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{4}{B}{B}{B}",
+    "text": "Flying, trample\nAt the beginning of your upkeep, sacrifice a creature other than Lord of the Pit. If you can't, Lord of the Pit deals 7 damage to you.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Vilis, Broker of Blood",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{6}{B}",
+    "text": "Flying\nWhenever you lose life, you draw that many cards.\n{2}{B}: Target creature gets -1/-1 until end of turn.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Vilis, Broker of Blood (2)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{6}{B}",
+    "text": "Flying\nWhenever you lose life, you draw that many cards.\n{2}{B}: Target creature gets -1/-1 until end of turn.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Vilis, Broker of Blood (3)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{6}{B}",
+    "text": "Flying\nWhenever you lose life, you draw that many cards.\n{2}{B}: Target creature gets -1/-1 until end of turn.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Vilis, Broker of Blood (4)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{6}{B}",
+    "text": "Flying\nWhenever you lose life, you draw that many cards.\n{2}{B}: Target creature gets -1/-1 until end of turn.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Vilis, Broker of Blood (5)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{6}{B}",
+    "text": "Flying\nWhenever you lose life, you draw that many cards.\n{2}{B}: Target creature gets -1/-1 until end of turn.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Vilis, Broker of Blood (6)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{6}{B}",
+    "text": "Flying\nWhenever you lose life, you draw that many cards.\n{2}{B}: Target creature gets -1/-1 until end of turn.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Vilis, Broker of Blood (7)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{6}{B}",
+    "text": "Flying\nWhenever you lose life, you draw that many cards.\n{2}{B}: Target creature gets -1/-1 until end of turn.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Vilis, Broker of Blood (8)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{6}{B}",
+    "text": "Flying\nWhenever you lose life, you draw that many cards.\n{2}{B}: Target creature gets -1/-1 until end of turn.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  },
+  {
+    "name": "Vilis, Broker of Blood (9)",
+    "quantity": 1,
+    "oracle_cmc": 7,
+    "cmc": 7,
+    "cost": "{6}{B}",
+    "text": "Flying\nWhenever you lose life, you draw that many cards.\n{2}{B}: Target creature gets -1/-1 until end of turn.",
+    "types": [
+      "Creature"
+    ],
+    "sub_types": [
+      "Demon"
+    ],
+    "super_types": [
+      "Legendary"
+    ],
+    "identity": [
+      "Black"
+    ],
+    "default_category": null,
+    "user_category": "Creature",
+    "tag": null,
+    "commander": false
+  }
+]

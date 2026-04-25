@@ -19,6 +19,11 @@ import numpy as np
 from auto_goldfish.optimization.candidate_cards import ALL_CANDIDATES
 from auto_goldfish.optimization.deck_config import DeckConfig
 
+# Type-only import to avoid circular dependency at runtime
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from auto_goldfish.optimization.factored_optimizer import MarginalResult
+
 
 # ── Feature extraction ─────────────────────────────────────────────────
 
@@ -578,3 +583,125 @@ def analyze_optimization(
         "regression": reg_dict,
         "n_configs": len(configs),
     }
+
+
+# ── Factored optimizer recommendations ───────────────────────────────
+
+
+def synthesize_factored_recommendations(
+    marginal_results: list[MarginalResult],
+    optimize_for: str,
+) -> list[dict[str, Any]]:
+    """Convert factored marginal results into user-friendly recommendations.
+
+    Each marginal result with a meaningful effect becomes a recommendation.
+    Uses measured paired effects directly (no regression needed).
+    """
+    metric_labels = {
+        "mean_mana": "mana spent",
+        "mean_mana_value": "mana spent on value",
+        "mean_mana_total": "total mana spent",
+        "floor_performance": "floor performance",
+        "consistency": "consistency",
+        "mean_spells_cast": "spells cast",
+    }
+    metric_label = metric_labels.get(optimize_for, optimize_for)
+
+    recommendations: list[dict[str, Any]] = []
+
+    for mr in marginal_results:
+        if mr.negligible:
+            continue
+
+        config = mr.config
+        effect = mr.effect_size
+        is_positive = effect > 0
+        impact_direction = "increase" if is_positive else "decrease"
+        example_card: dict[str, str] | None = None
+
+        # Build label and recommendation text
+        if mr.dimension == "land":
+            delta = config.land_delta
+            if delta > 0:
+                if is_positive:
+                    label = "Add more lands"
+                    rec_text = (
+                        f"Adding {delta} land(s) improves {metric_label}"
+                        f" by {abs(effect):.2f}"
+                    )
+                else:
+                    label = "Don't add lands"
+                    rec_text = (
+                        f"Adding {delta} land(s) decreases {metric_label}"
+                        f" by {abs(effect):.2f}"
+                    )
+            else:
+                if is_positive:
+                    label = "Cut lands"
+                    rec_text = (
+                        f"Cutting {abs(delta)} land(s) improves {metric_label}"
+                        f" by {abs(effect):.2f}"
+                    )
+                else:
+                    label = "Don't cut lands"
+                    rec_text = (
+                        f"Cutting {abs(delta)} land(s) decreases {metric_label}"
+                        f" by {abs(effect):.2f}"
+                    )
+        elif config.added_cards:
+            card_id = config.added_cards[0]
+            candidate = ALL_CANDIDATES.get(card_id)
+            compact = candidate.compact_label if candidate else card_id
+            card_info = _EXAMPLE_CARDS.get(compact)
+
+            if card_info:
+                friendly = card_info["friendly"]
+                description = card_info["description"]
+                example_name = card_info["example"]
+                label = (
+                    f"Add {friendly}" if is_positive
+                    else f"Don't add {friendly}"
+                )
+                example_card = {
+                    "name": example_name,
+                    "url": _scryfall_url(example_name),
+                    "image_url": _scryfall_image_url(example_name),
+                }
+                rec_text = (
+                    f"Adding a {description} (e.g. {example_name})"
+                    f" {impact_direction}s {metric_label} by {abs(effect):.2f}"
+                )
+            else:
+                label = (
+                    f"Add {compact}" if is_positive
+                    else f"Don't add {compact}"
+                )
+                rec_text = (
+                    f"Adding {compact} {impact_direction}s"
+                    f" {metric_label} by {abs(effect):.2f}"
+                )
+        else:
+            continue
+
+        confidence = "high" if mr.p_value < 0.01 else (
+            "medium" if mr.p_value < 0.05 else "low"
+        )
+
+        detail = (
+            f"Effect: {effect:+.3f} +/- {mr.se:.3f}"
+            f" (p={mr.p_value:.4f}, n={mr.n_games} games)"
+        )
+
+        rec_entry: dict[str, Any] = {
+            "recommendation": rec_text,
+            "impact": round(abs(effect), 4),
+            "confidence": confidence,
+            "label": label,
+            "detail": detail,
+        }
+        if example_card is not None:
+            rec_entry["example_card"] = example_card
+        recommendations.append(rec_entry)
+
+    recommendations.sort(key=lambda x: -x["impact"])
+    return recommendations

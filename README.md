@@ -10,7 +10,7 @@ Runs "goldfishing" simulations (playing games without an opponent) to evaluate d
 - **Parallel simulation** -- uses multiple CPU cores via `ProcessPoolExecutor` for fast results (configurable `workers` parameter, defaults to all CPUs)
 - **Data-driven card effects** -- ~4,750 cards with special abilities (ramp, draw, cost reduction) defined as composable effects in `card_effects.json`. 109 hand-curated + ~4,640 auto-labeled via LLM (Gemini/Ollama/Claude)
 - **Archidekt integration** -- pull decklists directly from Archidekt URLs via the API
-- **Draw/ramp optimization** -- uses Hyperband to enumerate generic draw and ramp card additions across land counts, finding optimal configurations. Set max draw/ramp additions to 0 for a simple land-only sweep
+- **Draw/ramp optimization** -- three algorithms for finding optimal deck configurations (land count, draw, ramp cards): Hyperband successive halving, CRN-paired racing, and factored evaluation with adaptive sampling. Set max draw/ramp additions to 0 for a simple land-only sweep
 - **Card performance analysis** -- identifies which cards are overrepresented in high- vs low-performing games
 - **Game replay viewer** -- interactive turn-by-turn replay of sample games from top/mid/low quartiles, showing hand state, played cards, board state, and mana production (works in both sequential and parallel modes)
 - **Web UI** -- Flask-based dashboard for importing decks, running simulations, and viewing inline results with charts and replay viewer. Card effects editor lets you override effects before running, with overrides persisted across sessions. Results appear inline below the form for an iterative tweak-and-rerun workflow
@@ -57,6 +57,18 @@ uv pip install -e ".[dev]"
 Then open http://127.0.0.1:5000 to import decks, run simulations, and explore results including the interactive game replay viewer.
 
 Simulations run client-side via Pyodide (WebAssembly) -- the Flask server serves deck data and the UI, but all simulation compute happens in the browser. The first run takes ~10s to load the engine; subsequent runs are fast. Build the wheel first with `uv build --wheel` so the endpoint can serve it.
+
+#### Demo Decks
+
+The dashboard ships with three synthetic mono-black decks designed to exercise the optimizer's adaptive sampling. They appear at the top of the deck list in pedagogical order:
+
+| Deck | Composition | What it demonstrates |
+|------|-------------|----------------------|
+| `mana-starved-demo` | 18 lands, 81 spells at CMC 5–7 | Severely under-landed. The optimizer should strongly recommend adding lands; effects are large and detected after the first batch of paired games. |
+| `equilibrium-demo` | 37 lands, 62 spells at CMC 2 | Already near-optimal. Marginal changes have small effects; adaptive sampling typically classifies them as negligible or runs more games to resolve ambiguity. |
+| `overlanded-cantrips-demo` | 45 lands, 54 spells at CMC 1 | Way over-landed. The optimizer should recommend cutting lands; flat curve and excess mana make every change quickly detectable. |
+
+Pick one on the dashboard, run a simulation with the **Factored** algorithm, and observe how the recommendations and per-marginal `n_games` differ across the three decks.
 
 ### Deploying to Vercel
 
@@ -128,6 +140,7 @@ src/auto_goldfish/
 ├── models/          # Card dataclass, GameState dataclass
 ├── effects/         # Effect protocols, registry, builtin effects, card database
 ├── engine/          # Goldfisher simulation, mana calculation, mulligan strategy
+├── optimization/    # Deck optimization (Hyperband, CRN racing, factored adaptive)
 ├── metrics/         # MetricsCollector, built-in metrics, aggregation, reporting
 ├── decklist/        # JSON loader, Archidekt API, deck builder
 ├── autocard/        # LLM-powered card effect labeling pipeline (Gemini/Ollama/Claude)

@@ -38,7 +38,8 @@
 </div>
 
 <!-- Server (shared) decks -->
-<h1>Shared Decks</h1>
+<h1>Sample Decks</h1>
+<p class="section-description">Try these pre-built decks to see how the optimizer handles different mana base scenarios.</p>
 {% if decks %}
 <div class="deck-grid">
     {% for deck in decks %}
@@ -48,6 +49,9 @@
         <p class="commanders">{{ deck.commanders | join(', ') }}</p>
         {% endif %}
         <p class="deck-stats">{{ deck.card_count }} cards &middot; {{ deck.land_count }} lands</p>
+        {% if deck.description %}
+        <p class="deck-description">{{ deck.description }}</p>
+        {% endif %}
         <div class="deck-actions">
             <a href="{{ url_for('decks.view_deck', name=deck.name) }}" class="btn btn-secondary">View</a>
             <a href="{{ url_for('simulation.config', deck_name=deck.name) }}" class="btn btn-primary">Simulate</a>
