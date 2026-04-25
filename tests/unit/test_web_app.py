@@ -599,8 +599,12 @@ class TestSaveResultsAPI:
         )
         return root
 
-    def test_save_results_nonexistent_deck_404(self, client, tmp_path, monkeypatch):
-        """POST to nonexistent deck returns 404."""
+    def test_save_results_nonexistent_deck_returns_ok(self, client, tmp_path, monkeypatch):
+        """POST for a deck without a JSON file on disk still returns ok.
+
+        Persistence is keyed on deck name in the DB, so the endpoint no longer
+        requires the deck JSON to exist on disk.
+        """
         monkeypatch.setattr(
             "auto_goldfish.web.routes.simulation.get_deckpath",
             lambda name: str(tmp_path / "nonexistent" / "nonexistent.json"),
@@ -610,7 +614,9 @@ class TestSaveResultsAPI:
             data=json.dumps({"config": {}, "results": []}),
             content_type="application/json",
         )
-        assert response.status_code == 404
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["ok"] is True
 
     def test_save_results_invalid_json(self, client, tmp_path, monkeypatch):
         """POST with invalid JSON returns 400."""
