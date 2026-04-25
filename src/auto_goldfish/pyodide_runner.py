@@ -169,6 +169,7 @@ def run_optimization(
     custom_ramp = config.get("custom_ramp")
     max_draw = config.get("max_draw_additions", 2)
     max_ramp = config.get("max_ramp_additions", 2)
+    mixed_combos = config.get("mixed_combos", True)
 
     # Build registry
     registry = None
@@ -242,6 +243,7 @@ def run_optimization(
             land_delta_min=land_delta_min,
             land_delta_max=land_delta_max,
             optimize_for=optimize_for,
+            mixed_combos=mixed_combos,
         )
     elif algorithm == "racing":
         optimizer = FastDeckOptimizer(

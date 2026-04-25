@@ -141,6 +141,98 @@ class TestCombinations:
         assert len(two_copy) >= 1
         assert two_copy[0].added_cards == ("draw_2cmc_2", "draw_2cmc_2")
 
+    def test_mixed_combos_disabled(self):
+        opt = FactoredOptimizer(
+            goldfisher=MagicMock(), candidates={},
+            max_draw=2, max_ramp=1, mixed_combos=False,
+        )
+        opt.marginal_results = [
+            self._make_marginal(DeckConfig(added_cards=("draw_2cmc_2",)), "draw", 0.5),
+            self._make_marginal(DeckConfig(added_cards=("draw_4cmc_3",)), "draw", 0.4),
+        ]
+        combos = opt._build_combinations()
+        # With mixed_combos=False: only the 2-copy of best draw, no mixed pair
+        mixed = [
+            c for c in combos
+            if c.added_cards == ("draw_2cmc_2", "draw_4cmc_3")
+        ]
+        assert mixed == []
+
+    def test_mixed_combos_on_by_default(self):
+        opt = FactoredOptimizer(
+            goldfisher=MagicMock(), candidates={},
+            max_draw=2, max_ramp=1,
+        )
+        opt.marginal_results = [
+            self._make_marginal(DeckConfig(added_cards=("draw_2cmc_2",)), "draw", 0.5),
+            self._make_marginal(DeckConfig(added_cards=("draw_4cmc_3",)), "draw", 0.4),
+        ]
+        combos = opt._build_combinations()
+        expected = ("draw_2cmc_2", "draw_4cmc_3")
+        mixed = [c for c in combos if c.added_cards == expected]
+        assert len(mixed) == 1
+
+    def test_mixed_combos_within_dim_draw(self):
+        opt = FactoredOptimizer(
+            goldfisher=MagicMock(), candidates={},
+            max_draw=2, max_ramp=1, mixed_combos=True,
+        )
+        opt.marginal_results = [
+            self._make_marginal(DeckConfig(added_cards=("draw_2cmc_2",)), "draw", 0.5),
+            self._make_marginal(DeckConfig(added_cards=("draw_4cmc_3",)), "draw", 0.4),
+            self._make_marginal(DeckConfig(added_cards=("draw_1cmc_1",)), "draw", 0.1),
+        ]
+        combos = opt._build_combinations()
+        # Top-2 distinct draw cards combined (sorted)
+        expected = ("draw_2cmc_2", "draw_4cmc_3")
+        mixed = [c for c in combos if c.added_cards == expected]
+        assert len(mixed) == 1
+
+    def test_mixed_combos_within_dim_ramp(self):
+        opt = FactoredOptimizer(
+            goldfisher=MagicMock(), candidates={},
+            max_draw=1, max_ramp=2, mixed_combos=True,
+        )
+        opt.marginal_results = [
+            self._make_marginal(DeckConfig(added_cards=("ramp_2cmc_1",)), "ramp", 0.5),
+            self._make_marginal(DeckConfig(added_cards=("ramp_4cmc_2",)), "ramp", 0.3),
+        ]
+        combos = opt._build_combinations()
+        expected = ("ramp_2cmc_1", "ramp_4cmc_2")
+        mixed = [c for c in combos if c.added_cards == expected]
+        assert len(mixed) == 1
+
+    def test_mixed_combos_respects_max_copies(self):
+        opt = FactoredOptimizer(
+            goldfisher=MagicMock(), candidates={},
+            max_draw=1, max_ramp=1, mixed_combos=True,
+        )
+        opt.marginal_results = [
+            self._make_marginal(DeckConfig(added_cards=("draw_2cmc_2",)), "draw", 0.5),
+            self._make_marginal(DeckConfig(added_cards=("draw_4cmc_3",)), "draw", 0.4),
+        ]
+        combos = opt._build_combinations()
+        # max_draw=1 means we can't add two draw cards even mixed
+        mixed = [c for c in combos if len(c.added_cards) == 2]
+        assert mixed == []
+
+    def test_mixed_combos_skips_when_only_one_positive(self):
+        opt = FactoredOptimizer(
+            goldfisher=MagicMock(), candidates={},
+            max_draw=2, max_ramp=1, mixed_combos=True,
+        )
+        opt.marginal_results = [
+            self._make_marginal(DeckConfig(added_cards=("draw_2cmc_2",)), "draw", 0.5),
+            self._make_marginal(DeckConfig(added_cards=("draw_4cmc_3",)), "draw", -0.3),
+        ]
+        combos = opt._build_combinations()
+        # Only one positive draw -> no mixed combo, just 2-copy
+        mixed = [
+            c for c in combos
+            if c.added_cards == ("draw_2cmc_2", "draw_4cmc_3")
+        ]
+        assert mixed == []
+
 
 class TestScoring:
     def test_mean_mana(self):

@@ -86,6 +86,9 @@ class FactoredOptimizer:
         max_games: Maximum games before stopping adaptive sampling.
         significance_threshold: z-multiplier for significance (effect > threshold * SE).
         negligible_threshold: z-multiplier for negligible (effect < threshold * SE).
+        mixed_combos: If True (default), also test within-dimension combinations
+            of the top-2 distinct positive-effect cards (e.g., 1x draw_A +
+            1x draw_B) in addition to the 2-copy variants.
         hyperband_max_sims: Accepted for API compatibility, ignored.
     """
 
@@ -104,6 +107,7 @@ class FactoredOptimizer:
         max_games: int = 800,
         significance_threshold: float = 2.0,
         negligible_threshold: float = 0.5,
+        mixed_combos: bool = True,
         hyperband_max_sims: Optional[int] = None,
     ) -> None:
         self.goldfisher = goldfisher
@@ -119,11 +123,13 @@ class FactoredOptimizer:
         self.max_games = max_games
         self.significance_threshold = significance_threshold
         self.negligible_threshold = negligible_threshold
+        self.mixed_combos = mixed_combos
 
         # Populated during run()
         self.marginal_results: List[MarginalResult] = []
         self.all_round_scores: List[Tuple[DeckConfig, float, int]] = []
         self.feature_analysis: Optional[dict] = None
+        self.total_sims: int = 0
 
     def run(
         self,
@@ -146,6 +152,8 @@ class FactoredOptimizer:
             else _stdlib_random.randrange(2**31)
         )
 
+        self.total_sims = 0
+
         # Build marginal configs
         marginal_configs = self._enumerate_marginals()
 
@@ -155,6 +163,7 @@ class FactoredOptimizer:
 
         def report_enum(sims: int) -> None:
             done_sims[0] += sims
+            self.total_sims += sims
             if enum_progress is not None:
                 enum_progress(done_sims[0], total_budget_est)
 
@@ -194,7 +203,7 @@ class FactoredOptimizer:
             enum_progress(done_sims[0], done_sims[0])
 
         # Build feature analysis from marginal results
-        self.feature_analysis = self._build_feature_analysis()
+        self.feature_analysis = self._build_feature_analysis(baseline_score)
 
         # Phase 3: Full evaluation of top configs
         all_candidates = self.marginal_results + combo_results
@@ -221,6 +230,7 @@ class FactoredOptimizer:
         for j, config in enumerate(eval_configs):
             apply_config(self.goldfisher, config, self.candidates, self.swap_mode)
             result = self.goldfisher.simulate()
+            self.total_sims += final_sims
             result_dict = result_to_dict(result, turns=self.goldfisher.turns)
             results.append((config, result_dict))
             if eval_progress is not None:
@@ -472,36 +482,26 @@ class FactoredOptimizer:
 
     def _build_combinations(self) -> list[DeckConfig]:
         """Build combination configs from the best marginal per dimension."""
-        best_per_dim: dict[str, MarginalResult] = {}
+        positive_per_dim: dict[str, list[MarginalResult]] = {}
         for mr in self.marginal_results:
             if mr.effect_size <= 0:
                 continue
-            prev = best_per_dim.get(mr.dimension)
-            if prev is None or mr.effect_size > prev.effect_size:
-                best_per_dim[mr.dimension] = mr
+            positive_per_dim.setdefault(mr.dimension, []).append(mr)
 
-        if len(best_per_dim) < 2:
-            # Not enough positive dimensions for meaningful combinations
-            # Still test 2-copy if available
-            combos: list[DeckConfig] = []
-            for dim, mr in best_per_dim.items():
-                if dim in ("draw", "ramp") and mr.config.added_cards:
-                    max_copies = (
-                        self.max_draw if dim == "draw" else self.max_ramp
-                    )
-                    if max_copies >= 2:
-                        cid = mr.config.added_cards[0]
-                        combos.append(
-                            DeckConfig(
-                                land_delta=mr.config.land_delta,
-                                added_cards=(cid, cid),
-                            )
-                        )
-            return combos
+        for dim in positive_per_dim:
+            positive_per_dim[dim].sort(key=lambda m: m.effect_size, reverse=True)
 
-        dims = list(best_per_dim.keys())
+        best_per_dim: dict[str, MarginalResult] = {
+            dim: results[0] for dim, results in positive_per_dim.items()
+        }
+
         combos: list[DeckConfig] = []
         seen: set[DeckConfig] = set()
+
+        def _add(cfg: DeckConfig) -> None:
+            if cfg not in seen:
+                combos.append(cfg)
+                seen.add(cfg)
 
         def _merge(*mrs: MarginalResult) -> DeckConfig:
             land_delta = 0
@@ -514,42 +514,50 @@ class FactoredOptimizer:
                 added_cards=tuple(sorted(cards)),
             )
 
-        # Pairwise combinations
-        for i in range(len(dims)):
-            for j in range(i + 1, len(dims)):
-                cfg = _merge(best_per_dim[dims[i]], best_per_dim[dims[j]])
-                if cfg not in seen:
-                    combos.append(cfg)
-                    seen.add(cfg)
+        if len(best_per_dim) >= 2:
+            dims = list(best_per_dim.keys())
+            for i in range(len(dims)):
+                for j in range(i + 1, len(dims)):
+                    _add(_merge(best_per_dim[dims[i]], best_per_dim[dims[j]]))
 
-        # All three together
-        if len(dims) >= 3:
-            cfg = _merge(*[best_per_dim[d] for d in dims])
-            if cfg not in seen:
-                combos.append(cfg)
-                seen.add(cfg)
+            if len(dims) >= 3:
+                _add(_merge(*[best_per_dim[d] for d in dims]))
 
-        # 2-copy variants for draw/ramp
+        # 2-copy variants for draw/ramp (same card twice)
         for dim in ("draw", "ramp"):
             mr = best_per_dim.get(dim)
             if mr and mr.config.added_cards:
                 max_copies = self.max_draw if dim == "draw" else self.max_ramp
                 if max_copies >= 2:
                     cid = mr.config.added_cards[0]
-                    cfg = DeckConfig(
-                        land_delta=0,
-                        added_cards=(cid, cid),
-                    )
-                    if cfg not in seen:
-                        combos.append(cfg)
-                        seen.add(cfg)
+                    _add(DeckConfig(land_delta=0, added_cards=(cid, cid)))
+
+        # Mixed within-dimension combos: top-2 distinct positive cards
+        if self.mixed_combos:
+            for dim in ("draw", "ramp"):
+                results = positive_per_dim.get(dim, [])
+                max_copies = self.max_draw if dim == "draw" else self.max_ramp
+                if len(results) < 2 or max_copies < 2:
+                    continue
+                top1, top2 = results[0], results[1]
+                if not top1.config.added_cards or not top2.config.added_cards:
+                    continue
+                cid1 = top1.config.added_cards[0]
+                cid2 = top2.config.added_cards[0]
+                if cid1 == cid2:
+                    continue
+                _add(DeckConfig(
+                    land_delta=0,
+                    added_cards=tuple(sorted((cid1, cid2))),
+                ))
 
         return combos
 
     # -- Feature analysis --
 
-    def _build_feature_analysis(self) -> dict[str, Any]:
+    def _build_feature_analysis(self, baseline_score: float) -> dict[str, Any]:
         """Build feature analysis dict from marginal results."""
+        from auto_goldfish.optimization.candidate_cards import ALL_CANDIDATES
         from auto_goldfish.optimization.feature_analysis import (
             synthesize_factored_recommendations,
         )
@@ -560,6 +568,17 @@ class FactoredOptimizer:
 
         marginal_impact = []
         for mr in self.marginal_results:
+            if mr.dimension == "land":
+                delta = mr.config.land_delta
+                label = f"+{delta} land" if delta > 0 else f"{delta} land"
+            elif mr.config.added_cards:
+                cid = mr.config.added_cards[0]
+                cand = ALL_CANDIDATES.get(cid)
+                compact = cand.compact_label if cand else cid
+                label = f"+1 {compact}"
+            else:
+                label = mr.config.describe()
+
             marginal_impact.append({
                 "config": mr.config.describe(),
                 "dimension": mr.dimension,
@@ -569,6 +588,12 @@ class FactoredOptimizer:
                 "n_games": mr.n_games,
                 "significant": mr.significant,
                 "negligible": mr.negligible,
+                # Aliases consumed by client_results.js renderer
+                "label": label,
+                "delta": round(mr.effect_size, 4),
+                "mean_with": round(baseline_score + mr.effect_size, 4),
+                "mean_without": round(baseline_score, 4),
+                "count": mr.n_games,
             })
 
         return {

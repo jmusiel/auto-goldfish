@@ -205,6 +205,7 @@ class SimulationRunner:
         swap_mode = config.get("swap_mode", False)
         max_draw = config.get("max_draw_additions", 2)
         max_ramp = config.get("max_ramp_additions", 2)
+        mixed_combos = config.get("mixed_combos", True)
 
         if algorithm == "factored":
             optimizer = FactoredOptimizer(
@@ -216,6 +217,7 @@ class SimulationRunner:
                 land_delta_min=land_delta_min,
                 land_delta_max=land_delta_max,
                 optimize_for=optimize_for,
+                mixed_combos=mixed_combos,
             )
         elif algorithm == "racing":
             optimizer = FastDeckOptimizer(
