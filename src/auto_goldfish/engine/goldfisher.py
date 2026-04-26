@@ -37,6 +37,7 @@ from auto_goldfish.engine.mulligan import DefaultMulligan, MulliganStrategy
 from auto_goldfish.engine.spell_priority import VALID_SPELL_PRIORITIES, get_spell_sort_key
 from auto_goldfish.models.card import Card
 from auto_goldfish.models.game_state import GameState
+from auto_goldfish.optimization.mana_model import prob_at_least
 
 
 # ---------------------------------------------------------------------------
@@ -303,6 +304,63 @@ def _classify_saturation(marginals: list[dict]) -> dict:
         return {"badge": "scaling", "saturates_at": None}
 
     return {"badge": "saturated", "saturates_at": last_sig["k"]}
+
+
+# Hypergeometric copy-range tunables (profile B: balanced).
+# saturates_at K (in hand) is translated into a deck-build copy range:
+#   * min copies = smallest C where P(draw >= 1 by turn T) >= 33%
+#   * max copies = largest  C where P(draw >= K+1 by turn T) <= 25%
+_COPY_RANGE_MIN_DRAW_PROB = 0.33
+_COPY_RANGE_MAX_WASTE_PROB = 0.25
+
+
+def _recommended_copy_range(
+    saturates_at: int | None,
+    copies: int,
+    deck_size: int,
+    turns: int,
+) -> dict | None:
+    """Translate "saturates at K in hand" into a suggested deck-build copy range.
+
+    Returns ``None`` when the inputs cannot produce a useful range (no
+    saturation point, missing context, or the range collapses), so the caller
+    can fall back to the wording-only badge.
+    """
+    if saturates_at is None or saturates_at <= 0:
+        return None
+    if deck_size <= 0 or turns <= 0:
+        return None
+
+    cards_seen = min(7 + max(turns - 1, 0), deck_size)
+    waste_threshold = saturates_at + 1
+
+    c_min: int | None = None
+    for c in range(1, deck_size + 1):
+        if prob_at_least(1, deck_size, c, cards_seen) >= _COPY_RANGE_MIN_DRAW_PROB:
+            c_min = c
+            break
+
+    c_max: int | None = None
+    for c in range(deck_size, 0, -1):
+        if prob_at_least(waste_threshold, deck_size, c, cards_seen) <= _COPY_RANGE_MAX_WASTE_PROB:
+            c_max = c
+            break
+
+    if c_min is None or c_max is None or c_min > c_max:
+        return None
+
+    if copies < c_min:
+        status = "low"
+    elif copies > c_max:
+        status = "high"
+    else:
+        status = "in_range"
+
+    return {
+        "min_copies": c_min,
+        "max_copies": c_max,
+        "status": status,
+    }
 
 
 def _card_to_dict(card: Card) -> dict:
@@ -1200,6 +1258,15 @@ class Goldfisher:
                     max_k=max_k,
                 )
                 saturation = _classify_saturation(marginals)
+                if saturation["badge"] == "saturated":
+                    copy_range = _recommended_copy_range(
+                        saturation["saturates_at"],
+                        copies,
+                        deck_size=len(self.decklist),
+                        turns=self.turns,
+                    )
+                    if copy_range is not None:
+                        saturation = {**saturation, "copy_range": copy_range}
 
             if always_drawn:
                 # Sum significant per-copy marginals stand in for "with vs without"

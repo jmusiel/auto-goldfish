@@ -216,7 +216,24 @@
     {% if sat.badge == 'scaling' %}
         <span class="sat-badge sat-scaling" data-tip="Every extra copy you draw is still adding measurable mana. More copies would likely help.">↑ Add more</span>
     {% elif sat.badge == 'saturated' %}
-        <span class="sat-badge sat-saturated" data-tip="Past copy {{ sat.saturates_at }}, additional copies don't add measurable value. {{ sat.saturates_at }} is roughly the sweet spot.">≈ Enough at {{ sat.saturates_at }}</span>
+        {% set rng = sat.copy_range %}
+        {% set copies = card.copies or 1 %}
+        {% if rng %}
+            {% set range_label = (rng.min_copies ~ ' copies') if rng.min_copies == rng.max_copies else (rng.min_copies ~ '–' ~ rng.max_copies ~ ' copies') %}
+            {% if rng.status == 'high' %}
+                {% set status_note = 'Currently ' ~ copies ~ ' — consider trimming toward ' ~ rng.max_copies ~ '.' %}
+                {% set extra_cls = ' sat-trim' %}
+            {% elif rng.status == 'low' %}
+                {% set status_note = 'Currently ' ~ copies ~ ' — could add more, up to about ' ~ rng.max_copies ~ '.' %}
+                {% set extra_cls = ' sat-room' %}
+            {% else %}
+                {% set status_note = 'Currently ' ~ copies ~ ' — looks right.' %}
+                {% set extra_cls = '' %}
+            {% endif %}
+            <span class="sat-badge sat-saturated{{ extra_cls }}" data-tip="Drawing more than {{ sat.saturates_at }} copy in the same game stops adding measurable mana. Hypergeometric range where you draw it often enough but rarely waste extras: {{ range_label }}. {{ status_note }}">≈ Sweet spot: {{ range_label }}</span>
+        {% else %}
+            <span class="sat-badge sat-saturated" data-tip="Drawing more than {{ sat.saturates_at }} copy in the same game does not add measurable mana. Currently {{ copies }} copies — only consider cutting if you frequently draw {{ sat.saturates_at + 1 }}+.">≈ Enough drawn at {{ sat.saturates_at }}</span>
+        {% endif %}
     {% elif sat.badge == 'crowding' %}
         <span class="sat-badge sat-crowding" data-tip="Drawing extra copies actually hurts (they crowd your hand or compete for mana). Consider running fewer.">↓ Cut copies</span>
     {% elif sat.badge == 'unclear' %}

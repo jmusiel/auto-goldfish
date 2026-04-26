@@ -10,6 +10,7 @@ from auto_goldfish.engine.goldfisher import (
     _classify_saturation,
     _compute_marginal_impacts,
     _format_pool_label,
+    _recommended_copy_range,
 )
 from auto_goldfish.models.card import Card
 
@@ -377,6 +378,58 @@ class TestSaturationBadge:
         sat = _classify_saturation(marginals)
         assert sat["badge"] == "crowding"
         assert sat["saturates_at"] == 1
+
+
+class TestRecommendedCopyRange:
+    """Hypergeometric translation of in-hand saturation point → deck-build range."""
+
+    def test_returns_none_when_saturates_at_missing(self):
+        assert _recommended_copy_range(None, 3, 100, 7) is None
+
+    def test_returns_none_when_saturates_at_nonpositive(self):
+        assert _recommended_copy_range(0, 3, 100, 7) is None
+
+    def test_returns_none_when_deck_size_invalid(self):
+        assert _recommended_copy_range(1, 3, 0, 7) is None
+
+    def test_returns_none_when_turns_invalid(self):
+        assert _recommended_copy_range(1, 3, 100, 0) is None
+
+    def test_in_range_for_typical_2mana_ramp_pool(self):
+        # K=1 in hand, 100-card deck, 7 turns → 13 cards seen.
+        # 3 copies should land in the sweet spot ~3–7.
+        rng = _recommended_copy_range(1, 3, 100, 7)
+        assert rng is not None
+        assert rng["status"] == "in_range"
+        assert rng["min_copies"] <= 3 <= rng["max_copies"]
+
+    def test_low_status_when_below_min(self):
+        rng = _recommended_copy_range(1, 1, 100, 7)
+        assert rng["status"] == "low"
+        assert rng["min_copies"] > 1
+
+    def test_high_status_when_above_max(self):
+        # 12 copies of a K=1 pool draws 2+ way too often.
+        rng = _recommended_copy_range(1, 12, 100, 7)
+        assert rng["status"] == "high"
+        assert rng["max_copies"] < 12
+
+    def test_higher_k_yields_wider_max(self):
+        # Saturating at 2 copies in hand tolerates more deck copies than K=1.
+        narrow = _recommended_copy_range(1, 5, 100, 7)
+        wide = _recommended_copy_range(2, 5, 100, 7)
+        assert wide["max_copies"] > narrow["max_copies"]
+
+    def test_thresholds_satisfy_definition(self):
+        # Verify the returned min/max actually meet the defined probability
+        # thresholds (33% min draw, 25% max waste).
+        from auto_goldfish.optimization.mana_model import prob_at_least
+        rng = _recommended_copy_range(1, 5, 100, 7)
+        cards_seen = 13  # 7 + 7 - 1
+        assert prob_at_least(1, 100, rng["min_copies"], cards_seen) >= 0.33
+        assert prob_at_least(1, 100, rng["min_copies"] - 1, cards_seen) < 0.33
+        assert prob_at_least(2, 100, rng["max_copies"], cards_seen) <= 0.25
+        assert prob_at_least(2, 100, rng["max_copies"] + 1, cards_seen) > 0.25
 
 
 class TestAlwaysDrawnPools:

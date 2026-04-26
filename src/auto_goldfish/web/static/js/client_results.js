@@ -373,9 +373,33 @@ const ClientResults = (function() {
                 return '<span class="sat-badge sat-scaling" data-tip="Every extra copy you draw is still adding measurable mana. More copies would likely help.">↑ Add more</span>';
             }
             if (sat.badge === 'saturated') {
-                const tip = 'Past copy ' + sat.saturates_at + ", additional copies don't add measurable value. "
-                    + sat.saturates_at + ' is roughly the sweet spot.';
-                return '<span class="sat-badge sat-saturated" data-tip="' + escapeHtml(tip) + '">≈ Enough at ' + sat.saturates_at + '</span>';
+                const k = sat.saturates_at;
+                const range = sat.copy_range;
+                const copies = card.copies || 1;
+                if (range) {
+                    const rangeLabel = range.min_copies === range.max_copies
+                        ? range.min_copies + ' copies'
+                        : range.min_copies + '–' + range.max_copies + ' copies';
+                    let statusNote;
+                    if (range.status === 'high') {
+                        statusNote = 'Currently ' + copies + ' — consider trimming toward ' + range.max_copies + '.';
+                    } else if (range.status === 'low') {
+                        statusNote = 'Currently ' + copies + ' — could add more, up to about ' + range.max_copies + '.';
+                    } else {
+                        statusNote = 'Currently ' + copies + ' — looks right.';
+                    }
+                    const tip = 'Drawing more than ' + k + ' copy in the same game stops adding measurable mana. '
+                        + 'Hypergeometric range where you draw it often enough but rarely waste extras: '
+                        + rangeLabel + '. ' + statusNote;
+                    const cls = range.status === 'high'
+                        ? 'sat-saturated sat-trim'
+                        : range.status === 'low' ? 'sat-saturated sat-room' : 'sat-saturated';
+                    return '<span class="sat-badge ' + cls + '" data-tip="' + escapeHtml(tip) + '">≈ Sweet spot: ' + rangeLabel + '</span>';
+                }
+                const tip = 'Drawing more than ' + k + ' copy in the same game does not add measurable mana. '
+                    + 'Currently ' + copies + ' copies — only consider cutting if you frequently draw '
+                    + (k + 1) + '+.';
+                return '<span class="sat-badge sat-saturated" data-tip="' + escapeHtml(tip) + '">≈ Enough drawn at ' + k + '</span>';
             }
             if (sat.badge === 'crowding') {
                 return '<span class="sat-badge sat-crowding" data-tip="Drawing extra copies actually hurts (they crowd your hand or compete for mana). Consider running fewer.">↓ Cut copies</span>';
