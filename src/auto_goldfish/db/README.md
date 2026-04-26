@@ -7,7 +7,7 @@ SQLAlchemy 2.0 database layer for persisting simulation results and deck card la
 ```
 db/
 ├── __init__.py      # Package docstring
-├── models.py        # SQLAlchemy ORM models (7 tables)
+├── models.py        # SQLAlchemy ORM models (8 tables)
 ├── session.py       # Engine creation, session context manager
 └── persistence.py   # Get-or-create helpers, save functions, convenience wrappers
 ```
@@ -22,9 +22,10 @@ DeckCardRow          -- deck <-> card join with effect label + user_edited flag
 SimulationRunRow     -- one simulation run (job_id, config params, optimal_land_count)
 SimulationResultRow  -- per-land-count stats (mean_mana, consistency, CIs, percentiles)
 CardPerformanceRow   -- bottom 10 archetype pools with effects at optimal land count (stored against the example card)
+CalibrationCacheRow  -- single-row cache of the most recent CASTER anchors, keyed by simulation_results row count
 ```
 
-Tables are created automatically via `init_db()` on app startup.
+By default `init_db()` runs `Base.metadata.create_all()` plus `_migrate()` at startup so the schema is created on first use. Set `AUTO_GOLDFISH_SKIP_MIGRATE=1` (production / Vercel) to skip both -- migrations are then expected to have already run during the deploy build via `scripts/migrate.py`.
 
 ## Usage
 
@@ -48,6 +49,32 @@ freeze between requests. A long-lived SQLAlchemy connection pool can hold
 sockets that the upstream proxy has already torn down by the time the worker
 thaws; the next request then sees an exception. Letting Neon's own pgbouncer
 do the pooling and opening a fresh connection per session keeps things sane.
+
+### Migrations at deploy time, not at request time
+
+Cold-start workers must not race on `ALTER TABLE`. Instead:
+
+* Build step: `scripts/vercel_build.sh` runs `python scripts/migrate.py`,
+  which calls `init_db(..., run_migrations=True)` once with the deploy's
+  `DATABASE_URL`. All `create_all` + `_migrate` work happens here.
+* Runtime: Vercel sets `AUTO_GOLDFISH_SKIP_MIGRATE=1` so each cold-start
+  worker calls `init_db()` with `run_migrations=False`, opening a fresh
+  engine and running `verify_schema()` (read-only) to log loudly if the
+  prod DB is missing any required column.
+
+Local dev/tests leave `AUTO_GOLDFISH_SKIP_MIGRATE` unset, preserving the
+auto-create behaviour expected by `tests/` and ad-hoc `flask run` workflows.
+
+### Calibration cache (CalibrationCacheRow)
+
+`metrics/calibration.py` reads/writes a single row in `calibration_cache`
+keyed by the current `simulation_results` row count. A freshly-thawed
+worker that finds a matching row deserializes the stored anchors instead
+of running the percentile + Bayesian-shrinkage pass. Adding new sim rows
+naturally invalidates the cache (row count differs); the next caller
+recomputes and writes the new row back. Concurrent recomputes converge to
+the same answer for a given row count, so a last-writer-wins merge by
+primary key (`id=1`) is sufficient.
 
 ## Setup
 

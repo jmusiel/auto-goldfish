@@ -11,16 +11,26 @@ decks accumulate.
 the default anchor.
 
 For runtime use, :func:`get_active_anchors` wraps the heavy DB query in a
-row-count-keyed cache and applies an env-var toggle. Calibration is
-**enabled by default**; set ``AUTO_GOLDFISH_CALIBRATE=0`` to fall back to
-defaults.
+two-tier cache and applies an env-var toggle. Calibration is **enabled by
+default**; set ``AUTO_GOLDFISH_CALIBRATE=0`` to fall back to defaults.
+
+Caching tiers:
+
+* In-process: a module-level dict keyed by ``simulation_results`` row count
+  serves repeated calls inside a single worker for free.
+* Cross-process: a single-row ``calibration_cache`` table stores the last
+  computed anchors keyed by row count. When a freshly-thawed serverless
+  worker sees a row-count match, it deserializes the stored JSON and skips
+  the (n_rows-scale) percentile pass entirely. Writes are best-effort and
+  idempotent (concurrent recomputes converge to the same answer).
 """
 
 from __future__ import annotations
 
+import json
 import logging
 import os
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Iterable, Optional, Tuple
 
 import numpy as np
@@ -224,8 +234,107 @@ def get_active_anchors(
         return DEFAULT_ANCHORS, None
 
 
+_STAT_FIELDS = (
+    "consistency",
+    "acceleration",
+    "snowball_ratio",
+    "snowball_late_avg_norm",
+    "toughness",
+    "efficiency",
+    "reach_norm",
+)
+
+
+def _serialize_anchors(anchors: StatAnchors) -> str:
+    return json.dumps({f: list(getattr(anchors, f)) for f in _STAT_FIELDS})
+
+
+def _deserialize_anchors(blob: str) -> StatAnchors:
+    data = json.loads(blob)
+    return StatAnchors(**{f: tuple(data[f]) for f in _STAT_FIELDS})
+
+
+def _read_db_cache(
+    session: "Session", expected_n_rows: int,
+) -> Optional[Tuple[StatAnchors, CalibrationMetadata]]:
+    """Return cached anchors when the DB row matches ``expected_n_rows``.
+
+    Returns ``None`` on miss, deserialization failure, or when the cache
+    table is missing (e.g. freshly-deployed schema not yet migrated). All
+    failure paths are silent at INFO -- cache reads must never break
+    scoring. The SELECT runs inside a SAVEPOINT so a missing-table error
+    can't poison the caller's outer transaction.
+    """
+    from sqlalchemy import select
+
+    from auto_goldfish.db.models import CalibrationCacheRow
+
+    try:
+        with session.begin_nested():
+            row = session.execute(
+                select(CalibrationCacheRow).where(CalibrationCacheRow.id == 1)
+            ).scalar_one_or_none()
+    except Exception:
+        logger.debug("Calibration cache read failed", exc_info=True)
+        return None
+
+    if row is None or row.n_rows != expected_n_rows:
+        return None
+
+    try:
+        anchors = _deserialize_anchors(row.anchors_json)
+        meta_dict = json.loads(row.metadata_json)
+        meta = CalibrationMetadata(
+            n_rows=meta_dict["n_rows"],
+            n_decks=meta_dict["n_decks"],
+            pseudo_count=meta_dict["pseudo_count"],
+            low_pct=meta_dict["low_pct"],
+            high_pct=meta_dict["high_pct"],
+        )
+    except Exception:
+        logger.warning("Calibration cache row was unparseable; recomputing")
+        return None
+
+    return anchors, meta
+
+
+def _write_db_cache(
+    session: "Session", n_rows: int, anchors: StatAnchors, meta: CalibrationMetadata,
+) -> None:
+    """Best-effort upsert of the cache row.
+
+    Concurrent writers all compute the same answer (same n_rows ->
+    deterministic percentiles), so a last-writer-wins merge is safe. The
+    caller's session commit/rollback drives durability; this helper just
+    stages the row.
+
+    Wrapped in a SAVEPOINT so a write failure (e.g. the cache table is
+    missing on a stale prod DB, or a unique-constraint race against another
+    worker) doesn't poison the caller's outer transaction. Without the
+    savepoint, the next statement issued by ``save_simulation_run`` would
+    fail with ``current transaction is aborted``.
+    """
+    from datetime import datetime, timezone
+
+    from auto_goldfish.db.models import CalibrationCacheRow
+
+    try:
+        with session.begin_nested():
+            row = CalibrationCacheRow(
+                id=1,
+                n_rows=n_rows,
+                anchors_json=_serialize_anchors(anchors),
+                metadata_json=json.dumps(asdict(meta)),
+                computed_at=datetime.now(timezone.utc),
+            )
+            session.merge(row)
+            session.flush()
+    except Exception:
+        logger.debug("Calibration cache write failed", exc_info=True)
+
+
 def _from_session(session: "Session") -> Tuple[StatAnchors, Optional[CalibrationMetadata]]:
-    """Cached read against a live session."""
+    """Two-tier cached read against a live session."""
     try:
         count = _row_count(session)
     except Exception:
@@ -235,11 +344,19 @@ def _from_session(session: "Session") -> Tuple[StatAnchors, Optional[Calibration
     if _cache["row_count"] == count and _cache["result"] is not None:
         return _cache["result"]
 
+    cached = _read_db_cache(session, count)
+    if cached is not None:
+        _cache["row_count"] = count
+        _cache["result"] = cached
+        return cached
+
     try:
         anchors, meta = compute_anchors_from_db(session)
     except Exception:
         logger.exception("Calibration query failed; using defaults")
         return DEFAULT_ANCHORS, None
+
+    _write_db_cache(session, count, anchors, meta)
 
     result = (anchors, meta)
     _cache["row_count"] = count
