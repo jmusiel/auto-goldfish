@@ -1,17 +1,14 @@
 """Tests for the Moxfield adapter."""
 
-import os
 from unittest.mock import patch, MagicMock
 
 import pytest
 
 from auto_goldfish.decklist.moxfield import (
     MoxfieldAPIError,
-    MoxfieldConfigError,
     _extract_deck_id,
     _get_user_agent,
     fetch_decklist,
-    is_configured,
 )
 from auto_goldfish.decklist import rate_limiter
 
@@ -42,29 +39,19 @@ class TestExtractDeckId:
 
 
 class TestGetUserAgent:
-    def test_reads_from_env(self, monkeypatch):
-        monkeypatch.setenv("MOXFIELD_USER_AGENT", "MoxKey; test_user test_pass")
-        assert _get_user_agent() == "MoxKey; test_user test_pass"
-
-    def test_missing_env_raises(self, monkeypatch):
+    def test_default_identifies_project(self, monkeypatch):
         monkeypatch.delenv("MOXFIELD_USER_AGENT", raising=False)
-        with pytest.raises(MoxfieldConfigError, match="not set"):
-            _get_user_agent()
+        ua = _get_user_agent()
+        assert ua.startswith("auto-goldfish/")
+        assert "github.com/jmusiel/auto-goldfish" in ua
 
-    def test_empty_env_raises(self, monkeypatch):
+    def test_env_override(self, monkeypatch):
+        monkeypatch.setenv("MOXFIELD_USER_AGENT", "MoxKey; partner_user partner_pass")
+        assert _get_user_agent() == "MoxKey; partner_user partner_pass"
+
+    def test_blank_env_falls_back_to_default(self, monkeypatch):
         monkeypatch.setenv("MOXFIELD_USER_AGENT", "  ")
-        with pytest.raises(MoxfieldConfigError, match="not set"):
-            _get_user_agent()
-
-
-class TestIsConfigured:
-    def test_configured(self, monkeypatch):
-        monkeypatch.setenv("MOXFIELD_USER_AGENT", "MoxKey; user pass")
-        assert is_configured() is True
-
-    def test_not_configured(self, monkeypatch):
-        monkeypatch.delenv("MOXFIELD_USER_AGENT", raising=False)
-        assert is_configured() is False
+        assert _get_user_agent().startswith("auto-goldfish/")
 
 
 class TestFetchDecklist:
@@ -103,27 +90,39 @@ class TestFetchDecklist:
     @patch("auto_goldfish.decklist.moxfield.resolve_cards")
     @patch("auto_goldfish.decklist.moxfield.requests.get")
     def test_fetch_parses_commanders_and_mainboard(self, mock_get, mock_resolve, monkeypatch):
-        monkeypatch.setenv("MOXFIELD_USER_AGENT", "MoxKey; test test")
+        monkeypatch.delenv("MOXFIELD_USER_AGENT", raising=False)
         mock_get.return_value = self._mock_moxfield_response(self.SAMPLE_RESPONSE)
         mock_resolve.return_value = [{"name": "test"}]
 
         fetch_decklist("https://www.moxfield.com/decks/abc123")
 
-        # Check resolve_cards was called with correct entries
         entries = mock_resolve.call_args[0][0]
         names = {name for _, name, _ in entries}
         assert "Vren, the Relentless" in names
         assert "Sol Ring" in names
         assert "Island" in names
 
-        # Commander flag
         cmdr_entries = [(q, n, c) for q, n, c in entries if c]
         assert len(cmdr_entries) == 1
         assert cmdr_entries[0][1] == "Vren, the Relentless"
 
     @patch("auto_goldfish.decklist.moxfield.resolve_cards")
     @patch("auto_goldfish.decklist.moxfield.requests.get")
-    def test_fetch_sends_user_agent_header(self, mock_get, mock_resolve, monkeypatch):
+    def test_fetch_sends_default_user_agent(self, mock_get, mock_resolve, monkeypatch):
+        monkeypatch.delenv("MOXFIELD_USER_AGENT", raising=False)
+        mock_get.return_value = self._mock_moxfield_response(self.SAMPLE_RESPONSE)
+        mock_resolve.return_value = []
+
+        fetch_decklist("https://www.moxfield.com/decks/abc123")
+
+        _, kwargs = mock_get.call_args
+        ua = kwargs["headers"]["User-Agent"]
+        assert ua.startswith("auto-goldfish/")
+        assert "github.com/jmusiel/auto-goldfish" in ua
+
+    @patch("auto_goldfish.decklist.moxfield.resolve_cards")
+    @patch("auto_goldfish.decklist.moxfield.requests.get")
+    def test_fetch_honors_user_agent_override(self, mock_get, mock_resolve, monkeypatch):
         monkeypatch.setenv("MOXFIELD_USER_AGENT", "MoxKey; secret_user secret_pass")
         mock_get.return_value = self._mock_moxfield_response(self.SAMPLE_RESPONSE)
         mock_resolve.return_value = []
@@ -135,7 +134,7 @@ class TestFetchDecklist:
 
     @patch("auto_goldfish.decklist.moxfield.requests.get")
     def test_fetch_404_raises(self, mock_get, monkeypatch):
-        monkeypatch.setenv("MOXFIELD_USER_AGENT", "MoxKey; test test")
+        monkeypatch.delenv("MOXFIELD_USER_AGENT", raising=False)
         resp = MagicMock()
         resp.status_code = 404
         mock_get.return_value = resp
@@ -145,21 +144,16 @@ class TestFetchDecklist:
 
     @patch("auto_goldfish.decklist.moxfield.requests.get")
     def test_fetch_empty_deck_raises(self, mock_get, monkeypatch):
-        monkeypatch.setenv("MOXFIELD_USER_AGENT", "MoxKey; test test")
+        monkeypatch.delenv("MOXFIELD_USER_AGENT", raising=False)
         mock_get.return_value = self._mock_moxfield_response({"boards": {}})
 
         with pytest.raises(MoxfieldAPIError, match="No cards found"):
             fetch_decklist("https://www.moxfield.com/decks/empty")
 
-    def test_fetch_without_config_raises(self, monkeypatch):
-        monkeypatch.delenv("MOXFIELD_USER_AGENT", raising=False)
-        with pytest.raises(MoxfieldConfigError):
-            fetch_decklist("https://www.moxfield.com/decks/abc123")
-
     @patch("auto_goldfish.decklist.moxfield.resolve_cards")
     @patch("auto_goldfish.decklist.moxfield.requests.get")
     def test_fetch_respects_rate_limiter(self, mock_get, mock_resolve, monkeypatch):
-        monkeypatch.setenv("MOXFIELD_USER_AGENT", "MoxKey; test test")
+        monkeypatch.delenv("MOXFIELD_USER_AGENT", raising=False)
         mock_get.return_value = self._mock_moxfield_response(self.SAMPLE_RESPONSE)
         mock_resolve.return_value = []
 

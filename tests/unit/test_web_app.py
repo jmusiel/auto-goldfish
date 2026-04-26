@@ -860,26 +860,6 @@ class TestMoxfieldImportAPI:
         data = response.get_json()
         assert "URL is required" in data["error"]
 
-    def test_moxfield_unconfigured_returns_501(self, client, monkeypatch):
-        from auto_goldfish.decklist.moxfield import MoxfieldConfigError
-
-        def raise_config_error(url):
-            raise MoxfieldConfigError("not set")
-
-        monkeypatch.setattr(
-            "auto_goldfish.web.routes.decks.fetch_moxfield",
-            raise_config_error,
-        )
-        response = client.post(
-            "/decks/import/api",
-            data=json.dumps({
-                "source": "moxfield",
-                "deck_url": "https://www.moxfield.com/decks/abc",
-            }),
-            content_type="application/json",
-        )
-        assert response.status_code == 501
-
     def test_moxfield_extracts_name_from_url(self, client, monkeypatch):
         monkeypatch.setattr(
             "auto_goldfish.web.routes.decks.fetch_moxfield",

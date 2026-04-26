@@ -37,11 +37,7 @@ def _pool_cards(cards):
 from auto_goldfish.decklist.archidekt import fetch_and_save, fetch_decklist as fetch_archidekt
 from auto_goldfish.decklist.card_resolver import resolve_cards
 from auto_goldfish.decklist.loader import get_deckpath, load_decklist
-from auto_goldfish.decklist.moxfield import (
-    MoxfieldConfigError,
-    fetch_decklist as fetch_moxfield,
-    is_configured as moxfield_is_configured,
-)
+from auto_goldfish.decklist.moxfield import fetch_decklist as fetch_moxfield
 from auto_goldfish.decklist.text_import import parse_decklist
 
 bp = Blueprint("decks", __name__, url_prefix="/decks")
@@ -49,7 +45,7 @@ bp = Blueprint("decks", __name__, url_prefix="/decks")
 
 @bp.route("/import")
 def import_form():
-    return render_template("import.html", moxfield_available=moxfield_is_configured())
+    return render_template("import.html")
 
 
 @bp.route("/import", methods=["POST"])
@@ -59,7 +55,6 @@ def import_deck():
     deck_url = request.form.get("deck_url", "").strip() or default_url
     deck_name = request.form.get("deck_name", "").strip()
 
-    # If no name provided, extract it from the URL's last path segment
     if not deck_name:
         deck_name = deck_url.rstrip("/").rsplit("/", 1)[-1]
 
@@ -67,7 +62,7 @@ def import_deck():
         fetch_and_save(deck_url, deck_name)
     except Exception as e:
         flash(f"Import failed: {e}", "error")
-        return render_template("import.html", moxfield_available=moxfield_is_configured()), 400
+        return render_template("import.html"), 400
 
     flash(f"Deck '{deck_name}' imported successfully.", "success")
     return redirect(url_for("decks.view_deck", name=deck_name))
@@ -111,8 +106,6 @@ def import_deck_api():
                 deck_name = deck_url.rstrip("/").rsplit("/", 1)[-1]
             cards = fetch_archidekt(deck_url)
 
-    except MoxfieldConfigError as e:
-        return jsonify({"ok": False, "error": str(e)}), 501
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 400
 
