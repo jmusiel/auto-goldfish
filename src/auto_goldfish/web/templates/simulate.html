@@ -438,6 +438,10 @@
 <div id="local-results"></div>
 
 <script>
+window.CASTER_CALIBRATION = {{ caster_calibration | tojson }};
+</script>
+
+<script>
 (function() {
     const MAX_SWEEP = {{ max_land_sweep }};
     const minSlider = document.getElementById('min-slider');

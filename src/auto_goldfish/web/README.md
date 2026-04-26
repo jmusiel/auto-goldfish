@@ -60,4 +60,4 @@ All simulation runs client-side via Pyodide (CPython in WebAssembly):
 
 - `SECRET_KEY` env var (defaults to `"dev"`)
 - `DATABASE_URL` env var -- if set, enables Postgres persistence via `db/` module
-- `AUTO_GOLDFISH_CALIBRATE` env var -- defaults to enabled. When the DB is reachable and contains persisted raw composite stats, the `/runs` page tunes the 1-10 score anchors against the empirical distribution (Bayesian-shrunk toward defaults). Set to `0` to fall back to built-in default anchors. The `/runs` page shows a "Calibrated" or "Default anchors" badge with the active values.
+- `AUTO_GOLDFISH_CALIBRATE` env var -- defaults to enabled. When the DB is reachable and contains persisted raw composite stats, the `/runs` page tunes the 1-10 score anchors against the empirical distribution (Bayesian-shrunk toward defaults). Set to `0` to fall back to built-in default anchors. The `/runs` page shows a "Calibrated" or "Default anchors" badge with the active values. The `/sim/<deck>` page injects the active anchors into `window.CASTER_CALIBRATION` so `client_results.js` can render the "What does my CASTER Score mean?" expandable panel against current calibration.

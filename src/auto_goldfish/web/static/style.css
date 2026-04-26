@@ -433,6 +433,83 @@ sup.always-drawn { color: #64748b; font-size: 0.7em; margin-left: 2px; cursor: h
     text-align: center;
 }
 
+/* CASTER Score expandable explanation */
+.caster-help {
+    margin: 0 0 1rem;
+    padding: 0.5rem 0.85rem;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    color: #334155;
+}
+.caster-help summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #1e293b;
+}
+.caster-help[open] summary { margin-bottom: 0.5rem; }
+.caster-help-body p { margin: 0.4rem 0; line-height: 1.45; }
+.caster-help-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.85rem;
+    margin: 0.75rem 0;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.caster-help-table th,
+.caster-help-table td {
+    border-right: 1px solid #cbd5e1;
+    border-bottom: 1px solid #cbd5e1;
+    padding: 0.55rem 0.6rem;
+    vertical-align: top;
+    line-height: 1.45;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+}
+.caster-help-table th:last-child,
+.caster-help-table td:last-child { border-right: none; }
+.caster-help-table tbody tr:last-child td { border-bottom: none; }
+.caster-help-table th {
+    background: #f1f5f9;
+    text-align: left;
+    color: #334155;
+    font-weight: 600;
+    border-bottom: 2px solid #94a3b8;
+}
+.caster-help-table tbody tr:nth-child(even) td { background: #f8fafc; }
+/* Fixed column widths so long descriptions wrap inside the panel
+   instead of forcing horizontal overflow. */
+.caster-help-table th:nth-child(1),
+.caster-help-table td:nth-child(1) { width: 12%; }
+.caster-help-table th:nth-child(2),
+.caster-help-table td:nth-child(2) { width: 22%; }
+.caster-help-table th:nth-child(3),
+.caster-help-table td:nth-child(3),
+.caster-help-table th:nth-child(4),
+.caster-help-table td:nth-child(4) { width: 33%; }
+@media (max-width: 700px) {
+    .caster-help-table { font-size: 0.78rem; }
+    .caster-help-table th,
+    .caster-help-table td { padding: 0.4rem 0.45rem; }
+}
+.caster-help-foot {
+    color: #64748b;
+    font-size: 0.82rem;
+    margin-top: 0.4rem;
+}
+.caster-help-foot code {
+    background: #f1f5f9;
+    padding: 0.05rem 0.3rem;
+    border-radius: 3px;
+    font-size: 0.85em;
+}
+
 /* Feature analysis / recommendations */
 .feature-analysis-section {
     margin: 1.5rem 0;

@@ -129,6 +129,41 @@ def _load_calibration_meta() -> dict | None:
     }
 
 
+def load_caster_calibration() -> dict:
+    """Return calibration data for the CASTER score explanation.
+
+    Always returns a usable dict (falls back to defaults when calibration is
+    unavailable). The shape matches :func:`_load_calibration_meta`, plus a
+    boolean ``calibrated`` flag distinguishing live data from defaults.
+    """
+    try:
+        from auto_goldfish.metrics.deck_score import DEFAULT_ANCHORS
+    except Exception:
+        return {"calibrated": False, "anchors": []}
+
+    meta = _load_calibration_meta()
+    if meta is not None:
+        meta["calibrated"] = True
+        return meta
+
+    return {
+        "calibrated": False,
+        "n_rows": 0,
+        "n_decks": 0,
+        "pseudo_count": 0,
+        "low_pct": 10.0,
+        "high_pct": 90.0,
+        "anchors": [
+            {
+                "name": field,
+                "default": list(getattr(DEFAULT_ANCHORS, field)),
+                "active": list(getattr(DEFAULT_ANCHORS, field)),
+            }
+            for field in _ANCHOR_FIELDS
+        ],
+    }
+
+
 @bp.route("/")
 def index():
     runs = _load_runs()

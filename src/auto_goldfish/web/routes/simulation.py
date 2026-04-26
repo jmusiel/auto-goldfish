@@ -174,6 +174,8 @@ def config(deck_name: str):
 
     effect_schema = get_effect_schema()
 
+    from auto_goldfish.web.routes.runs import load_caster_calibration
+
     return render_template(
         "simulate.html",
         deck_name=deck_name,
@@ -187,6 +189,7 @@ def config(deck_name: str):
         wizard_cards=wizard_cards,
         all_nonland_cards=all_nonland_cards,
         is_local=is_local,
+        caster_calibration=load_caster_calibration(),
     )
 
 

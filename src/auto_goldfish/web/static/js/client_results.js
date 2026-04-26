@@ -81,32 +81,95 @@ const ClientResults = (function() {
 
     // -- Section renderers --
 
+    // Per-stat copy used by the CASTER Score header tooltip + explanation panel.
+    const CASTER_STATS = [
+        {name: 'Consistency', key: 'consistency', color: '#eab308',
+         desc: 'How rarely the deck bricks',
+         lowMeaning: 'worst-case games are catastrophic — frequent floods, stalls, or dead hands.',
+         highMeaning: 'almost every game runs smoothly; the bottom 25% looks much like the average.'},
+        {name: 'Acceleration', key: 'acceleration', color: '#ef4444',
+         desc: 'Early-game mana deployment',
+         lowMeaning: 'slow opening — barely any mana spent over the first four turns.',
+         highMeaning: 'explosive early game with multiple ramp/draw plays before turn 5.'},
+        {name: 'Snowball', key: 'snowball', color: '#8b5cf6',
+         desc: 'How much advantage compounds over time',
+         lowMeaning: 'late game stays flat — the deck does not pull away from its early curve.',
+         highMeaning: 'late turns dwarf the early game; the deck snowballs hard once it gets going.'},
+        {name: 'Toughness', key: 'toughness', color: '#22c55e',
+         desc: 'Structural redundancy of the decklist',
+         lowMeaning: 'thin/fragile decklist — few mana sources, little draw, or a heavy curve.',
+         highMeaning: 'deep redundancy: lots of mana sources, draw, low-cost plays, and a controlled curve.'},
+        {name: 'Efficiency', key: 'efficiency', color: '#3b82f6',
+         desc: 'Mana utilization per turn',
+         lowMeaning: 'mana left unused — frequent mid-game stall turns.',
+         highMeaning: 'nearly every turn fully utilized; very few wasted mana points.'},
+        {name: 'Reach', key: 'reach', color: '#f97316',
+         desc: 'Peak mana output and ceiling',
+         lowMeaning: 'low ceiling — even the best games never spend that much mana.',
+         highMeaning: 'explosive peak turns; the top 25% of games spend a huge amount of mana.'},
+    ];
+
+    function renderCasterExplanation() {
+        const cal = window.CASTER_CALIBRATION || {};
+
+        let html = '<details class="caster-help">';
+        html += '<summary>What does my CASTER Score mean?</summary>';
+        html += '<div class="caster-help-body">';
+        html += '<p>Each stat is rescaled to <strong>1&ndash;10</strong> against ';
+        if (cal.calibrated && cal.n_rows > 0) {
+            html += 'an empirical distribution of <strong>' + cal.n_rows + ' run'
+                + (cal.n_rows === 1 ? '' : 's') + '</strong> across <strong>'
+                + cal.n_decks + ' deck' + (cal.n_decks === 1 ? '' : 's') + '</strong> '
+                + 'in this database (anchors at p' + Math.round(cal.low_pct) + '/p'
+                + Math.round(cal.high_pct) + ' with Bayesian shrinkage, pseudo_count='
+                + cal.pseudo_count + '). ';
+        } else {
+            html += 'the built-in default anchors (no DB calibration available). ';
+        }
+        html += 'A score of <strong>1</strong> matches the low anchor; <strong>10</strong> matches the high anchor.</p>';
+
+        html += '<table class="caster-help-table"><thead><tr>'
+            + '<th>Stat</th><th>What it measures</th>'
+            + '<th>Score 1 looks like…</th><th>Score 10 looks like…</th>'
+            + '</tr></thead><tbody>';
+        for (const s of CASTER_STATS) {
+            html += '<tr>';
+            html += '<td><strong style="color:' + s.color + '">' + s.name + '</strong></td>';
+            html += '<td>' + escapeHtml(s.desc) + '</td>';
+            html += '<td>' + escapeHtml(s.lowMeaning) + '</td>';
+            html += '<td>' + escapeHtml(s.highMeaning) + '</td>';
+            html += '</tr>';
+        }
+        html += '</tbody></table>';
+        if (!cal.calibrated) {
+            html += '<p class="caster-help-foot">Set <code>AUTO_GOLDFISH_CALIBRATE=1</code> '
+                + '(default) and run more decks to switch from default anchors to a live calibration.</p>';
+        } else {
+            html += '<p class="caster-help-foot">Calibration refreshes automatically as new runs land in the DB. '
+                + 'Set <code>AUTO_GOLDFISH_CALIBRATE=0</code> to disable.</p>';
+        }
+        html += '</div></details>';
+        return html;
+    }
+
     function renderDeckScore(results) {
         // Use the last result (highest land count) for the score
         const r = results[results.length - 1];
         const score = r.deck_score;
         if (!score) return '';
 
-        const stats = [
-            {name: 'Consistency', key: 'consistency', color: '#eab308', desc: 'How rarely the deck bricks'},
-            {name: 'Acceleration', key: 'acceleration', color: '#ef4444', desc: 'Early-game mana deployment'},
-            {name: 'Snowball', key: 'snowball', color: '#8b5cf6', desc: 'How much advantage compounds over time'},
-            {name: 'Toughness', key: 'toughness', color: '#22c55e', desc: 'Structural redundancy of the decklist'},
-            {name: 'Efficiency', key: 'efficiency', color: '#3b82f6', desc: 'Mana utilization per turn'},
-            {name: 'Reach', key: 'reach', color: '#f97316', desc: 'Peak mana output and ceiling'},
-        ];
-
-        let html = '<div class="deck-score-section"><h2>Deck Stats</h2>';
+        let html = '<div class="deck-score-section"><h2>CASTER Score</h2>';
+        html += renderCasterExplanation();
         html += '<div class="deck-score-grid">';
         // Radar chart canvas
         html += '<div class="deck-score-radar"><canvas id="deckScoreRadar"></canvas></div>';
         // Stat bars
         html += '<div class="deck-score-bars">';
-        for (const s of stats) {
+        for (const s of CASTER_STATS) {
             const val = score[s.key] || 0;
             const pct = (val / 10 * 100).toFixed(0);
             html += '<div class="deck-stat-row">';
-            html += '<div class="deck-stat-label" title="' + s.desc + '">' + s.name + '</div>';
+            html += '<div class="deck-stat-label" data-tip="' + escapeHtml(s.desc) + '">' + s.name + '</div>';
             html += '<div class="deck-stat-bar-track">';
             html += '<div class="deck-stat-bar-fill" style="width:' + pct + '%;background:' + s.color + '"></div>';
             html += '</div>';
@@ -133,7 +196,7 @@ const ClientResults = (function() {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Deck Stats',
+                    label: 'CASTER Score',
                     data: values,
                     backgroundColor: 'rgba(59, 130, 246, 0.2)',
                     borderColor: '#3b82f6',
