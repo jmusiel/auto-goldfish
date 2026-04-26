@@ -16,9 +16,10 @@
     <div id="commander-filter" style="display:none; margin-bottom:1rem;"></div>
     <div id="mana-model-recommendation" style="margin-bottom:1.5rem;"></div>
 
-    <div style="display:flex; gap:2rem; flex-wrap:wrap;">
-        <div>
+    <div class="mana-model-grid">
+        <section class="mana-panel">
             <h3>Expected Mana by Turn</h3>
+            <p class="mana-panel-hint">Per-turn mana for the deck's <em>current</em> land count.</p>
             <table class="mana-table" id="mana-model-table">
                 <thead>
                     <tr>
@@ -30,10 +31,11 @@
                 </thead>
                 <tbody></tbody>
             </table>
-        </div>
-        <div>
+        </section>
+        <section class="mana-panel">
             <h3>Land Count Comparison</h3>
-            <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.5rem; flex-wrap:wrap;">
+            <p class="mana-panel-hint">Side-by-side expected mana for alternate land counts.</p>
+            <div class="mana-comparison-controls">
                 <label>Add column: <input type="number" id="comparison-add-input" min="20" max="60" placeholder="e.g. 38" style="width:5rem;"></label>
                 <button type="button" class="btn btn-secondary btn-sm" id="comparison-add-btn">Add</button>
                 <button type="button" class="btn btn-secondary btn-sm" id="comparison-reset-btn" title="Restore the default comparison">Reset</button>
@@ -42,7 +44,7 @@
                 <thead><tr id="mana-comparison-header"></tr></thead>
                 <tbody id="mana-comparison-body"></tbody>
             </table>
-        </div>
+        </section>
     </div>
 
     <div id="mana-model-mulligan" style="margin-top:1.5rem;"></div>

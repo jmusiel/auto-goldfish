@@ -4,8 +4,35 @@ from __future__ import annotations
 
 import json
 import os
+import re
 
 from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, url_for
+
+# Engine bookkeeping suffix used to keep simulator card identities unique.
+_COPY_SUFFIX_RE = re.compile(r"\s*\(\d+\)\s*$")
+
+
+def _base_card_name(name: str) -> str:
+    return _COPY_SUFFIX_RE.sub("", name) if name else name
+
+
+def _pool_cards(cards):
+    """Collapse engine-uniquified copies into one entry per base name."""
+    pools: dict[str, dict] = {}
+    order: list[str] = []
+    for card in cards:
+        base = _base_card_name(card.get("name", ""))
+        if base not in pools:
+            pools[base] = {
+                "base_name": base,
+                "cmc": card.get("cmc"),
+                "cost": card.get("cost"),
+                "count": 0,
+                "example": card,
+            }
+            order.append(base)
+        pools[base]["count"] += int(card.get("quantity", 1) or 1)
+    return [pools[k] for k in order]
 
 from auto_goldfish.decklist.archidekt import fetch_and_save, fetch_decklist as fetch_archidekt
 from auto_goldfish.decklist.card_resolver import resolve_cards
@@ -108,7 +135,8 @@ def view_deck(name: str):
         cards = load_decklist(name)
         is_local = False
 
-    # Group cards by user_category (or "Other")
+    # Group cards by user_category (or "Other"), then collapse engine-uniquified
+    # copies inside each group so the deck list shows "9× Avatar of Woe" once.
     groups: dict[str, list] = {}
     commanders = []
     for card in cards:
@@ -118,8 +146,14 @@ def view_deck(name: str):
         category = card.get("user_category") or card.get("default_category") or "Other"
         groups.setdefault(category, []).append(card)
 
+    pooled_groups = []
+    for category, raw_cards in groups.items():
+        pools = _pool_cards(raw_cards)
+        pools.sort(key=lambda p: p["base_name"].lower())
+        pooled_groups.append((category, pools))
+
     # Sort groups: Land last, Commander first handled separately
-    sorted_groups = sorted(groups.items(), key=lambda x: (x[0] == "Land", x[0]))
+    pooled_groups.sort(key=lambda x: (x[0] == "Land", x[0]))
 
     total_cards = len(cards)
     land_count = sum(1 for c in cards if "Land" in c.get("types", []))
@@ -128,7 +162,7 @@ def view_deck(name: str):
         "deck_view.html",
         name=name,
         commanders=commanders,
-        groups=sorted_groups,
+        groups=pooled_groups,
         total_cards=total_cards,
         land_count=land_count,
         is_local=is_local,

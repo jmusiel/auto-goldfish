@@ -4,11 +4,14 @@
 <div class="deck-header">
     <h1>{{ name }}</h1>
     <p class="deck-stats">{{ total_cards }} cards &middot; {{ land_count }} lands</p>
-    {% if is_local is defined and is_local %}
-    <button class="btn btn-primary" onclick="navigateToSim('{{ name }}')">Simulate</button>
-    {% else %}
-    <a href="{{ url_for('simulation.config', deck_name=name) }}" class="btn btn-primary">Simulate</a>
-    {% endif %}
+    <div class="deck-actions">
+        <a href="{{ url_for('mana_model.page', deck_name=name) }}" class="btn btn-secondary btn-sm">Mana Model</a>
+        {% if is_local is defined and is_local %}
+        <button class="btn btn-primary btn-sm" onclick="navigateToSim('{{ name }}')">Simulate</button>
+        {% else %}
+        <a href="{{ url_for('simulation.config', deck_name=name) }}" class="btn btn-primary btn-sm">Simulate</a>
+        {% endif %}
+    </div>
 </div>
 
 {% if commanders %}
@@ -17,26 +20,28 @@
     <ul class="card-list">
         {% for card in commanders %}
         <li>
+            <span class="card-qty">1&times;</span>
             <span class="card-name">{{ card.name }}</span>
             <span class="card-cost">{{ card.cost }}</span>
-            <span class="card-cmc">({{ card.cmc }})</span>
+            <span class="card-cmc" title="Mana value">CMC&nbsp;{{ card.cmc }}</span>
         </li>
         {% endfor %}
     </ul>
 </div>
 {% endif %}
 
-{% for category, cards in groups %}
+{% for category, pools in groups %}
 <div class="card-group">
-    <h2>{{ category }} ({{ cards | length }})</h2>
+    <h2>{{ category }} ({{ pools | sum(attribute='count') }})</h2>
     <ul class="card-list">
-        {% for card in cards | sort(attribute='name') %}
+        {% for pool in pools %}
         <li>
-            <span class="card-name">{{ card.name }}</span>
-            {% if card.cost %}
-            <span class="card-cost">{{ card.cost }}</span>
+            <span class="card-qty">{{ pool.count }}&times;</span>
+            <span class="card-name">{{ pool.base_name }}</span>
+            {% if pool.cost %}
+            <span class="card-cost">{{ pool.cost }}</span>
             {% endif %}
-            <span class="card-cmc">({{ card.cmc }})</span>
+            <span class="card-cmc" title="Mana value">CMC&nbsp;{{ pool.cmc }}</span>
         </li>
         {% endfor %}
     </ul>

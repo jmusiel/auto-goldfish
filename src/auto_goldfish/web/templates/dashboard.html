@@ -38,15 +38,15 @@
 </div>
 
 <!-- Server (shared) decks -->
-<h1>Sample Decks</h1>
-<p class="section-description">Try these pre-built decks to see how the optimizer handles different mana base scenarios.</p>
+<h1>Demo Decks</h1>
+<p class="section-description">Pre-built decks that exercise the optimizer's recommendations across mana-base extremes. Import your own deck above to see results for it.</p>
 {% if decks %}
 <div class="deck-grid">
     {% for deck in decks %}
     <div class="deck-card">
         <h2><a href="{{ url_for('decks.view_deck', name=deck.name) }}">{{ deck.name }}</a></h2>
         {% if deck.commanders %}
-        <p class="commanders">{{ deck.commanders | join(', ') }}</p>
+        <p class="commanders"><span class="commander-label">Commander</span> {{ deck.commanders | join(', ') }}</p>
         {% endif %}
         <p class="deck-stats">{{ deck.card_count }} cards &middot; {{ deck.land_count }} lands</p>
         {% if deck.description %}
@@ -111,7 +111,7 @@
             var card = document.createElement('div');
             card.className = 'deck-card';
             var cmdrHtml = deck.commanders.length
-                ? '<p class="commanders">' + deck.commanders.join(', ') + '</p>'
+                ? '<p class="commanders"><span class="commander-label">Commander</span> ' + deck.commanders.join(', ') + '</p>'
                 : '';
             card.innerHTML =
                 '<h2><a href="javascript:void(0)" onclick="navigateToDeckView(\'' + deck.name.replace(/'/g, "\\'") + '\')">' + deck.name + '</a></h2>'

@@ -35,8 +35,8 @@
         </table>
     </details>
     {% else %}
-    <span class="calibration-badge calibration-badge-off" title="Using built-in default anchors">
-        Default anchors
+    <span class="calibration-badge calibration-badge-off" title="Using built-in default anchors; calibration is disabled or no persisted runs are available yet">
+        Stat anchors: defaults
     </span>
     {% endif %}
 </div>
@@ -99,7 +99,12 @@
 </div>
 
 {% else %}
-<p style="color:#64748b;">No simulation runs found. Run a simulation first and results will appear here.</p>
+<div class="empty-state-block">
+    <p><strong>No simulation runs persisted yet.</strong></p>
+    <p>This page lists historical runs stored in Postgres. Set the <code>DATABASE_URL</code> environment variable
+       to enable persistence — without it, simulations still run in your browser but results aren't saved between sessions.</p>
+    <p><a href="{{ url_for('dashboard.index') }}">Back to dashboard</a></p>
+</div>
 {% endif %}
 
 <script>

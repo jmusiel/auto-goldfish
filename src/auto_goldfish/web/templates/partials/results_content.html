@@ -556,10 +556,12 @@
         let currentGame = 0;
         let currentTurn = 0;
 
+        const COPY_SUFFIX_RE = /\s*\(\d+\)\s*$/;
         function cardLink(name) {
+            const base = (name || '').replace(COPY_SUFFIX_RE, '');
             return '<a class="card-link" data-card-name="' + name
                 + '" href="https://scryfall.com/search?exact='
-                + encodeURIComponent(name) + '" target="_blank">' + name + '</a>';
+                + encodeURIComponent(base) + '" target="_blank">' + base + '</a>';
         }
 
         function renderGameButtons() {

@@ -33,7 +33,7 @@ def test_runs_page_calibration_default_when_disabled(client, monkeypatch):
     monkeypatch.setenv("AUTO_GOLDFISH_CALIBRATE", "0")
     reset_cache()
     response = client.get("/runs/")
-    assert b"Default anchors" in response.data
+    assert b"Stat anchors: defaults" in response.data
     assert b"calibration-badge-on" not in response.data
 
 
