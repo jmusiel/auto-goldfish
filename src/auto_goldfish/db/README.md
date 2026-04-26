@@ -35,6 +35,19 @@ The web layer calls into this module at three points:
 3. **Client results API** (`POST /sim/api/<deck>/results`) calls `save_simulation_run()` to persist Pyodide results
 
 All calls are wrapped in try/except so database failures never break the app.
+The client results endpoint distinguishes between "DB not configured" (returns
+200 with `persisted: false`) and "DB configured but the write failed" (returns
+500 with the error string), so the browser can surface real persistence
+failures instead of silently dropping them.
+
+## Serverless considerations
+
+`init_db()` configures SQLAlchemy with `poolclass=NullPool` and
+`pool_pre_ping=True` because the app is deployed on Vercel, where workers
+freeze between requests. A long-lived SQLAlchemy connection pool can hold
+sockets that the upstream proxy has already torn down by the time the worker
+thaws; the next request then sees an exception. Letting Neon's own pgbouncer
+do the pooling and opening a fresh connection per session keeps things sane.
 
 ## Setup
 

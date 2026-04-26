@@ -139,21 +139,17 @@ def config(deck_name: str):
         for c in card_effects_list
     ]
 
-    # Persist deck cards in background — don't block the page response
+    # Persist deck cards synchronously. A daemon thread used to do this, but
+    # under Vercel's serverless runtime the worker can freeze before the
+    # thread's DB connection is returned to the pool, leaving the next request
+    # with a half-dead pooled connection. Doing this inline keeps the engine
+    # state consistent with the request lifecycle.
     try:
-        import threading
-
         from auto_goldfish.db.persistence import persist_deck_cards
 
-        def _persist_safe():
-            try:
-                persist_deck_cards(deck_name, card_effects_list, saved_overrides)
-            except Exception:
-                logger.debug("Background deck card persistence failed")
-
-        threading.Thread(target=_persist_safe, daemon=True).start()
+        persist_deck_cards(deck_name, card_effects_list, saved_overrides)
     except Exception:
-        logger.debug("Failed to start deck card persistence")
+        logger.exception("Deck card persistence failed for %s", deck_name)
 
     # Build wizard card list using otag registry + optional DB stats
     otag_registry = load_otag_registry()
@@ -349,6 +345,15 @@ def api_save_results(deck_name: str):
 
     job_id = uuid.uuid4().hex[:12]
 
+    from auto_goldfish.db.session import is_db_configured
+
+    if not is_db_configured():
+        # No database wired up (e.g. local dev without DATABASE_URL). The
+        # client-side simulation already finished successfully; we just have
+        # nowhere to store it.
+        logger.info("DB not configured; skipping persistence for %s", deck_name)
+        return jsonify({"ok": True, "persisted": False, "reason": "db_not_configured"})
+
     try:
         from auto_goldfish.db.persistence import get_or_create_deck, save_simulation_run
         from auto_goldfish.db.session import get_session
@@ -357,7 +362,8 @@ def api_save_results(deck_name: str):
             deck = get_or_create_deck(session, deck_name)
             save_simulation_run(session, job_id, deck, config, results)
         logger.info("Persisted client simulation %s for deck %s", job_id, deck_name)
-    except Exception:
+    except Exception as exc:
         logger.exception("Failed to persist client simulation results")
+        return jsonify({"ok": False, "persisted": False, "error": str(exc)}), 500
 
-    return jsonify({"ok": True})
+    return jsonify({"ok": True, "persisted": True, "job_id": job_id})

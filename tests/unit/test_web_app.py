@@ -630,10 +630,14 @@ class TestSaveResultsAPI:
         data = response.get_json()
         assert data["ok"] is False
 
-    def test_save_results_db_failure_still_returns_ok(self, client, tmp_path, monkeypatch):
-        """If DB import fails (no sqlalchemy), endpoint still returns ok."""
+    def test_save_results_db_unconfigured_returns_ok_not_persisted(
+        self, client, tmp_path, monkeypatch
+    ):
+        """When no DATABASE_URL is configured, endpoint returns 200 with persisted=False."""
         self._mock_deck(monkeypatch, tmp_path)
-        # No DB mocking needed -- the try/except in the route catches ImportError
+        monkeypatch.setattr(
+            "auto_goldfish.db.session.is_db_configured", lambda: False
+        )
         payload = {"config": {"turns": 10}, "results": []}
         response = client.post(
             "/sim/api/testdeck/results",
@@ -643,10 +647,53 @@ class TestSaveResultsAPI:
         assert response.status_code == 200
         data = response.get_json()
         assert data["ok"] is True
+        assert data["persisted"] is False
+        assert data["reason"] == "db_not_configured"
+
+    def test_save_results_db_failure_returns_500(self, client, tmp_path, monkeypatch):
+        """When DB is configured but the write blows up, return 500 with the error.
+
+        This is the regression guard for the bug where Vercel silently swallowed
+        DB failures and the client believed the simulation had been persisted.
+        """
+        self._mock_deck(monkeypatch, tmp_path)
+        monkeypatch.setattr(
+            "auto_goldfish.db.session.is_db_configured", lambda: True
+        )
+
+        from contextlib import contextmanager
+
+        @contextmanager
+        def _broken_session():
+            raise RuntimeError("simulated DB outage")
+            yield  # pragma: no cover
+
+        monkeypatch.setattr(
+            "auto_goldfish.web.routes.simulation.get_session", _broken_session, raising=False
+        )
+        # Also patch at the module of definition since route imports lazily
+        monkeypatch.setattr(
+            "auto_goldfish.db.session.get_session", _broken_session
+        )
+
+        payload = {"config": {"turns": 10}, "results": []}
+        response = client.post(
+            "/sim/api/testdeck/results",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        assert response.status_code == 500
+        data = response.get_json()
+        assert data["ok"] is False
+        assert data["persisted"] is False
+        assert "simulated DB outage" in data["error"]
 
     def test_save_results_returns_ok_with_valid_payload(self, client, tmp_path, monkeypatch):
-        """POST with valid JSON body returns ok (DB persistence is best-effort)."""
+        """POST with valid JSON body returns 200 (no DB configured -> persisted=False)."""
         self._mock_deck(monkeypatch, tmp_path)
+        monkeypatch.setattr(
+            "auto_goldfish.db.session.is_db_configured", lambda: False
+        )
         payload = {
             "config": {"turns": 10, "sims": 100},
             "results": [{"land_count": 37, "mean_mana": 5.5, "consistency": 0.8}],
