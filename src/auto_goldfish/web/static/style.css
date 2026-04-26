@@ -1462,6 +1462,109 @@ h2 { font-size: 1.15rem; margin-bottom: 0.75rem; }
     text-align: center;
 }
 
+/* CASTER header rank-buttons (top-N / bottom-N triggers) */
+.caster-header { white-space: nowrap; }
+.caster-rank-buttons {
+    display: inline-flex;
+    flex-direction: column;
+    line-height: 0.7;
+    margin-left: 0.25rem;
+    vertical-align: middle;
+}
+.caster-rank-btn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-size: 0.55rem;
+    color: #94a3b8;
+    cursor: pointer;
+    line-height: 0.9;
+}
+.caster-rank-btn:hover:not(:disabled) { color: #2563eb; }
+.caster-rank-btn:disabled { opacity: 0.4; cursor: wait; }
+
+/* Per-run detail expansion (radar + deck breakdown side by side) */
+.run-detail-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 1.5rem;
+    text-align: left;
+    align-items: start;
+}
+@media (max-width: 900px) {
+    .run-detail-grid { grid-template-columns: 1fr; }
+}
+.run-detail-charts { display: flex; justify-content: center; }
+.run-detail-deck { font-size: 0.85rem; color: #1e293b; }
+.deck-info-empty { color: #64748b; font-style: italic; }
+
+.bd-section { margin-bottom: 0.75rem; }
+.bd-section-title {
+    font-weight: 600;
+    color: #475569;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.2rem;
+}
+.bd-section-meta { color: #94a3b8; font-weight: 400; text-transform: none; letter-spacing: 0; }
+.bd-headline { font-size: 1.1rem; font-weight: 600; color: #0f172a; }
+.bd-sub-meta { color: #64748b; font-weight: 400; font-size: 0.85em; }
+.bd-sublist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.15rem 0.75rem;
+}
+.bd-sublist li {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dotted #e2e8f0;
+    padding: 0.1rem 0;
+}
+.bd-sub-label { color: #475569; }
+.bd-sub-count { font-weight: 600; color: #0f172a; }
+.bd-sub-empty { color: #94a3b8; font-style: italic; }
+
+.curve-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.25rem;
+    height: 80px;
+    padding-top: 0.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+.curve-bar-wrap {
+    flex: 1;
+    min-width: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    position: relative;
+}
+.curve-bar-fill {
+    width: 100%;
+    background: #3b82f6;
+    border-radius: 2px 2px 0 0;
+    min-height: 2px;
+}
+.curve-bar-count {
+    font-size: 0.65rem;
+    color: #475569;
+    margin-top: -1.1em;
+    margin-bottom: 0.05rem;
+    pointer-events: none;
+}
+.curve-bar-label {
+    font-size: 0.65rem;
+    color: #64748b;
+    margin-top: 0.2rem;
+}
+
 /* Comparison charts */
 .comparison-charts {
     display: grid;

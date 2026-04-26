@@ -42,7 +42,13 @@
 </div>
 
 {% if runs %}
-<p style="color:#64748b; margin-bottom:1rem;">{{ runs|length }} run{{ 's' if runs|length != 1 }} found. Click column headers to sort.</p>
+<p style="color:#64748b; margin-bottom:0.5rem;">
+    <span id="runsViewLabel">Showing the {{ runs|length }} most recent run{{ 's' if runs|length != 1 }}.</span>
+    Click column headers to sort, or click the ↑/↓ buttons next to a CASTER stat to view the highest- or lowest-scoring runs for that stat.
+</p>
+<p id="runsResetWrap" style="margin-bottom:1rem; display:none;">
+    <button type="button" class="btn-sm" id="runsResetBtn">← Back to recent 20</button>
+</p>
 
 <table class="runs-table" id="runsTable">
     <thead>
@@ -52,41 +58,26 @@
             <th data-col="2" data-type="number" class="sortable">Turns</th>
             <th data-col="3" data-type="number" class="sortable">Sims</th>
             <th data-col="4" data-type="number" class="sortable">Lands</th>
-            <th data-col="5" data-type="number" class="sortable stat-col-consistency">Consistency</th>
-            <th data-col="6" data-type="number" class="sortable stat-col-acceleration">Acceleration</th>
-            <th data-col="7" data-type="number" class="sortable stat-col-snowball">Snowball</th>
-            <th data-col="8" data-type="number" class="sortable stat-col-toughness">Toughness</th>
-            <th data-col="9" data-type="number" class="sortable stat-col-efficiency">Efficiency</th>
-            <th data-col="10" data-type="number" class="sortable stat-col-reach">Reach</th>
+            {% for stat in ['consistency', 'acceleration', 'snowball', 'toughness', 'efficiency', 'reach'] %}
+            <th data-col="{{ loop.index + 4 }}" data-type="number" class="sortable stat-col-{{ stat }} caster-header">
+                <span class="caster-label">{{ stat|capitalize }}</span>
+                <span class="caster-rank-buttons" title="Show top/bottom 20 by {{ stat }}">
+                    <button type="button" class="caster-rank-btn" data-stat="{{ stat }}" data-view="top" aria-label="Top 20 by {{ stat }}">▲</button>
+                    <button type="button" class="caster-rank-btn" data-stat="{{ stat }}" data-view="bottom" aria-label="Bottom 20 by {{ stat }}">▼</button>
+                </span>
+            </th>
+            {% endfor %}
             <th></th>
         </tr>
     </thead>
-    <tbody>
+    <tbody id="runsTableBody">
         {% for run in runs %}
-        <tr class="run-row" data-run-id="{{ run.id }}">
-            <td>{{ run.deck_name }}</td>
-            <td>{{ run.created_at }}</td>
-            <td>{{ run.turns }}</td>
-            <td>{{ run.sims }}</td>
-            <td>{{ run.optimal_land_count or '—' }}</td>
-            <td class="stat-cell-consistency">{{ run.consistency if run.consistency is not none else '—' }}</td>
-            <td class="stat-cell-acceleration">{{ run.acceleration if run.acceleration is not none else '—' }}</td>
-            <td class="stat-cell-snowball">{{ run.snowball if run.snowball is not none else '—' }}</td>
-            <td class="stat-cell-toughness">{{ run.toughness if run.toughness is not none else '—' }}</td>
-            <td class="stat-cell-efficiency">{{ run.efficiency if run.efficiency is not none else '—' }}</td>
-            <td class="stat-cell-reach">{{ run.reach if run.reach is not none else '—' }}</td>
-            <td><button class="btn-sm" onclick="toggleChart({{ run.id }})">Show</button></td>
-        </tr>
-        <tr class="chart-row" id="chart-row-{{ run.id }}" style="display:none">
-            <td colspan="12" class="chart-cell">
-                <canvas id="radar-{{ run.id }}" width="360" height="360"></canvas>
-            </td>
-        </tr>
+        {% include "_run_row.html" %}
         {% endfor %}
     </tbody>
 </table>
 
-<h2 style="margin-top:2rem;">Comparison</h2>
+<h2 style="margin-top:2rem;">Comparison <span style="font-size:0.7em; color:#64748b; font-weight:normal;">(20 most recent runs)</span></h2>
 <div class="comparison-charts">
     <div class="chart-box">
         <h3>Stat Profiles (Radar)</h3>
@@ -108,7 +99,10 @@
 {% endif %}
 
 <script>
-const RUNS_DATA = {{ runs | tojson }};
+// Recent-20 dataset rendered server-side -- used by comparison charts and as
+// the "reset" target. RUNS_DATA tracks whichever slice is currently shown.
+const RECENT_RUNS = {{ runs | tojson }};
+let RUNS_DATA = RECENT_RUNS.slice();
 const STAT_KEYS = ['consistency', 'acceleration', 'snowball', 'toughness', 'efficiency', 'reach'];
 const STAT_COLORS = {
     consistency: '#eab308',
@@ -122,20 +116,191 @@ const DECK_COLORS = [
     '#3b82f6', '#ef4444', '#22c55e', '#f97316', '#8b5cf6',
     '#06b6d4', '#ec4899', '#84cc16', '#f59e0b', '#6366f1',
 ];
+const DRAW_LABELS = {
+    cantrip: 'Cantrips',
+    instant_draw: 'Instant draw',
+    repeatable_draw: 'Repeatable draw',
+};
 
-// --- Table sorting ---
+function escapeHtml(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function fmtScore(v) { return v === null || v === undefined ? '—' : v; }
+
+// --- Row rendering (mirrors _run_row.html for client-side replacement) ---
+function buildRunRowHtml(run) {
+    let tr = `<tr class="run-row" data-run-id="${run.id}">`;
+    tr += `<td>${escapeHtml(run.deck_name)}</td>`;
+    tr += `<td>${escapeHtml(run.created_at)}</td>`;
+    tr += `<td>${run.turns}</td>`;
+    tr += `<td>${run.sims}</td>`;
+    tr += `<td>${run.optimal_land_count ?? '—'}</td>`;
+    for (const stat of STAT_KEYS) {
+        tr += `<td class="stat-cell-${stat}">${fmtScore(run[stat])}</td>`;
+    }
+    tr += `<td><button class="btn-sm" onclick="toggleChart(${run.id})">Show</button></td>`;
+    tr += `</tr>`;
+    tr += `<tr class="chart-row" id="chart-row-${run.id}" style="display:none">`;
+    tr += `<td colspan="12" class="chart-cell"><div class="run-detail-grid">`;
+    tr += `<div class="run-detail-charts"><canvas id="radar-${run.id}" width="320" height="320"></canvas></div>`;
+    tr += `<div class="run-detail-deck" id="deck-info-${run.id}">${buildDeckInfoHtml(run.deck_breakdown)}</div>`;
+    tr += `</div></td></tr>`;
+    return tr;
+}
+
+function buildDeckInfoHtml(bd) {
+    if (!bd) {
+        return `<p class="deck-info-empty">Deck composition unavailable (deck JSON not found on disk).</p>`;
+    }
+    const commanders = (bd.commander_names || []).length
+        ? bd.commander_names.map(escapeHtml).join(' &amp; ')
+        : '<em>None detected</em>';
+
+    const cmcKeys = Object.keys(bd.cmc_distribution || {})
+        .map(k => parseInt(k))
+        .filter(k => !Number.isNaN(k))
+        .sort((a, b) => a - b);
+    const maxCount = cmcKeys.length
+        ? Math.max(...cmcKeys.map(k => bd.cmc_distribution[String(k)] || 0))
+        : 0;
+    const curveBars = cmcKeys.map(k => {
+        const count = bd.cmc_distribution[String(k)] || 0;
+        const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
+        return `<div class="curve-bar-wrap">
+            <div class="curve-bar-fill" style="height:${pct}%"></div>
+            <span class="curve-bar-count">${count}</span>
+            <span class="curve-bar-label">${k}</span>
+        </div>`;
+    }).join('');
+
+    const rampKeys = Object.keys(bd.ramp_by_cmc || {})
+        .map(k => parseInt(k))
+        .filter(k => !Number.isNaN(k))
+        .sort((a, b) => a - b);
+    const rampRows = rampKeys.map(k =>
+        `<li><span class="bd-sub-label">${k} mana ramp</span><span class="bd-sub-count">${bd.ramp_by_cmc[String(k)]}</span></li>`
+    ).join('') || '<li class="bd-sub-empty">none</li>';
+
+    const drawOrder = ['cantrip', 'instant_draw', 'repeatable_draw'];
+    const drawRows = drawOrder
+        .filter(k => (bd.draw_breakdown || {})[k])
+        .map(k => `<li><span class="bd-sub-label">${DRAW_LABELS[k]}</span><span class="bd-sub-count">${bd.draw_breakdown[k]}</span></li>`)
+        .join('') || '<li class="bd-sub-empty">none</li>';
+
+    return `
+    <div class="bd-section">
+        <div class="bd-section-title">Commanders</div>
+        <div>${commanders}</div>
+    </div>
+    <div class="bd-section">
+        <div class="bd-section-title">Mana curve <span class="bd-section-meta">(avg CMC ${bd.avg_cmc})</span></div>
+        <div class="curve-chart">${curveBars || '<span class="bd-sub-empty">no nonland cards</span>'}</div>
+    </div>
+    <div class="bd-section">
+        <div class="bd-section-title">Lands</div>
+        <div class="bd-headline">${bd.land_count}${bd.mdfc_count ? ` <span class="bd-sub-meta">(${bd.mdfc_count} MDFC)</span>` : ''}</div>
+    </div>
+    <div class="bd-section">
+        <div class="bd-section-title">Ramp <span class="bd-section-meta">(${bd.ramp_cards} total)</span></div>
+        <ul class="bd-sublist">${rampRows}</ul>
+    </div>
+    <div class="bd-section">
+        <div class="bd-section-title">Draw <span class="bd-section-meta">(${bd.draw_cards} total)</span></div>
+        <ul class="bd-sublist">${drawRows}</ul>
+    </div>`;
+}
+
+// --- View switching (recent / top / bottom) ---
+const chartInstances = {};
+const tbody = document.getElementById('runsTableBody');
+const viewLabel = document.getElementById('runsViewLabel');
+const resetWrap = document.getElementById('runsResetWrap');
+const resetBtn = document.getElementById('runsResetBtn');
+
+function destroyAllChartInstances() {
+    for (const id of Object.keys(chartInstances)) {
+        try { chartInstances[id].destroy(); } catch (e) { /* ignore */ }
+        delete chartInstances[id];
+    }
+}
+
+function renderRows(runs) {
+    if (!tbody) return;
+    destroyAllChartInstances();
+    tbody.innerHTML = runs.map(buildRunRowHtml).join('');
+    RUNS_DATA = runs;
+}
+
+function setViewLabel(view, stat, count) {
+    if (!viewLabel) return;
+    if (view === 'top') {
+        viewLabel.textContent = `Top ${count} runs by ${stat.charAt(0).toUpperCase() + stat.slice(1)}.`;
+        if (resetWrap) resetWrap.style.display = '';
+    } else if (view === 'bottom') {
+        viewLabel.textContent = `Bottom ${count} runs by ${stat.charAt(0).toUpperCase() + stat.slice(1)}.`;
+        if (resetWrap) resetWrap.style.display = '';
+    } else {
+        viewLabel.textContent = `Showing the ${count} most recent run${count === 1 ? '' : 's'}.`;
+        if (resetWrap) resetWrap.style.display = 'none';
+    }
+}
+
+async function fetchView(view, stat) {
+    const url = `{{ url_for('runs.api_data') }}?view=${encodeURIComponent(view)}` +
+        (stat ? `&stat=${encodeURIComponent(stat)}` : '');
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    return data.runs || [];
+}
+
+if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+        renderRows(RECENT_RUNS);
+        setViewLabel('recent', null, RECENT_RUNS.length);
+    });
+}
+
+document.querySelectorAll('.caster-rank-btn').forEach(btn => {
+    btn.addEventListener('click', async (ev) => {
+        ev.stopPropagation();
+        const stat = btn.dataset.stat;
+        const view = btn.dataset.view;
+        btn.disabled = true;
+        try {
+            const runs = await fetchView(view, stat);
+            renderRows(runs);
+            setViewLabel(view, stat, runs.length);
+        } catch (e) {
+            console.error('Failed to load view', e);
+            alert('Failed to load runs. See console for details.');
+        } finally {
+            btn.disabled = false;
+        }
+    });
+});
+
+// --- Table sorting (operates on whatever rows are currently in the tbody) ---
 const table = document.getElementById('runsTable');
 if (table) {
     let currentSort = { col: -1, asc: true };
     table.querySelectorAll('th.sortable').forEach(th => {
-        th.addEventListener('click', () => {
+        th.addEventListener('click', (ev) => {
+            // Clicks on the rank buttons should not trigger column sort.
+            if (ev.target.closest('.caster-rank-btn')) return;
             const col = parseInt(th.dataset.col);
             const type = th.dataset.type;
             const asc = currentSort.col === col ? !currentSort.asc : true;
             currentSort = { col, asc };
 
-            const tbody = table.querySelector('tbody');
-            const runRows = Array.from(tbody.querySelectorAll('tr.run-row'));
+            const body = table.querySelector('tbody');
+            const runRows = Array.from(body.querySelectorAll('tr.run-row'));
             runRows.sort((a, b) => {
                 let va = a.children[col].textContent.trim();
                 let vb = b.children[col].textContent.trim();
@@ -146,13 +311,11 @@ if (table) {
                 }
                 return asc ? va.localeCompare(vb) : vb.localeCompare(va);
             });
-            // Re-append rows (run-row + its chart-row)
             runRows.forEach(row => {
                 const chartRow = document.getElementById('chart-row-' + row.dataset.runId);
-                tbody.appendChild(row);
-                if (chartRow) tbody.appendChild(chartRow);
+                body.appendChild(row);
+                if (chartRow) body.appendChild(chartRow);
             });
-            // Update sort indicators
             table.querySelectorAll('th.sortable').forEach(h => {
                 h.classList.remove('sort-asc', 'sort-desc');
             });
@@ -162,7 +325,6 @@ if (table) {
 }
 
 // --- Per-run radar chart ---
-const chartInstances = {};
 function toggleChart(runId) {
     const row = document.getElementById('chart-row-' + runId);
     if (!row) return;
@@ -171,8 +333,9 @@ function toggleChart(runId) {
     if (!visible && !chartInstances[runId]) {
         const run = RUNS_DATA.find(r => r.id === runId);
         if (!run) return;
-        const ctx = document.getElementById('radar-' + runId).getContext('2d');
-        chartInstances[runId] = new Chart(ctx, {
+        const canvas = document.getElementById('radar-' + runId);
+        if (!canvas) return;
+        chartInstances[runId] = new Chart(canvas.getContext('2d'), {
             type: 'radar',
             data: {
                 labels: STAT_KEYS.map(s => s.charAt(0).toUpperCase() + s.slice(1)),
@@ -197,16 +360,15 @@ function toggleChart(runId) {
     }
 }
 
-// --- Comparison charts ---
-if (RUNS_DATA.length > 0) {
-    // Radar comparison
+// --- Comparison charts (always reflect the recent-20 dataset) ---
+if (RECENT_RUNS.length > 0) {
     const radarCtx = document.getElementById('comparisonRadar');
     if (radarCtx) {
         new Chart(radarCtx.getContext('2d'), {
             type: 'radar',
             data: {
                 labels: STAT_KEYS.map(s => s.charAt(0).toUpperCase() + s.slice(1)),
-                datasets: RUNS_DATA.map((run, i) => ({
+                datasets: RECENT_RUNS.map((run, i) => ({
                     label: run.deck_name + ' (' + run.created_at.split(' ')[0] + ')',
                     data: STAT_KEYS.map(k => run[k] ?? 0),
                     backgroundColor: DECK_COLORS[i % DECK_COLORS.length] + '22',
@@ -224,16 +386,15 @@ if (RUNS_DATA.length > 0) {
         });
     }
 
-    // Bar comparison
     const barCtx = document.getElementById('comparisonBar');
     if (barCtx) {
         new Chart(barCtx.getContext('2d'), {
             type: 'bar',
             data: {
-                labels: RUNS_DATA.map(r => r.deck_name),
+                labels: RECENT_RUNS.map(r => r.deck_name),
                 datasets: STAT_KEYS.map(stat => ({
                     label: stat.charAt(0).toUpperCase() + stat.slice(1),
-                    data: RUNS_DATA.map(r => r[stat] ?? 0),
+                    data: RECENT_RUNS.map(r => r[stat] ?? 0),
                     backgroundColor: STAT_COLORS[stat],
                 })),
             },

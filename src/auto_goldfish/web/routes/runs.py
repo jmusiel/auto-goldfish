@@ -3,43 +3,122 @@
 from __future__ import annotations
 
 import logging
+import os
+from typing import Optional
 
-from flask import Blueprint, jsonify, render_template
+from flask import Blueprint, jsonify, render_template, request
 
 logger = logging.getLogger(__name__)
 
 bp = Blueprint("runs", __name__, url_prefix="/runs")
 
 STAT_KEYS = ["consistency", "acceleration", "snowball", "toughness", "efficiency", "reach"]
+DEFAULT_LIMIT = 20
 
 
-def _load_runs() -> list[dict]:
-    """Query all simulation runs with their optimal-land-count D&D scores."""
+def _load_deck_breakdown(deck_name: str, cache: dict) -> Optional[dict]:
+    """Load deck composition from disk and convert to a JSON-friendly dict.
+
+    ``cache`` is keyed by deck name so the same deck loaded by multiple runs
+    on a single page render only hits the disk + analyzer once.
+    """
+    if deck_name in cache:
+        return cache[deck_name]
+
     try:
-        from sqlalchemy import select
+        from auto_goldfish.decklist.loader import (
+            get_deckpath,
+            load_decklist,
+            load_overrides,
+        )
+        from auto_goldfish.effects.card_database import DEFAULT_REGISTRY
+        from auto_goldfish.optimization.deck_analyzer import analyze_deck_composition
+    except Exception:
+        cache[deck_name] = None
+        return None
+
+    breakdown: Optional[dict] = None
+    try:
+        if os.path.isfile(get_deckpath(deck_name)):
+            deck_list = load_decklist(deck_name)
+            overrides = load_overrides(deck_name)
+            comp = analyze_deck_composition(deck_list, DEFAULT_REGISTRY, overrides)
+            breakdown = {
+                "commander_names": list(comp.commander_names),
+                "land_count": comp.land_count,
+                "mdfc_count": comp.mdfc_count,
+                "avg_cmc": comp.avg_cmc,
+                "cmc_distribution": {str(k): v for k, v in comp.cmc_distribution.items()},
+                "ramp_cards": comp.ramp_cards,
+                "ramp_by_cmc": {str(k): v for k, v in comp.ramp_by_cmc.items()},
+                "draw_cards": comp.draw_cards,
+                "draw_breakdown": dict(comp.draw_breakdown),
+            }
+    except Exception:
+        logger.exception("Failed to load deck breakdown for %s", deck_name)
+        breakdown = None
+
+    cache[deck_name] = breakdown
+    return breakdown
+
+
+def _load_runs(view: str = "recent", stat: Optional[str] = None, limit: int = DEFAULT_LIMIT) -> list[dict]:
+    """Query a slice of simulation runs along with deck composition breakdowns.
+
+    ``view`` is one of:
+      - ``recent``: most recently created runs (default).
+      - ``top``: highest-scoring runs for ``stat`` at the run's optimal land count.
+      - ``bottom``: lowest-scoring runs for ``stat``.
+
+    Top/bottom views require ``stat`` to be one of :data:`STAT_KEYS`. They
+    join through ``SimulationResultRow`` filtered to the run's optimal land
+    count so each run contributes exactly one ranking score.
+    """
+    try:
+        from sqlalchemy import asc, desc, select
         from sqlalchemy.orm import joinedload
 
-        from auto_goldfish.db.models import SimulationRunRow
+        from auto_goldfish.db.models import SimulationResultRow, SimulationRunRow
         from auto_goldfish.db.session import get_session
     except Exception:
         return []
 
-    runs = []
+    if view in ("top", "bottom"):
+        if stat not in STAT_KEYS:
+            view = "recent"
+            stat = None
+
+    runs: list[dict] = []
+    deck_cache: dict = {}
     try:
         with get_session() as session:
-            rows = (
-                session.execute(
-                    select(SimulationRunRow)
-                    .options(
-                        joinedload(SimulationRunRow.deck),
-                        joinedload(SimulationRunRow.results),
-                    )
-                    .order_by(SimulationRunRow.created_at.desc())
+            base_select = (
+                select(SimulationRunRow)
+                .options(
+                    joinedload(SimulationRunRow.deck),
+                    joinedload(SimulationRunRow.results),
                 )
-                .unique()
-                .scalars()
-                .all()
             )
+
+            if view in ("top", "bottom") and stat is not None:
+                score_col = getattr(SimulationResultRow, f"score_{stat}")
+                ordering = desc(score_col) if view == "top" else asc(score_col)
+                # Join to the result row at the run's optimal land count so
+                # each run contributes exactly one ranking score.
+                stmt = (
+                    base_select.join(
+                        SimulationResultRow,
+                        (SimulationResultRow.run_id == SimulationRunRow.id)
+                        & (SimulationResultRow.land_count == SimulationRunRow.optimal_land_count),
+                    )
+                    .where(score_col.is_not(None))
+                    .order_by(ordering, SimulationRunRow.created_at.desc())
+                    .limit(limit)
+                )
+            else:
+                stmt = base_select.order_by(SimulationRunRow.created_at.desc()).limit(limit)
+
+            rows = session.execute(stmt).unique().scalars().all()
 
             for run in rows:
                 optimal_result = None
@@ -70,16 +149,18 @@ def _load_runs() -> list[dict]:
                     val = getattr(result, f"score_{key}", None) if result else None
                     return val
 
+                deck_name = run.deck.name if run.deck else "Unknown"
                 runs.append({
                     "id": run.id,
                     "job_id": run.job_id,
-                    "deck_name": run.deck.name if run.deck else "Unknown",
+                    "deck_name": deck_name,
                     "turns": run.turns,
                     "sims": run.sims,
                     "optimal_land_count": run.optimal_land_count,
                     "created_at": run.created_at.strftime("%Y-%m-%d %H:%M"),
                     **{k: _score(optimal_result, k) for k in STAT_KEYS},
                     "results": results_series,
+                    "deck_breakdown": _load_deck_breakdown(deck_name, deck_cache),
                 })
     except Exception:
         logger.exception("Failed to load simulation runs")
@@ -174,6 +255,25 @@ def index():
 
 @bp.route("/api/data")
 def api_data():
-    """Return all runs as JSON."""
-    runs = _load_runs()
-    return jsonify({"runs": runs, "calibration": _load_calibration_meta()})
+    """Return a slice of runs as JSON.
+
+    Query params:
+      - ``view``: ``recent`` (default), ``top``, or ``bottom``.
+      - ``stat``: required for ``top``/``bottom`` -- one of the CASTER stats.
+
+    Invalid combinations (``top``/``bottom`` without a known stat) silently
+    fall back to ``recent`` and the response reflects the applied view.
+    """
+    raw_view = request.args.get("view", "recent")
+    raw_stat = request.args.get("stat")
+    if raw_view in ("top", "bottom") and raw_stat in STAT_KEYS:
+        view, stat = raw_view, raw_stat
+    else:
+        view, stat = "recent", None
+    runs = _load_runs(view=view, stat=stat)
+    return jsonify({
+        "runs": runs,
+        "calibration": _load_calibration_meta(),
+        "view": view,
+        "stat": stat,
+    })
