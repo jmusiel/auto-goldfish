@@ -460,6 +460,8 @@ a:hover { text-decoration: underline; }
 }
 .sat-scaling { background: #dcfce7; color: #166534; }
 .sat-saturated { background: #fef3c7; color: #92400e; }
+.sat-saturated.sat-trim { background: #ffedd5; color: #9a3412; }
+.sat-saturated.sat-room { background: #dbeafe; color: #1e40af; }
 .sat-crowding { background: #fee2e2; color: #991b1b; }
 .sat-unclear { background: #e2e8f0; color: #64748b; }
 sup.always-drawn { color: #64748b; font-size: 0.7em; margin-left: 2px; cursor: help; }
