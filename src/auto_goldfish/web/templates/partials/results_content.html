@@ -4,7 +4,70 @@
 {% if results[-1].deck_score %}
 {% set score = results[-1].deck_score %}
 <div class="deck-score-section">
-<h2>Deck Stats</h2>
+<h2>CASTER Score</h2>
+{% if caster_calibration %}
+{% set cal = caster_calibration %}
+{% set caster_help = [
+    ('Consistency', '#eab308', 'How rarely the deck bricks',
+     'worst-case games are catastrophic — frequent floods, stalls, or dead hands.',
+     'almost every game runs smoothly; the bottom 25% looks much like the average.'),
+    ('Acceleration', '#ef4444', 'Early-game mana deployment',
+     'slow opening — barely any mana spent over the first four turns.',
+     'explosive early game with multiple ramp/draw plays before turn 5.'),
+    ('Snowball', '#8b5cf6', 'How much advantage compounds over time',
+     'late game stays flat — the deck does not pull away from its early curve.',
+     'late turns dwarf the early game; the deck snowballs hard once it gets going.'),
+    ('Toughness', '#22c55e', 'Structural redundancy of the decklist',
+     'thin/fragile decklist — few mana sources, little draw, or a heavy curve.',
+     'deep redundancy: lots of mana sources, draw, low-cost plays, and a controlled curve.'),
+    ('Efficiency', '#3b82f6', 'Mana utilization per turn',
+     'mana left unused — frequent mid-game stall turns.',
+     'nearly every turn fully utilized; very few wasted mana points.'),
+    ('Reach', '#f97316', 'Peak mana output and ceiling',
+     'low ceiling — even the best games never spend that much mana.',
+     'explosive peak turns; the top 25% of games spend a huge amount of mana.'),
+] %}
+<details class="caster-help">
+    <summary>What does my CASTER Score mean?</summary>
+    <div class="caster-help-body">
+        <p>Each stat is rescaled to <strong>1&ndash;10</strong> against
+        {% if cal.calibrated and cal.n_rows > 0 %}
+        an empirical distribution of <strong>{{ cal.n_rows }} run{{ 's' if cal.n_rows != 1 }}</strong>
+        across <strong>{{ cal.n_decks }} deck{{ 's' if cal.n_decks != 1 }}</strong>
+        in this database (anchors at p{{ cal.low_pct|int }}/p{{ cal.high_pct|int }}
+        with Bayesian shrinkage, pseudo_count={{ cal.pseudo_count }}).
+        {% else %}
+        the built-in default anchors (no DB calibration available).
+        {% endif %}
+        A score of <strong>1</strong> matches the low anchor; <strong>10</strong> matches the high anchor.</p>
+        <table class="caster-help-table">
+            <thead><tr>
+                <th>Stat</th><th>What it measures</th>
+                <th>Score 1 looks like…</th><th>Score 10 looks like…</th>
+            </tr></thead>
+            <tbody>
+            {% for name, color, desc, low_meaning, high_meaning in caster_help %}
+                <tr>
+                    <td><strong style="color:{{ color }}">{{ name }}</strong></td>
+                    <td>{{ desc }}</td>
+                    <td>{{ low_meaning }}</td>
+                    <td>{{ high_meaning }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <p class="caster-help-foot">
+            {% if cal.calibrated %}
+            Calibration refreshes automatically as new runs land in the DB.
+            Set <code>AUTO_GOLDFISH_CALIBRATE=0</code> to disable.
+            {% else %}
+            Set <code>AUTO_GOLDFISH_CALIBRATE=1</code> (default) and run more decks
+            to switch from default anchors to a live calibration.
+            {% endif %}
+        </p>
+    </div>
+</details>
+{% endif %}
 <div class="deck-score-grid">
     <div class="deck-score-radar"><canvas id="deckScoreRadar"></canvas></div>
     <div class="deck-score-bars">
@@ -19,7 +82,7 @@
         {% for name, key, color, desc in stat_defs %}
         {% set val = score[key]|default(0) %}
         <div class="deck-stat-row">
-            <div class="deck-stat-label" title="{{ desc }}">{{ name }}</div>
+            <div class="deck-stat-label" data-tip="{{ desc }}">{{ name }}</div>
             <div class="deck-stat-bar-track">
                 <div class="deck-stat-bar-fill" style="width:{{ (val / 10 * 100)|int }}%;background:{{ color }}"></div>
             </div>
@@ -453,7 +516,7 @@
                     data: {
                         labels: ['Consistency', 'Acceleration', 'Snowball', 'Toughness', 'Efficiency', 'Reach'],
                         datasets: [{
-                            label: 'Deck Stats',
+                            label: 'CASTER Score',
                             data: [ds.consistency, ds.acceleration, ds.snowball, ds.toughness, ds.efficiency, ds.reach],
                             backgroundColor: 'rgba(59, 130, 246, 0.2)',
                             borderColor: '#3b82f6',
