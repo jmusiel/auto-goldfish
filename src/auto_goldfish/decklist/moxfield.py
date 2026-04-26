@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import re
 from importlib.metadata import PackageNotFoundError, version
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import requests
 
@@ -44,6 +44,16 @@ def _get_user_agent() -> str:
     return f"auto-goldfish/{_package_version()} (+https://github.com/jmusiel/auto-goldfish)"
 
 
+def _slugify(name: str) -> str:
+    """Lowercase + collapse non-alphanumerics into single underscores.
+
+    Used to turn a free-form Moxfield deck title into something safe for
+    URL paths and filesystem entries (the deck name is used as both).
+    Returns "" if nothing alphanumeric remains.
+    """
+    return re.sub(r"[^a-zA-Z0-9]+", "_", name).strip("_").lower()
+
+
 def _extract_deck_id(deck_url: str) -> str:
     """Extract the deck ID from a Moxfield URL."""
     match = _URL_RE.search(deck_url)
@@ -55,18 +65,16 @@ def _extract_deck_id(deck_url: str) -> str:
     return match.group(1)
 
 
-def fetch_decklist(deck_url: str) -> List[Dict[str, Any]]:
+def fetch_decklist(deck_url: str) -> Tuple[str, List[Dict[str, Any]]]:
     """Fetch a decklist from the Moxfield API and resolve via Scryfall.
-
-    Parameters
-    ----------
-    deck_url : str
-        Moxfield deck URL (e.g. "https://www.moxfield.com/decks/AbCdEf123").
 
     Returns
     -------
-    list[dict]
-        Card dicts in the standard internal format.
+    (suggested_name, cards)
+        ``suggested_name`` is the Moxfield deck title slugified to a safe
+        URL/filesystem identifier (empty string if the title has no
+        alphanumeric characters). Callers may use it as a default when the
+        user did not provide one.
     """
     user_agent = _get_user_agent()
     deck_id = _extract_deck_id(deck_url)
@@ -101,4 +109,5 @@ def fetch_decklist(deck_url: str) -> List[Dict[str, Any]]:
     if not entries:
         raise MoxfieldAPIError("No cards found in deck")
 
-    return resolve_cards(entries)
+    suggested_name = _slugify(data.get("name") or "")
+    return suggested_name, resolve_cards(entries)

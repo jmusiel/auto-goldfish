@@ -834,7 +834,7 @@ class TestMoxfieldImportAPI:
         ]
         monkeypatch.setattr(
             "auto_goldfish.web.routes.decks.fetch_moxfield",
-            lambda url: fake_cards,
+            lambda url: ("api_suggested", fake_cards),
         )
         response = client.post(
             "/decks/import/api",
@@ -860,22 +860,39 @@ class TestMoxfieldImportAPI:
         data = response.get_json()
         assert "URL is required" in data["error"]
 
-    def test_moxfield_extracts_name_from_url(self, client, monkeypatch):
+    def test_moxfield_uses_api_name_when_user_omits_one(self, client, monkeypatch):
         monkeypatch.setattr(
             "auto_goldfish.web.routes.decks.fetch_moxfield",
-            lambda url: [],
+            lambda url: ("proft_control", []),
         )
         response = client.post(
             "/decks/import/api",
             data=json.dumps({
                 "source": "moxfield",
-                "deck_url": "https://www.moxfield.com/decks/my_cool_deck",
+                "deck_url": "https://www.moxfield.com/decks/sS_jW0XYekSWF-j0upT8ug",
             }),
             content_type="application/json",
         )
         assert response.status_code == 200
         data = response.get_json()
-        assert data["deck_name"] == "my_cool_deck"
+        assert data["deck_name"] == "proft_control"
+
+    def test_moxfield_falls_back_to_url_id_when_api_name_empty(self, client, monkeypatch):
+        monkeypatch.setattr(
+            "auto_goldfish.web.routes.decks.fetch_moxfield",
+            lambda url: ("", []),
+        )
+        response = client.post(
+            "/decks/import/api",
+            data=json.dumps({
+                "source": "moxfield",
+                "deck_url": "https://www.moxfield.com/decks/sS_jW0XYekSWF-j0upT8ug",
+            }),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["deck_name"] == "sS_jW0XYekSWF-j0upT8ug"
 
 
 class TestDeckViewPOST:

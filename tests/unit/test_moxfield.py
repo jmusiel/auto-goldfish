@@ -8,6 +8,7 @@ from auto_goldfish.decklist.moxfield import (
     MoxfieldAPIError,
     _extract_deck_id,
     _get_user_agent,
+    _slugify,
     fetch_decklist,
 )
 from auto_goldfish.decklist import rate_limiter
@@ -54,8 +55,26 @@ class TestGetUserAgent:
         assert _get_user_agent().startswith("auto-goldfish/")
 
 
+class TestSlugify:
+    def test_simple_name(self):
+        assert _slugify("Proft Control") == "proft_control"
+
+    def test_punctuation_collapses(self):
+        assert _slugify("Vren, the Relentless!") == "vren_the_relentless"
+
+    def test_unicode_stripped(self):
+        assert _slugify("The Rakdos™ ❤️") == "the_rakdos"
+
+    def test_empty_when_only_specials(self):
+        assert _slugify("¯\\_(ツ)_/¯") == ""
+
+    def test_collapses_repeated_separators(self):
+        assert _slugify("foo   ---   bar") == "foo_bar"
+
+
 class TestFetchDecklist:
     SAMPLE_RESPONSE = {
+        "name": "Vren, the Relentless",
         "boards": {
             "commanders": {
                 "cards": {
@@ -94,7 +113,8 @@ class TestFetchDecklist:
         mock_get.return_value = self._mock_moxfield_response(self.SAMPLE_RESPONSE)
         mock_resolve.return_value = [{"name": "test"}]
 
-        fetch_decklist("https://www.moxfield.com/decks/abc123")
+        suggested_name, _cards = fetch_decklist("https://www.moxfield.com/decks/abc123")
+        assert suggested_name == "vren_the_relentless"
 
         entries = mock_resolve.call_args[0][0]
         names = {name for _, name, _ in entries}
@@ -105,6 +125,18 @@ class TestFetchDecklist:
         cmdr_entries = [(q, n, c) for q, n, c in entries if c]
         assert len(cmdr_entries) == 1
         assert cmdr_entries[0][1] == "Vren, the Relentless"
+
+    @patch("auto_goldfish.decklist.moxfield.resolve_cards")
+    @patch("auto_goldfish.decklist.moxfield.requests.get")
+    def test_fetch_returns_empty_name_when_title_unhelpful(self, mock_get, mock_resolve, monkeypatch):
+        monkeypatch.delenv("MOXFIELD_USER_AGENT", raising=False)
+        payload = dict(self.SAMPLE_RESPONSE)
+        payload["name"] = "❤️"
+        mock_get.return_value = self._mock_moxfield_response(payload)
+        mock_resolve.return_value = []
+
+        suggested_name, _cards = fetch_decklist("https://www.moxfield.com/decks/abc123")
+        assert suggested_name == ""
 
     @patch("auto_goldfish.decklist.moxfield.resolve_cards")
     @patch("auto_goldfish.decklist.moxfield.requests.get")

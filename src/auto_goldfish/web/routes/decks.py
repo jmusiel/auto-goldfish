@@ -95,9 +95,9 @@ def import_deck_api():
             deck_url = (body.get("deck_url") or "").strip()
             if not deck_url:
                 return jsonify({"ok": False, "error": "Moxfield URL is required"}), 400
+            api_name, cards = fetch_moxfield(deck_url)
             if not deck_name:
-                deck_name = deck_url.rstrip("/").rsplit("/", 1)[-1]
-            cards = fetch_moxfield(deck_url)
+                deck_name = api_name or deck_url.rstrip("/").rsplit("/", 1)[-1]
 
         else:  # archidekt (default)
             default_url = "https://archidekt.com/decks/81320/the_rr_connection"
