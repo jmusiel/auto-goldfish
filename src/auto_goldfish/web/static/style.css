@@ -746,6 +746,15 @@ sup.always-drawn { color: #64748b; font-size: 0.7em; margin-left: 2px; cursor: h
     font-weight: 500;
     color: #1a1a2e;
 }
+.replay-disclaimer {
+    margin-top: 1.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e2e8f0;
+    font-size: 0.8rem;
+    color: #64748b;
+    font-style: italic;
+    line-height: 1.5;
+}
 .replay-info {
     font-size: 0.9rem;
     color: #475569;

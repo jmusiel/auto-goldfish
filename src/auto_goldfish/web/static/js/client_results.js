@@ -504,6 +504,10 @@ const ClientResults = (function() {
                     <div class="replay-card-list" id="replay-board"></div>
                 </div>
             </div>
+            <p class="replay-disclaimer">
+                Mana model: every land is treated like a basic Wastes &mdash; one untapped colorless mana.
+                Color requirements, tapped lands, and fetches are not simulated.
+            </p>
         </div>`;
     }
 
