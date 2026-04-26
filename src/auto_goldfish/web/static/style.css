@@ -86,13 +86,92 @@ a:hover { text-decoration: underline; }
     padding: 1.25rem;
 }
 .deck-card h2 { font-size: 1.1rem; margin-bottom: 0.25rem; }
-.deck-card .commanders { color: #64748b; font-size: 0.9rem; margin-bottom: 0.25rem; }
+.deck-card h2 a { color: #1a1a2e; }
+.deck-card h2 a:hover { color: #2563eb; text-decoration: underline; }
+.deck-card .commanders { color: #1a1a2e; font-size: 0.9rem; margin-bottom: 0.25rem; }
+.commander-label {
+    display: inline-block;
+    background: #e0e7ff;
+    color: #3730a3;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.05rem 0.4rem;
+    border-radius: 3px;
+    margin-right: 0.35rem;
+    vertical-align: 1px;
+}
 .deck-card .deck-stats { color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem; }
 .deck-card .deck-description { color: #94a3b8; font-size: 0.8rem; margin-bottom: 0.75rem; font-style: italic; }
 .section-description { color: #64748b; font-size: 0.95rem; margin-top: -0.5rem; margin-bottom: 1rem; }
 .deck-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 
 .empty-state { color: #64748b; margin-top: 2rem; font-size: 1.05rem; }
+.empty-state-block {
+    margin-top: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    color: #475569;
+    line-height: 1.6;
+}
+.empty-state-block p { margin-bottom: 0.5rem; }
+.empty-state-block code { background: #fff; padding: 0.05rem 0.35rem; border-radius: 4px; }
+
+/* Mana Model layout */
+.mana-model-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+@media (max-width: 800px) {
+    .mana-model-grid { grid-template-columns: 1fr; }
+}
+.mana-panel {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem 1.25rem 1.25rem;
+}
+.mana-panel h3 { margin-bottom: 0.25rem; font-size: 1rem; }
+.mana-panel-hint {
+    color: #64748b;
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+}
+.mana-comparison-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+}
+.mana-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+}
+.mana-table th,
+.mana-table td {
+    padding: 0.4rem 0.75rem;
+    text-align: right;
+    border-bottom: 1px solid #f1f5f9;
+}
+.mana-table th:first-child,
+.mana-table td:first-child {
+    text-align: left;
+    color: #64748b;
+}
+.mana-table thead th {
+    color: #475569;
+    font-weight: 600;
+    border-bottom: 2px solid #e2e8f0;
+    font-size: 0.85rem;
+}
 
 /* Deck view */
 .deck-header { margin-bottom: 1.5rem; }
@@ -113,9 +192,18 @@ a:hover { text-decoration: underline; }
     padding: 0.2rem 0;
     font-size: 0.9rem;
 }
+.card-qty {
+    color: #475569;
+    font-variant-numeric: tabular-nums;
+    min-width: 2.25rem;
+    text-align: right;
+    margin-right: 0.6rem;
+}
 .card-name { flex: 1; }
-.card-cost { color: #64748b; margin: 0 0.5rem; }
-.card-cmc { color: #94a3b8; min-width: 2rem; text-align: right; }
+.card-cost { color: #64748b; margin: 0 0.5rem; font-variant-numeric: tabular-nums; }
+.card-cmc { color: #94a3b8; min-width: 4rem; text-align: right; font-size: 0.8rem; }
+.deck-header .deck-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.form-actions { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.75rem; flex-wrap: wrap; }
 
 /* Progress bar */
 .progress-bar {
@@ -657,6 +745,15 @@ sup.always-drawn { color: #64748b; font-size: 0.7em; margin-left: 2px; cursor: h
     font-size: 0.9rem;
     font-weight: 500;
     color: #1a1a2e;
+}
+.replay-disclaimer {
+    margin-top: 1.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e2e8f0;
+    font-size: 0.8rem;
+    color: #64748b;
+    font-style: italic;
+    line-height: 1.5;
 }
 .replay-info {
     font-size: 0.9rem;

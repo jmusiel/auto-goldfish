@@ -62,10 +62,17 @@ const ClientResults = (function() {
         return Number(val).toFixed(decimals);
     }
 
+    // Engine bookkeeping suffix used to keep simulator card identities unique.
+    const COPY_SUFFIX_RE = /\s*\(\d+\)\s*$/;
+    function baseCardName(name) {
+        return (name || '').replace(COPY_SUFFIX_RE, '');
+    }
+
     function cardLink(name) {
+        const base = baseCardName(name);
         return '<a class="card-link" data-card-name="' + escapeHtml(name)
             + '" href="https://scryfall.com/search?exact='
-            + encodeURIComponent(name) + '" target="_blank">' + escapeHtml(name) + '</a>';
+            + encodeURIComponent(base) + '" target="_blank">' + escapeHtml(base) + '</a>';
     }
 
     function escapeHtml(str) {
@@ -413,18 +420,44 @@ const ClientResults = (function() {
             + '<th data-tip="Per-copy effect: how much more (or less) mana the deck spends when you draw the 1st, 2nd, 3rd … copy compared to having one fewer. Hover any pill for details.">Each extra copy <span class="help-icon" aria-hidden="true">?</span></th>'
             + '<th data-tip="Plain-English verdict on whether to add more copies, you have enough, cut copies, or there isn\'t enough data yet.">Recommendation <span class="help-icon" aria-hidden="true">?</span></th>';
 
-        // High performers
+        const high = cp.high_performing || [];
+        const low = cp.low_performing || [];
+        const cardKey = (c) => (c.label || c.name) + '|' + (c.copies || 1);
+        const highKeys = new Set(high.map(cardKey));
+        const lowKeys = new Set(low.map(cardKey));
+        const overlap = [...highKeys].some(k => lowKeys.has(k));
+        // Below ~12 distinct pools the server's high/low split degenerates into
+        // showing the same rows in both tables. Collapse to a single ranked table.
+        const collapsed = overlap || high.length === 0 || low.length === 0;
+
+        if (collapsed) {
+            const seen = new Set();
+            const merged = [];
+            high.concat(low).forEach(c => {
+                const k = cardKey(c);
+                if (!seen.has(k)) { seen.add(k); merged.push(c); }
+            });
+            merged.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+            html += '<div><h3>Ranked by impact</h3><div class="table-wrap"><table class="stats-table">';
+            html += '<thead><tr>' + headerCells + '</tr></thead><tbody>';
+            merged.forEach((card, i) => {
+                const cls = (card.score ?? 0) >= 0 ? 'score-positive' : 'score-negative';
+                html += renderRow(card, i, cls);
+            });
+            html += '</tbody></table></div></div></div>';
+            return html;
+        }
+
         html += '<div><h3>Top Performers</h3><div class="table-wrap"><table class="stats-table">';
         html += '<thead><tr>' + headerCells + '</tr></thead><tbody>';
-        cp.high_performing.forEach((card, i) => {
+        high.forEach((card, i) => {
             html += renderRow(card, i, 'score-positive');
         });
         html += '</tbody></table></div></div>';
 
-        // Low performers
         html += '<div><h3>Low Performers</h3><div class="table-wrap"><table class="stats-table">';
         html += '<thead><tr>' + headerCells + '</tr></thead><tbody>';
-        cp.low_performing.forEach((card, i) => {
+        low.forEach((card, i) => {
             html += renderRow(card, i, 'score-negative');
         });
         html += '</tbody></table></div></div></div>';
@@ -471,6 +504,10 @@ const ClientResults = (function() {
                     <div class="replay-card-list" id="replay-board"></div>
                 </div>
             </div>
+            <p class="replay-disclaimer">
+                Mana model: every land is treated like a basic Wastes &mdash; one untapped colorless mana.
+                Color requirements, tapped lands, and fetches are not simulated.
+            </p>
         </div>`;
     }
 

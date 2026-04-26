@@ -54,8 +54,8 @@
     {% if wizard_cards is defined and wizard_cards %}
     <div class="label-banner">
         <div class="label-banner-text">
-            <strong>{{ wizard_cards | length }} card{{ 's' if wizard_cards | length != 1 else '' }} still need{{ '' if wizard_cards | length != 1 else 's' }} labels.</strong>
-            <span class="label-banner-hint">Unlabeled cards default to "no effects", which can skew ramp/draw recommendations.</span>
+            <strong>{{ wizard_cards | length }} distinct card{{ 's' if wizard_cards | length != 1 else '' }} need{{ '' if wizard_cards | length != 1 else 's' }} a labeling decision.</strong>
+            <span class="label-banner-hint">Until labeled, they default to "no effects" (counted as plain spells), which can skew ramp/draw recommendations. Other copies of the same name share the decision.</span>
         </div>
         <div class="label-banner-actions">
             <button type="button" class="btn btn-primary btn-sm" id="label-cards-btn" onclick="labelerOpen(WIZARD_CARDS)">Open Card Labeler</button>
@@ -354,7 +354,7 @@
     <details class="effects-editor" id="effects-editor-block">
         <summary class="effects-summary">
             <h2>Edit individual card effects</h2>
-            <span class="effects-count">{{ with_effects | length }} of {{ card_effects | length }} non-land cards have effects</span>
+            <span class="effects-count">{{ with_effects | length }} of {{ card_effects | length }} non-land cards have non-trivial effects (the rest are treated as plain spells).</span>
         </summary>
 
         {% if with_effects %}
@@ -425,15 +425,15 @@
         Simulation runs in your browser via WebAssembly.
         <span id="local-sim-estimate"></span>
     </small>
-    <button type="submit" class="btn btn-primary" id="submit-btn">Run Simulation</button>
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="submit-btn">Run Simulation</button>
+        {% if is_local is defined and is_local %}
+        <button type="button" class="btn btn-secondary" onclick="navigateToManaModel('{{ deck_name }}')" title="Closed-form hypergeometric land-count recommendation, no simulation needed">Open Mana Model (instant)</button>
+        {% else %}
+        <a href="{{ url_for('mana_model.page', deck_name=deck_name) }}" class="btn btn-secondary" title="Closed-form hypergeometric land-count recommendation, no simulation needed">Open Mana Model (instant)</a>
+        {% endif %}
+    </div>
 </form>
-<div style="margin-top:1rem;">
-    {% if is_local is defined and is_local %}
-    <button class="btn btn-secondary" onclick="navigateToManaModel('{{ deck_name }}')">Mana Model (Hypergeometric)</button>
-    {% else %}
-    <a href="{{ url_for('mana_model.page', deck_name=deck_name) }}" class="btn btn-secondary">Mana Model (Hypergeometric)</a>
-    {% endif %}
-</div>
 <div id="job-status"></div>
 <div id="local-results"></div>
 
