@@ -48,14 +48,17 @@
                     <span class="labeler-shortcut-hints">Keys: 1-9 select, Enter submit, Arrows navigate</span>
                 </div>
             </div>
+            <div class="labeler-disclaimer">
+                This goldfisher is an approximation of a real game, and not every ramp or draw effect can be modeled exactly. For cards that don't perfectly match the options shown, aim for a general floor for how you expect the card to perform.
+            </div>
         </div>
     </div>
 
     {% if wizard_cards is defined and wizard_cards %}
     <div class="label-banner">
         <div class="label-banner-text">
-            <strong>{{ wizard_cards | length }} distinct card{{ 's' if wizard_cards | length != 1 else '' }} need{{ '' if wizard_cards | length != 1 else 's' }} a labeling decision.</strong>
-            <span class="label-banner-hint">Until labeled, they default to "no effects" (counted as plain spells), which can skew ramp/draw recommendations. Other copies of the same name share the decision.</span>
+            <strong>{{ wizard_cards | length }} distinct card{{ 's' if wizard_cards | length != 1 else '' }} ha{{ 've' if wizard_cards | length != 1 else 's' }} suggested effect labels.</strong>
+            <span class="label-banner-hint">Suggestions are auto-generated and may not always match how the card actually plays &mdash; reviewing them sharpens ramp/draw recommendations. All copies of the same card share one label.</span>
         </div>
         <div class="label-banner-actions">
             <button type="button" class="btn btn-primary btn-sm" id="label-cards-btn" onclick="labelerOpen(WIZARD_CARDS)">Open Card Labeler</button>

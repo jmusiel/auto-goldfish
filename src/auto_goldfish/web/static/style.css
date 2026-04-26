@@ -1190,6 +1190,16 @@ th[data-tip]:focus::after {
     padding: 0.2rem 0.5rem;
     margin-top: 0.35rem;
 }
+.labeler-disclaimer {
+    font-size: 0.8rem;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.75rem;
+    line-height: 1.4;
+}
 
 /* Labeler responsive: stack card + controls vertically on narrow screens */
 @media (max-width: 640px) {
