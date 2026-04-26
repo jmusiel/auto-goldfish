@@ -80,13 +80,14 @@ The app deploys to Vercel as a serverless Flask function with static assets serv
    - `DATABASE_URL` (optional) — Neon Postgres connection string
    - `SECRET_KEY` — Flask secret key for sessions
    - `AUTO_GOLDFISH_CALIBRATE` (optional, defaults to enabled) — set to `0` to disable on-the-fly scoring anchor calibration and use built-in defaults instead
+   - `AUTO_GOLDFISH_SKIP_MIGRATE` (recommended for production) — set to `1` so each cold-start worker skips schema migrations; `scripts/vercel_build.sh` runs `python scripts/migrate.py` once at deploy time instead
 3. Deploy:
 
 ```bash
 vercel
 ```
 
-The build script (`scripts/vercel_build.sh`) automatically builds the Pyodide wheel and copies static assets to `public/` for CDN serving. The `vercel.json` config routes static files directly and everything else to the Flask serverless function.
+The build script (`scripts/vercel_build.sh`, wired up via `vercel.json`'s `buildCommand`) builds the Pyodide wheel, copies static assets to `public/` for CDN serving, then runs `scripts/migrate.py` to apply schema changes once per deploy. The `vercel.json` config routes static files directly and everything else to the Flask serverless function.
 
 ### Database Persistence (optional)
 

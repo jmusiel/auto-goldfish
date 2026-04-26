@@ -154,3 +154,24 @@ class CardPerformanceRow(Base):
 
     run: Mapped["SimulationRunRow"] = relationship(back_populates="card_performances")
     card: Mapped["CardRow"] = relationship()
+
+
+class CalibrationCacheRow(Base):
+    """Single-row cache of the most recently computed CASTER anchors.
+
+    Lets every serverless worker share one calibration recompute instead of
+    each cold start re-running the (n_rows-scale) percentile + shrinkage
+    pass. The cache is keyed by ``n_rows`` -- when the row count of
+    ``simulation_results`` changes, callers refresh the cache and write it
+    back. ``id`` is always 1 so an UPSERT-by-PK keeps the table at one row.
+    """
+
+    __tablename__ = "calibration_cache"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    n_rows: Mapped[int] = mapped_column(Integer, nullable=False)
+    anchors_json: Mapped[str] = mapped_column(Text, nullable=False)
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False)
+    computed_at: Mapped[datetime] = mapped_column(
+        default=lambda: datetime.now(timezone.utc),
+    )

@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import json
 from typing import Optional
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from auto_goldfish.db.models import (
     Base,
+    CalibrationCacheRow,
     DeckRow,
     SimulationResultRow,
     SimulationRunRow,
@@ -524,3 +526,148 @@ class TestPersistenceReScoring:
         row = db_session.execute(select(SimulationResultRow)).scalar_one()
         # Without raw_*, persistence keeps the input scores verbatim.
         assert row.score_acceleration == 5
+
+
+# ---------------------------------------------------------------------------
+# DB-backed cache: persists anchors across processes / cold starts.
+# ---------------------------------------------------------------------------
+
+class TestDbBackedCache:
+    """The calibration_cache row spares cold-start workers a recompute."""
+
+    def test_first_call_writes_cache_row(self, db_session: Session, monkeypatch):
+        monkeypatch.delenv("AUTO_GOLDFISH_CALIBRATE", raising=False)
+        for i in range(5):
+            _add_run(
+                db_session, f"deck-{i}", f"job-{i}",
+                land_counts=(38,), optimal_land_count=38,
+            )
+        db_session.commit()
+
+        anchors, meta = get_active_anchors(db_session)
+        assert meta is not None
+
+        row = db_session.execute(select(CalibrationCacheRow)).scalar_one()
+        assert row.id == 1
+        assert row.n_rows == 5
+        # Round-trip: deserialize and confirm equivalence.
+        cached_data = json.loads(row.anchors_json)
+        assert tuple(cached_data["acceleration"]) == anchors.acceleration
+
+    def test_subsequent_call_uses_cache_skipping_recompute(
+        self, db_session: Session, monkeypatch
+    ):
+        """A new in-process cache (e.g. fresh worker) reads the DB cache."""
+        monkeypatch.delenv("AUTO_GOLDFISH_CALIBRATE", raising=False)
+        for i in range(3):
+            _add_run(
+                db_session, f"deck-{i}", f"job-{i}",
+                land_counts=(38,), optimal_land_count=38,
+            )
+        db_session.commit()
+
+        # Prime the DB cache.
+        first_anchors, first_meta = get_active_anchors(db_session)
+
+        # Simulate a fresh worker by clearing the in-process cache only.
+        reset_cache()
+
+        # Stub compute_anchors_from_db to confirm it's NOT called.
+        from auto_goldfish.metrics import calibration as cal
+        called = {"compute": False}
+
+        original_compute = cal.compute_anchors_from_db
+
+        def _trap(*a, **kw):
+            called["compute"] = True
+            return original_compute(*a, **kw)
+
+        monkeypatch.setattr(cal, "compute_anchors_from_db", _trap)
+
+        second_anchors, second_meta = get_active_anchors(db_session)
+
+        assert called["compute"] is False  # served from DB cache
+        assert second_anchors == first_anchors
+        assert second_meta.n_rows == first_meta.n_rows
+
+    def test_row_count_change_invalidates_cache(
+        self, db_session: Session, monkeypatch
+    ):
+        monkeypatch.delenv("AUTO_GOLDFISH_CALIBRATE", raising=False)
+        _add_run(db_session, "deck-1", "job-1", land_counts=(38,), optimal_land_count=38)
+        db_session.commit()
+
+        first_anchors, _ = get_active_anchors(db_session)
+
+        # New row -> cached n_rows mismatches; recompute.
+        _add_run(
+            db_session, "deck-2", "job-2", land_counts=(38,), optimal_land_count=38,
+            raw_by_land={38: {"raw_acceleration": 100.0}},
+        )
+        db_session.commit()
+
+        # Clear in-process cache so the DB cache is the only thing left.
+        reset_cache()
+
+        # Stub compute_anchors_from_db to confirm it IS called this time.
+        from auto_goldfish.metrics import calibration as cal
+        called = {"compute": False}
+        original_compute = cal.compute_anchors_from_db
+
+        def _trap(*a, **kw):
+            called["compute"] = True
+            return original_compute(*a, **kw)
+
+        monkeypatch.setattr(cal, "compute_anchors_from_db", _trap)
+
+        second_anchors, second_meta = get_active_anchors(db_session)
+
+        assert called["compute"] is True
+        assert second_meta.n_rows == 2
+        # The cache row is now updated to n_rows=2.
+        row = db_session.execute(select(CalibrationCacheRow)).scalar_one()
+        assert row.n_rows == 2
+
+    def test_corrupt_cache_row_falls_through_to_recompute(
+        self, db_session: Session, monkeypatch
+    ):
+        """A garbled JSON cache row shouldn't break scoring."""
+        monkeypatch.delenv("AUTO_GOLDFISH_CALIBRATE", raising=False)
+        _add_run(db_session, "deck-1", "job-1", land_counts=(38,), optimal_land_count=38)
+        db_session.commit()
+
+        # Plant a corrupt cache row manually.
+        db_session.add(CalibrationCacheRow(
+            id=1, n_rows=1, anchors_json="not valid json", metadata_json="{}",
+        ))
+        db_session.commit()
+        reset_cache()  # invalidate in-process cache so DB read is exercised.
+
+        anchors, meta = get_active_anchors(db_session)
+        # Falls through to a real recompute -> meta is present and matches.
+        assert meta is not None
+        assert meta.n_rows == 1
+        # And the corrupt row got rewritten.
+        row = db_session.execute(select(CalibrationCacheRow)).scalar_one()
+        assert "not valid json" not in row.anchors_json
+
+    def test_missing_cache_table_does_not_break_calibration(
+        self, db_session: Session, monkeypatch
+    ):
+        """If the calibration_cache table doesn't exist, fall back gracefully."""
+        from sqlalchemy import text
+
+        monkeypatch.delenv("AUTO_GOLDFISH_CALIBRATE", raising=False)
+        _add_run(db_session, "deck-1", "job-1", land_counts=(38,), optimal_land_count=38)
+        db_session.commit()
+
+        # Drop the cache table to simulate a stale prod DB.
+        db_session.execute(text("DROP TABLE calibration_cache"))
+        db_session.commit()
+        reset_cache()
+
+        anchors, meta = get_active_anchors(db_session)
+        # Calibration should still work, falling through to a recompute on
+        # every call. The write attempt also fails silently.
+        assert meta is not None
+        assert meta.n_rows == 1

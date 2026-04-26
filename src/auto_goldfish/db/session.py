@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from contextlib import contextmanager
 from typing import Generator
 
@@ -17,15 +18,47 @@ logger = logging.getLogger(__name__)
 _engine = None
 _SessionFactory = None
 
+_SKIP_MIGRATE_ENV = "AUTO_GOLDFISH_SKIP_MIGRATE"
 
-def init_db(database_url: str) -> None:
-    """Create the engine, session factory, and all tables.
+# Tables/columns the runtime relies on. ``verify_schema`` checks these in
+# read-only mode when migrations are skipped at startup so a stale DB shows
+# up loudly in the logs instead of silently 500ing on the first query.
+_REQUIRED_SCHEMA: dict[str, tuple[str, ...]] = {
+    "simulation_results": (
+        "score_consistency", "score_acceleration", "score_snowball",
+        "score_toughness", "score_efficiency", "score_reach",
+        "raw_consistency", "raw_acceleration", "raw_snowball",
+        "raw_toughness", "raw_efficiency", "raw_reach",
+        "mean_spells_cast",
+    ),
+    "card_annotations": ("session_id",),
+    "card_performance": ("mean_with", "mean_without"),
+    "calibration_cache": ("n_rows", "anchors_json", "metadata_json"),
+}
+
+
+def _skip_migrations_env() -> bool:
+    """Return True if the env var disables auto-migrate at startup."""
+    raw = os.environ.get(_SKIP_MIGRATE_ENV, "0").strip().lower()
+    return raw not in ("0", "false", "no", "off", "")
+
+
+def init_db(database_url: str, *, run_migrations: bool | None = None) -> None:
+    """Create the engine, session factory, and (optionally) the schema.
 
     Uses ``NullPool`` and ``pool_pre_ping`` so that this works correctly under
     serverless runtimes (Vercel) where workers freeze between requests: pooled
     connections kept across a freeze go stale and the next request gets a dead
     socket. NullPool means every session opens a fresh connection (Neon's own
     pgbouncer handles pooling on the server side); pre_ping is belt-and-braces.
+
+    ``run_migrations`` controls whether ``Base.metadata.create_all()`` and
+    ``_migrate()`` run on startup. Default behaviour: migrate unless the
+    ``AUTO_GOLDFISH_SKIP_MIGRATE`` env var is truthy. Production (Vercel)
+    sets that var so schema changes happen once during the build step via
+    ``scripts/migrate.py`` instead of on every cold-start worker, removing
+    the ALTER-TABLE race that would otherwise fire under concurrent boots.
+    Local dev/tests leave the var unset and keep the auto-create behaviour.
     """
     global _engine, _SessionFactory
     _engine = create_engine(
@@ -34,9 +67,57 @@ def init_db(database_url: str) -> None:
         pool_pre_ping=True,
     )
     _SessionFactory = sessionmaker(bind=_engine)
-    Base.metadata.create_all(_engine)
-    _migrate(_engine)
-    logger.info("Database initialized: %s", database_url.split("@")[-1] if "@" in database_url else "(local)")
+
+    if run_migrations is None:
+        run_migrations = not _skip_migrations_env()
+
+    if run_migrations:
+        Base.metadata.create_all(_engine)
+        _migrate(_engine)
+        logger.info(
+            "Database initialized with migrations: %s",
+            database_url.split("@")[-1] if "@" in database_url else "(local)",
+        )
+    else:
+        verify_schema(_engine)
+        logger.info(
+            "Database initialized (migrations skipped): %s",
+            database_url.split("@")[-1] if "@" in database_url else "(local)",
+        )
+
+
+def verify_schema(engine) -> list[str]:
+    """Read-only check that required tables/columns exist.
+
+    Returns a list of issue strings (empty when healthy). Logs at ERROR if
+    anything is missing so an out-of-date production DB is impossible to
+    miss in Vercel logs. Never raises -- the runtime keeps serving so
+    requests that don't touch the missing columns still work.
+    """
+    issues: list[str] = []
+    try:
+        insp = inspect(engine)
+        existing_tables = set(insp.get_table_names())
+        for table, required_cols in _REQUIRED_SCHEMA.items():
+            if table not in existing_tables:
+                issues.append(f"missing table: {table}")
+                continue
+            present = {c["name"] for c in insp.get_columns(table)}
+            missing = [c for c in required_cols if c not in present]
+            if missing:
+                issues.append(f"{table}: missing columns {missing}")
+    except Exception:
+        logger.exception("Schema verification probe failed")
+        return ["schema verification probe failed"]
+
+    if issues:
+        logger.error(
+            "Schema verification found issues; run scripts/migrate.py: %s",
+            issues,
+        )
+    else:
+        logger.info("Schema verification passed")
+    return issues
 
 
 def is_db_configured() -> bool:
