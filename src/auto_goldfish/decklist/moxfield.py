@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import os
 import re
-from typing import Any, Dict, List
+from importlib.metadata import PackageNotFoundError, version
+from typing import Any, Dict, List, Tuple
 
 import requests
 
@@ -19,27 +20,38 @@ _API_BASE = "https://api2.moxfield.com/v3/decks/all"
 _URL_RE = re.compile(r"moxfield\.com/decks/([A-Za-z0-9_-]+)")
 
 
-class MoxfieldConfigError(Exception):
-    """Raised when the Moxfield User-Agent credential is not configured."""
-
-
 class MoxfieldAPIError(Exception):
     """Raised when the Moxfield API returns an error."""
 
 
-def _get_user_agent() -> str:
-    """Read the Moxfield User-Agent from environment.
+def _package_version() -> str:
+    try:
+        return version("auto_goldfish")
+    except PackageNotFoundError:
+        return "dev"
 
-    The User-Agent is a sensitive credential and must never be logged,
-    exposed to clients, or committed to source control.
+
+def _get_user_agent() -> str:
+    """Return the User-Agent for Moxfield requests.
+
+    Defaults to identifying this project by name + GitHub URL so Moxfield
+    admins can reach us. The MOXFIELD_USER_AGENT env var overrides this for
+    deployments with a partner credential of their own.
     """
-    ua = os.environ.get("MOXFIELD_USER_AGENT", "").strip()
-    if not ua:
-        raise MoxfieldConfigError(
-            "MOXFIELD_USER_AGENT environment variable is not set. "
-            "Moxfield import requires a valid User-Agent credential."
-        )
-    return ua
+    override = os.environ.get("MOXFIELD_USER_AGENT", "").strip()
+    if override:
+        return override
+    return f"auto-goldfish/{_package_version()} (+https://github.com/jmusiel/auto-goldfish)"
+
+
+def _slugify(name: str) -> str:
+    """Lowercase + collapse non-alphanumerics into single underscores.
+
+    Used to turn a free-form Moxfield deck title into something safe for
+    URL paths and filesystem entries (the deck name is used as both).
+    Returns "" if nothing alphanumeric remains.
+    """
+    return re.sub(r"[^a-zA-Z0-9]+", "_", name).strip("_").lower()
 
 
 def _extract_deck_id(deck_url: str) -> str:
@@ -53,18 +65,16 @@ def _extract_deck_id(deck_url: str) -> str:
     return match.group(1)
 
 
-def fetch_decklist(deck_url: str) -> List[Dict[str, Any]]:
+def fetch_decklist(deck_url: str) -> Tuple[str, List[Dict[str, Any]]]:
     """Fetch a decklist from the Moxfield API and resolve via Scryfall.
-
-    Parameters
-    ----------
-    deck_url : str
-        Moxfield deck URL (e.g. "https://www.moxfield.com/decks/AbCdEf123").
 
     Returns
     -------
-    list[dict]
-        Card dicts in the standard internal format.
+    (suggested_name, cards)
+        ``suggested_name`` is the Moxfield deck title slugified to a safe
+        URL/filesystem identifier (empty string if the title has no
+        alphanumeric characters). Callers may use it as a default when the
+        user did not provide one.
     """
     user_agent = _get_user_agent()
     deck_id = _extract_deck_id(deck_url)
@@ -82,18 +92,14 @@ def fetch_decklist(deck_url: str) -> List[Dict[str, Any]]:
 
     data = resp.json()
 
-    # Extract card entries from the Moxfield response.
-    # Moxfield groups cards under "boards" -> "mainboard"/"commanders"/etc.
     entries: list[tuple[int, str, bool]] = []
 
-    # Commanders
     commanders_board = data.get("boards", {}).get("commanders", {})
     for card_key, card_data in commanders_board.get("cards", {}).items():
         name = card_data.get("card", {}).get("name", card_key)
         qty = card_data.get("quantity", 1)
         entries.append((qty, name, True))
 
-    # Mainboard
     mainboard = data.get("boards", {}).get("mainboard", {})
     for card_key, card_data in mainboard.get("cards", {}).items():
         name = card_data.get("card", {}).get("name", card_key)
@@ -103,9 +109,5 @@ def fetch_decklist(deck_url: str) -> List[Dict[str, Any]]:
     if not entries:
         raise MoxfieldAPIError("No cards found in deck")
 
-    return resolve_cards(entries)
-
-
-def is_configured() -> bool:
-    """Check if the Moxfield User-Agent credential is available."""
-    return bool(os.environ.get("MOXFIELD_USER_AGENT", "").strip())
+    suggested_name = _slugify(data.get("name") or "")
+    return suggested_name, resolve_cards(entries)
