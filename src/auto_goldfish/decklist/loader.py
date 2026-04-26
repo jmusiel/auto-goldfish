@@ -16,7 +16,6 @@ def get_deckpath(deck_name: str) -> str:
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     )
     deck_dir = os.path.join(project_root, "decks", deck_name)
-    os.makedirs(deck_dir, exist_ok=True)
     return os.path.join(deck_dir, f"{deck_name}.json")
 
 
@@ -30,6 +29,7 @@ def load_decklist(deck_name: str) -> List[Dict[str, Any]]:
 def save_decklist(deck_name: str, decklist: List[Dict[str, Any]]) -> str:
     """Save a decklist to JSON. Returns the file path."""
     path = get_deckpath(deck_name)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
         json.dump(decklist, f, indent=4)
     return path
@@ -41,7 +41,6 @@ def get_overrides_path(deck_name: str) -> str:
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     )
     deck_dir = os.path.join(project_root, "decks", deck_name)
-    os.makedirs(deck_dir, exist_ok=True)
     return os.path.join(deck_dir, f"{deck_name}.overrides.json")
 
 
@@ -57,6 +56,7 @@ def load_overrides(deck_name: str) -> Dict[str, Any]:
 def save_overrides(deck_name: str, overrides: Dict[str, Any]) -> str:
     """Save overrides dict to JSON. Returns file path."""
     path = get_overrides_path(deck_name)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
         json.dump(overrides, f, indent=4)
     return path
