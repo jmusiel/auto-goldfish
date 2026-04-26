@@ -402,7 +402,7 @@ def _worker_run_batch(
         turn_snapshots: list[dict] = []
         starting_hand_names: list[str] = []
         if _capture_this:
-            starting_hand_names = [gf.decklist[idx].name for idx in state.hand]
+            starting_hand_names = [gf._card_by_id(idx).name for idx in state.hand]
 
         for i in range(turns):
             turn_mana_value = 0
@@ -411,7 +411,7 @@ def _worker_run_batch(
             spells_played = 0
 
             if _capture_this:
-                hand_before = [gf.decklist[idx].name for idx in state.hand]
+                hand_before = [gf._card_by_id(idx).name for idx in state.hand]
 
             played = gf._take_turn(state)
             for card in played:
@@ -463,10 +463,10 @@ def _worker_run_batch(
                     ],
                     "mana_spent_this_turn": turn_mana,
                     "total_mana_production": gf._get_mana(state),
-                    "hand_after": [gf.decklist[idx].name for idx in state.hand],
-                    "battlefield": [gf.decklist[idx].name for idx in state.battlefield],
-                    "lands": [gf.decklist[idx].name for idx in state.lands],
-                    "graveyard": [gf.decklist[idx].name for idx in state.yard],
+                    "hand_after": [gf._card_by_id(idx).name for idx in state.hand],
+                    "battlefield": [gf._card_by_id(idx).name for idx in state.battlefield],
+                    "lands": [gf._card_by_id(idx).name for idx in state.lands],
+                    "graveyard": [gf._card_by_id(idx).name for idx in state.yard],
                 })
 
         mana_spent.append(total_mana_spent)
@@ -554,6 +554,11 @@ class Goldfisher:
         Mulligan strategy. Uses DefaultMulligan if not provided.
     """
 
+    # Commander indices live above this offset so they never collide with
+    # decklist indices (the optimizer mutates the decklist post-construction,
+    # so a length-based boundary is unstable).
+    _COMMANDER_INDEX_OFFSET = 1_000_000
+
     def __init__(
         self,
         decklist_dicts: list[dict],
@@ -604,21 +609,30 @@ class Goldfisher:
         self.workers = workers
         self._should_log = verbose or record_results is not None
 
-        # Separate commanders from the decklist
-        self.commanders: list[Card] = []
+        # Separate commanders from the decklist. Card indices double as the
+        # value stored in zone lists (state.battlefield, state.command_zone,
+        # etc.), so commander indices MUST be disjoint from decklist indices —
+        # otherwise a commander cast onto the battlefield aliases a random
+        # non-commander card during snapshot lookups.
+        #
+        # Decklists are mutated post-construction by the optimizer (cards
+        # cut, indices reassigned, synthetic cards appended), so we can't
+        # tie commander indices to the current decklist length. Use a fixed
+        # high offset that real decklists will never reach.
         non_commander_dicts: list[dict] = []
-        commander_index = 0
+        commander_dicts: list[dict] = []
         for card_dict in decklist_dicts:
             if card_dict.get("commander", False):
-                card = self._make_card(card_dict, commander_index)
-                self.commanders.append(card)
-                commander_index += 1
+                commander_dicts.append(card_dict)
             else:
                 non_commander_dicts.append(card_dict)
 
-        # Build decklist
         self.decklist: list[Card] = [
             self._make_card(d, i) for i, d in enumerate(non_commander_dicts)
+        ]
+        self.commanders: list[Card] = [
+            self._make_card(d, self._COMMANDER_INDEX_OFFSET + i)
+            for i, d in enumerate(commander_dicts)
         ]
         self.deckdict: dict[str, Card] = {c.name: c for c in self.decklist}
 
@@ -660,6 +674,18 @@ class Goldfisher:
             self.record_decile = self.record_centile = True
         elif record_results == "centile":
             self.record_centile = True
+
+    def _card_by_id(self, idx: int) -> Card:
+        """Resolve a zone card-id to its Card.
+
+        Decklist indices start at 0; commander indices start at
+        _COMMANDER_INDEX_OFFSET. Any zone (battlefield, command zone, hand,
+        etc.) can in principle store either kind of id, so all zone-derived
+        lookups should go through this helper.
+        """
+        if idx >= self._COMMANDER_INDEX_OFFSET:
+            return self.commanders[idx - self._COMMANDER_INDEX_OFFSET]
+        return self.decklist[idx]
 
     def _make_card(self, card_dict: dict, index: int) -> Card:
         """Create a Card from a raw dict, applying registry effects."""
@@ -821,7 +847,7 @@ class Goldfisher:
                 playables.append(card)
 
         for i in state.command_zone:
-            card = self.commanders[i]
+            card = self._card_by_id(i)
             if card.get_current_cost(state) <= available_mana and card.spell:
                 playables.append(card)
 
@@ -1683,7 +1709,7 @@ class Goldfisher:
             turn_snapshots: list[dict] = []
             starting_hand_names: list[str] = []
             if _capture_replay:
-                starting_hand_names = [self.decklist[idx].name for idx in state.hand]
+                starting_hand_names = [self._card_by_id(idx).name for idx in state.hand]
 
             for i in range(self.turns):
                 turn_mana_value = 0
@@ -1692,7 +1718,7 @@ class Goldfisher:
                 spells_played = 0
 
                 if _capture_replay:
-                    hand_before = [self.decklist[idx].name for idx in state.hand]
+                    hand_before = [self._card_by_id(idx).name for idx in state.hand]
 
                 played = self._take_turn(state)
 
@@ -1746,10 +1772,10 @@ class Goldfisher:
                         ],
                         "mana_spent_this_turn": mana_spent,
                         "total_mana_production": self._get_mana(state),
-                        "hand_after": [self.decklist[idx].name for idx in state.hand],
-                        "battlefield": [self.decklist[idx].name for idx in state.battlefield],
-                        "lands": [self.decklist[idx].name for idx in state.lands],
-                        "graveyard": [self.decklist[idx].name for idx in state.yard],
+                        "hand_after": [self._card_by_id(idx).name for idx in state.hand],
+                        "battlefield": [self._card_by_id(idx).name for idx in state.battlefield],
+                        "lands": [self._card_by_id(idx).name for idx in state.lands],
+                        "graveyard": [self._card_by_id(idx).name for idx in state.yard],
                     })
 
             mana_spent_list.append(total_mana_spent)
