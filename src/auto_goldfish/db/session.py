@@ -8,6 +8,7 @@ from typing import Generator
 
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import NullPool
 
 from .models import Base
 
@@ -18,13 +19,29 @@ _SessionFactory = None
 
 
 def init_db(database_url: str) -> None:
-    """Create the engine, session factory, and all tables."""
+    """Create the engine, session factory, and all tables.
+
+    Uses ``NullPool`` and ``pool_pre_ping`` so that this works correctly under
+    serverless runtimes (Vercel) where workers freeze between requests: pooled
+    connections kept across a freeze go stale and the next request gets a dead
+    socket. NullPool means every session opens a fresh connection (Neon's own
+    pgbouncer handles pooling on the server side); pre_ping is belt-and-braces.
+    """
     global _engine, _SessionFactory
-    _engine = create_engine(database_url)
+    _engine = create_engine(
+        database_url,
+        poolclass=NullPool,
+        pool_pre_ping=True,
+    )
     _SessionFactory = sessionmaker(bind=_engine)
     Base.metadata.create_all(_engine)
     _migrate(_engine)
     logger.info("Database initialized: %s", database_url.split("@")[-1] if "@" in database_url else "(local)")
+
+
+def is_db_configured() -> bool:
+    """Return True if init_db has been called successfully."""
+    return _SessionFactory is not None
 
 
 def _migrate(engine) -> None:

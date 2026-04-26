@@ -41,7 +41,7 @@ All simulation runs client-side via Pyodide (CPython in WebAssembly):
 2. Worker downloads the `auto_goldfish` wheel from `/sim/api/wheel/<filename>` and installs it into Pyodide
 3. On form submit, the main thread fetches deck data (`/sim/api/<deck>/deck`) and effects (`/sim/api/<deck>/effects`), then posts to the worker
 4. Worker runs `pyodide_runner.run_simulation()`, sends progress updates back
-5. On completion, `client_results.js` renders results inline; a fire-and-forget POST to `/sim/api/<deck>/results` persists to the database (if configured)
+5. On completion, `client_results.js` renders results inline and POSTs to `/sim/api/<deck>/results`. The endpoint returns 200 with `persisted: false` when no `DATABASE_URL` is configured, 200 with `persisted: true` on a successful write, and 500 with an `error` field when persistence is configured but the write fails — so client-side code can distinguish "no DB" from a real outage.
 
 ## API Endpoints
 
