@@ -66,7 +66,7 @@ The dashboard ships with three synthetic mono-black decks designed to exercise t
 | Deck | Composition | What it demonstrates |
 |------|-------------|----------------------|
 | `mana-starved-demo` | 18 lands, 81 spells at CMC 5–7 | Severely under-landed. The optimizer should strongly recommend adding lands; effects are large and detected after the first batch of paired games. |
-| `equilibrium-demo` | 37 lands, 62 spells at CMC 2 | Already near-optimal. Marginal changes have small effects; adaptive sampling typically classifies them as negligible or runs more games to resolve ambiguity. |
+| `equilibrium-demo` | 37 lands, 62 spells at CMC 2 | Already close to a stable equilibrium. Marginal changes have small effects; adaptive sampling typically classifies them as negligible or runs more games to resolve ambiguity. |
 | `overlanded-cantrips-demo` | 45 lands, 54 spells at CMC 1 | Way over-landed. The optimizer should recommend cutting lands; flat curve and excess mana make every change quickly detectable. |
 
 Pick one on the dashboard, run a simulation with the **Factored** algorithm, and observe how the recommendations and per-marginal `n_games` differ across the three decks.

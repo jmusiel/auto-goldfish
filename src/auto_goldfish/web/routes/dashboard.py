@@ -14,7 +14,7 @@ bp = Blueprint("dashboard", __name__)
 _DECK_DESCRIPTIONS: dict[str, str] = {
     "mana-starved-demo": "18 lands with CMC 5-7 spells. Severely under-landed — the optimizer should strongly recommend adding lands.",
     "overlanded-cantrips-demo": "45 lands with all CMC 1 spells. Way too many lands — the optimizer should recommend cutting lands.",
-    "equilibrium-demo": "37 lands with uniform CMC 2 spells. Already near-optimal — changes should have negligible effect.",
+    "equilibrium-demo": "37 lands with uniform CMC 2 spells. Already close to a stable equilibrium — changes should have negligible effect.",
 }
 
 # Pedagogical order: under-landed → balanced → over-landed.
