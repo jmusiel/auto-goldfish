@@ -424,17 +424,22 @@
     </details>
     {% endif %}
 
-    <small class="hint" id="local-sim-hint">
-        Simulation runs in your browser via WebAssembly.
-        <span id="local-sim-estimate"></span>
-    </small>
-    <div class="form-actions">
-        <button type="submit" class="btn btn-primary" id="submit-btn">Run Simulation</button>
-        {% if is_local is defined and is_local %}
-        <button type="button" class="btn btn-secondary" onclick="navigateToManaModel('{{ deck_name }}')" title="Closed-form hypergeometric land-count recommendation, no simulation needed">Open Mana Model (instant)</button>
-        {% else %}
-        <a href="{{ url_for('mana_model.page', deck_name=deck_name) }}" class="btn btn-secondary" title="Closed-form hypergeometric land-count recommendation, no simulation needed">Open Mana Model (instant)</a>
-        {% endif %}
+    <div class="sticky-actions-bar">
+        <div class="sticky-actions-inner">
+            <small class="hint" id="local-sim-hint">
+                Simulation runs in your browser via WebAssembly.
+                <span id="local-sim-estimate"></span>
+            </small>
+            <span class="sticky-status" id="sticky-status" hidden></span>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="submit-btn" form="sim-form">Run Simulation</button>
+                {% if is_local is defined and is_local %}
+                <button type="button" class="btn btn-secondary" onclick="navigateToManaModel('{{ deck_name }}')" title="Closed-form hypergeometric land-count recommendation, no simulation needed">Open Mana Model (instant)</button>
+                {% else %}
+                <a href="{{ url_for('mana_model.page', deck_name=deck_name) }}" class="btn btn-secondary" title="Closed-form hypergeometric land-count recommendation, no simulation needed">Open Mana Model (instant)</a>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </form>
 <div id="job-status"></div>
@@ -1548,6 +1553,40 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
     const form = document.getElementById('sim-form');
     const jobStatus = document.getElementById('job-status');
     const localResults = document.getElementById('local-results');
+    const submitBtn = document.getElementById('submit-btn');
+    const stickyStatus = document.getElementById('sticky-status');
+    const stickyHint = document.getElementById('local-sim-hint');
+    const submitBtnDefaultHTML = submitBtn.innerHTML;
+    var clearStickyTimer = null;
+
+    function setSimRunning(running) {
+        submitBtn.disabled = running;
+        if (running) {
+            submitBtn.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span>Running…';
+        } else {
+            submitBtn.innerHTML = submitBtnDefaultHTML;
+        }
+    }
+
+    function setStickyStatus(text, kind) {
+        if (clearStickyTimer) { clearTimeout(clearStickyTimer); clearStickyTimer = null; }
+        stickyStatus.classList.remove('error', 'done');
+        if (!text) {
+            stickyStatus.hidden = true;
+            stickyStatus.textContent = '';
+            if (stickyHint) stickyHint.hidden = false;
+            return;
+        }
+        if (kind) stickyStatus.classList.add(kind);
+        stickyStatus.textContent = text;
+        stickyStatus.hidden = false;
+        if (stickyHint) stickyHint.hidden = true;
+    }
+
+    function setStickyStatusTransient(text, kind, ms) {
+        setStickyStatus(text, kind);
+        clearStickyTimer = setTimeout(function() { setStickyStatus(''); }, ms);
+    }
 
     // Fidelity presets: derived from hyperband sensitivity analysis
     var FIDELITY_PRESETS = {
@@ -1639,6 +1678,8 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
             resolvedWheelUrl = window.location.origin + WHEEL_META_URL + '/' + meta.filename;
         } catch (err) {
             jobStatus.innerHTML = '<div class="job-status error"><p>Error: Could not find simulation wheel. Run <code>uv build --wheel</code> first.</p></div>';
+            setStickyStatus('Error: simulation wheel not found.', 'error');
+            setSimRunning(false);
             pyodideInitializing = false;
             return;
         }
@@ -1673,6 +1714,7 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
 
         if (msg.type === 'init_progress') {
             jobStatus.innerHTML = '<div class="job-status"><p>' + msg.message + '</p></div>';
+            if (submitBtn.disabled) setStickyStatus(msg.message);
         } else if (msg.type === 'ready') {
             pyodideReady = true;
             pyodideInitializing = false;
@@ -1727,11 +1769,17 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
             }
             html += '</div>';
             jobStatus.innerHTML = html;
+            var stickyLabel;
+            if (phase === 'enum') stickyLabel = 'Enumerating… ' + pct + '%';
+            else if (phase === 'eval' && lastConfig && lastConfig.optimization_enabled) stickyLabel = 'Evaluating… ' + pct + '%';
+            else stickyLabel = 'Simulating… ' + pct + '%';
+            setStickyStatus(stickyLabel);
         } else if (msg.type === 'result') {
             jobStatus.innerHTML = '';
             localResults.innerHTML = '';
             ClientResults.render(localResults, msg.data, DECK_NAME);
-            document.getElementById('submit-btn').disabled = false;
+            setSimRunning(false);
+            setStickyStatusTransient('Done — results below.', 'done', 5000);
             // Update leaderboard for local decks
             if (IS_LOCAL_DECK && lastConfig) {
                 var storedDeck = DeckStore.getDeck(DECK_NAME);
@@ -1748,7 +1796,8 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
             }
         } else if (msg.type === 'error') {
             jobStatus.innerHTML = '<div class="job-status error"><p>Error: ' + msg.message + '</p></div>';
-            document.getElementById('submit-btn').disabled = false;
+            setSimRunning(false);
+            setStickyStatus('Error: ' + msg.message, 'error');
         }
     }
 
@@ -1757,6 +1806,8 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
         e.preventDefault();
 
         if (!pyodideReady) {
+            setSimRunning(true);
+            setStickyStatus('Waiting for engine to load…');
             jobStatus.innerHTML = '<div class="job-status"><p>Waiting for engine to load...</p></div>';
             if (!pyodideInitializing) initWorker();
             const retryInterval = setInterval(function() {
@@ -1772,7 +1823,8 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
     });
 
     async function startLocalSimulation() {
-        document.getElementById('submit-btn').disabled = true;
+        setSimRunning(true);
+        setStickyStatus('Fetching deck data…');
         localResults.innerHTML = '';
         jobStatus.innerHTML = '<div class="job-status"><p>Fetching deck data...</p></div>';
 
@@ -1846,6 +1898,7 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
             simStartTime = performance.now();
             lastProgressUpdate = 0;
             jobStatus.innerHTML = '<div class="job-status"><p>Starting optimization...</p></div>';
+            setStickyStatus('Starting optimization…');
             worker.postMessage({
                 type: workerType,
                 deckJson: JSON.stringify(deckData),
@@ -1853,7 +1906,8 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
             });
         } catch (err) {
             jobStatus.innerHTML = '<div class="job-status error"><p>Error: ' + err.message + '</p></div>';
-            document.getElementById('submit-btn').disabled = false;
+            setSimRunning(false);
+            setStickyStatus('Error: ' + err.message, 'error');
         }
     }
 

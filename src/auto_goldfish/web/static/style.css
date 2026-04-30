@@ -32,9 +32,28 @@ a:hover { text-decoration: underline; }
     width: 3.75rem;
 }
 .nav-brand:hover { text-decoration: none; color: #93c5fd; }
-.nav-links { display: flex; gap: 1.5rem; }
-.nav-links a { color: #cbd5e1; }
-.nav-links a:hover { color: #fff; text-decoration: none; }
+.nav-links { display: flex; gap: 0.625rem; align-items: center; }
+.nav-links .btn-nav {
+    color: #e2e8f0;
+    background: transparent;
+    border: 1px solid #475569;
+    padding: 0.4rem 0.9rem;
+    font-weight: 500;
+}
+.nav-links .btn-nav:hover {
+    color: #fff;
+    background: #334155;
+    border-color: #64748b;
+    text-decoration: none;
+}
+.nav-links .btn-nav-primary {
+    border: 1px solid #2563eb;
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.4);
+}
+.nav-links .btn-nav-primary:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+}
 
 /* Container */
 .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
@@ -204,6 +223,53 @@ a:hover { text-decoration: underline; }
 .card-cmc { color: #94a3b8; min-width: 4rem; text-align: right; font-size: 0.8rem; }
 .deck-header .deck-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
 .form-actions { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.75rem; flex-wrap: wrap; }
+
+/* Sticky bottom action bar (e.g. Run Simulation) */
+.sticky-actions-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.08);
+    z-index: 50;
+    padding: 0.75rem 1.5rem;
+}
+.sticky-actions-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.sticky-actions-inner .form-actions { margin-top: 0; }
+.sticky-actions-inner .hint { margin: 0; }
+.sticky-actions-inner .sticky-status {
+    color: #1d4ed8;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin: 0;
+}
+.sticky-actions-inner .sticky-status.error { color: #b91c1c; }
+.sticky-actions-inner .sticky-status.done { color: #166534; }
+main.container:has(.sticky-actions-bar) { padding-bottom: 6rem; }
+
+/* Inline spinner for the Run Simulation button */
+.btn-spinner {
+    display: inline-block;
+    width: 0.85em;
+    height: 0.85em;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: btn-spin 0.7s linear infinite;
+    vertical-align: -0.15em;
+    margin-right: 0.45em;
+}
+@keyframes btn-spin { to { transform: rotate(360deg); } }
 
 /* Progress bar */
 .progress-bar {
