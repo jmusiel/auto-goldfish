@@ -18,6 +18,13 @@ class CardRow(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
+    # Card metadata cached from Scryfall at deck-persist time. Populated
+    # whenever a deck is opened in the config page; NULL on legacy rows
+    # written before these columns existed. ``types_json`` is a JSON list
+    # like ``["Creature", "Elf"]`` -- the analyzer only needs membership
+    # checks ("Land" in types) so JSON-as-list is the smallest fit.
+    types_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    cmc: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
 
 class EffectLabelRow(Base):
@@ -48,6 +55,11 @@ class DeckCardRow(Base):
     card_id: Mapped[int] = mapped_column(ForeignKey("cards.id"), nullable=False)
     label_id: Mapped[Optional[int]] = mapped_column(ForeignKey("effect_labels.id"), nullable=True)
     user_edited: Mapped[bool] = mapped_column(default=False)
+    # Per-deck card data: quantity is almost always 1 in commander but
+    # basic lands repeat; is_commander flags the 1-2 cards designated as
+    # the deck's commander. Both default safely for legacy rows.
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    is_commander: Mapped[bool] = mapped_column(default=False)
 
     __table_args__ = (
         UniqueConstraint("deck_id", "card_id", name="uq_deck_card"),

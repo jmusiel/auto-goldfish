@@ -1497,6 +1497,9 @@ h2 { font-size: 1.15rem; margin-bottom: 0.75rem; }
 .run-detail-charts { display: flex; justify-content: center; }
 .run-detail-deck { font-size: 0.85rem; color: #1e293b; }
 .deck-info-empty { color: #64748b; font-style: italic; }
+.deck-info-link { color: #3b82f6; text-decoration: underline; }
+.deck-info-link:hover { color: #2563eb; }
+.bd-actions { margin-bottom: 0.5rem; font-size: 0.8rem; }
 
 .bd-section { margin-bottom: 0.75rem; }
 .bd-section-title {

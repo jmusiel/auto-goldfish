@@ -34,6 +34,8 @@ _REQUIRED_SCHEMA: dict[str, tuple[str, ...]] = {
     "card_annotations": ("session_id",),
     "card_performance": ("mean_with", "mean_without"),
     "calibration_cache": ("n_rows", "anchors_json", "metadata_json"),
+    "cards": ("types_json", "cmc"),
+    "deck_cards": ("quantity", "is_commander"),
 }
 
 
@@ -224,6 +226,34 @@ def _migrate(engine) -> None:
                         f"ALTER TABLE card_performance RENAME COLUMN {old} TO {new}"
                     ))
             logger.info("Migrated card_performance: renamed %s", renames)
+
+    if "cards" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("cards")}
+        adds: list[tuple[str, str]] = []
+        if "types_json" not in cols:
+            adds.append(("types_json", "TEXT"))
+        if "cmc" not in cols:
+            adds.append(("cmc", "INTEGER"))
+        if adds:
+            with engine.begin() as conn:
+                for col, sql_type in adds:
+                    conn.execute(text(f"ALTER TABLE cards ADD COLUMN {col} {sql_type}"))
+            logger.info("Migrated cards: added %s", [a[0] for a in adds])
+
+    if "deck_cards" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("deck_cards")}
+        adds: list[tuple[str, str]] = []
+        if "quantity" not in cols:
+            adds.append(("quantity", "INTEGER NOT NULL DEFAULT 1"))
+        if "is_commander" not in cols:
+            adds.append(("is_commander", "BOOLEAN NOT NULL DEFAULT FALSE"))
+        if adds:
+            with engine.begin() as conn:
+                for col, sql_type in adds:
+                    conn.execute(text(
+                        f"ALTER TABLE deck_cards ADD COLUMN {col} {sql_type}"
+                    ))
+            logger.info("Migrated deck_cards: added %s", [a[0] for a in adds])
 
 
 @contextmanager
