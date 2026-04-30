@@ -24,9 +24,9 @@
             </div>
         </div>
         <div class="nav-links">
-            <a href="{{ url_for('dashboard.index') }}">Decks</a>
-            <a href="{{ url_for('decks.import_form') }}">Import</a>
-            <a href="{{ url_for('runs.index') }}">Runs</a>
+            <a href="{{ url_for('dashboard.index') }}" class="btn btn-nav">Decks</a>
+            <a href="{{ url_for('runs.index') }}" class="btn btn-nav">Runs</a>
+            <a href="{{ url_for('decks.import_form') }}" class="btn btn-primary btn-nav-primary">Import Deck</a>
         </div>
     </nav>
     <main class="container">
