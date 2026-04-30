@@ -149,14 +149,16 @@ function buildRunRowHtml(run) {
     tr += `<tr class="chart-row" id="chart-row-${run.id}" style="display:none">`;
     tr += `<td colspan="12" class="chart-cell"><div class="run-detail-grid">`;
     tr += `<div class="run-detail-charts"><canvas id="radar-${run.id}" width="320" height="320"></canvas></div>`;
-    tr += `<div class="run-detail-deck" id="deck-info-${run.id}">${buildDeckInfoHtml(run.deck_breakdown)}</div>`;
+    tr += `<div class="run-detail-deck" id="deck-info-${run.id}">${buildDeckInfoHtml(run.deck_breakdown, run.deck_name)}</div>`;
     tr += `</div></td></tr>`;
     return tr;
 }
 
-function buildDeckInfoHtml(bd) {
+function buildDeckInfoHtml(bd, deckName) {
+    const safeName = escapeHtml(deckName || '');
+    const openLink = `<a href="#" onclick="event.preventDefault(); navigateToSim('${safeName}')" class="deck-info-link">Open in config</a>`;
     if (!bd) {
-        return `<p class="deck-info-empty">Deck composition unavailable (deck JSON not found on disk).</p>`;
+        return `<p class="deck-info-empty">Deck composition unavailable for this deck. ${openLink} to refresh it from your saved deck.</p>`;
     }
     const commanders = (bd.commander_names || []).length
         ? bd.commander_names.map(escapeHtml).join(' &amp; ')
@@ -194,6 +196,7 @@ function buildDeckInfoHtml(bd) {
         .join('') || '<li class="bd-sub-empty">none</li>';
 
     return `
+    <div class="bd-actions">${openLink}</div>
     <div class="bd-section">
         <div class="bd-section-title">Commanders</div>
         <div>${commanders}</div>

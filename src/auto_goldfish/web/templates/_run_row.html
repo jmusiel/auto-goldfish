@@ -24,8 +24,15 @@
             <div class="run-detail-deck" id="deck-info-{{ run.id }}">
                 {% set bd = run.deck_breakdown %}
                 {% if not bd %}
-                <p class="deck-info-empty">Deck composition unavailable (deck JSON not found on disk).</p>
+                <p class="deck-info-empty">
+                    Deck composition unavailable for this deck.
+                    <a href="#" onclick="event.preventDefault(); navigateToSim('{{ run.deck_name }}')" class="deck-info-link">Open in config</a>
+                    to refresh it from your saved deck.
+                </p>
                 {% else %}
+                <div class="bd-actions">
+                    <a href="#" onclick="event.preventDefault(); navigateToSim('{{ run.deck_name }}')" class="deck-info-link">Open in config</a>
+                </div>
                 <div class="bd-section">
                     <div class="bd-section-title">Commanders</div>
                     <div>

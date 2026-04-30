@@ -230,8 +230,9 @@ var Leaderboard = {
 };
 
 /**
- * Navigate to the simulation page for a local deck.
- * POSTs deck data as JSON, replaces the page with the response.
+ * Navigate to the simulation page for a deck. Prefers localStorage data
+ * (POST) but falls back to a plain GET when the deck is only on disk
+ * (e.g. the demo decks shipped with the app).
  *
  * NOTE: document.write() re-executes every <script src=...> tag in the new
  * HTML in the same JS context. Top-level modules declared with `const` will
@@ -244,8 +245,20 @@ var Leaderboard = {
  */
 async function navigateToSim(deckName) {
     var deck = DeckStore.getDeck(deckName);
-    if (!deck) { alert('Deck not found in local storage'); return; }
-    var resp = await fetch('/sim/' + encodeURIComponent(deckName), {
+    var url = '/sim/' + encodeURIComponent(deckName);
+    if (!deck) {
+        // No localStorage copy -- try the disk-shipped GET path. The
+        // server returns 404 if the deck JSON isn't on disk either, in
+        // which case we surface the same "not found" message.
+        var probe = await fetch(url, { method: 'GET' });
+        if (!probe.ok) {
+            alert('Deck not found locally. Open it from the dashboard or re-import it.');
+            return;
+        }
+        window.location.href = url;
+        return;
+    }
+    var resp = await fetch(url, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({cards: deck.cards, overrides: deck.overrides})
@@ -253,7 +266,7 @@ async function navigateToSim(deckName) {
     if (!resp.ok) { alert('Failed to load simulation page'); return; }
     var html = await resp.text();
     document.open(); document.write(html); document.close();
-    history.pushState(null, '', '/sim/' + encodeURIComponent(deckName));
+    history.pushState(null, '', url);
 }
 
 /**
