@@ -28,12 +28,31 @@ logger = logging.getLogger(__name__)
 # get-or-create primitives
 # ---------------------------------------------------------------------------
 
-def get_or_create_card(session: Session, name: str) -> CardRow:
+def get_or_create_card(
+    session: Session,
+    name: str,
+    *,
+    types: Optional[List[str]] = None,
+    cmc: Optional[int] = None,
+) -> CardRow:
+    """Look up a card by name, inserting it if missing.
+
+    When ``types`` or ``cmc`` are supplied the row's metadata is updated to
+    match (so a deck re-persisted after a Scryfall fix picks up the
+    correction). Calls without metadata leave the existing row untouched
+    so a deck-effect-only call doesn't blank out previously-saved data.
+    """
     row = session.execute(select(CardRow).where(CardRow.name == name)).scalar_one_or_none()
     if row is None:
         row = CardRow(name=name)
         session.add(row)
-        session.flush()
+
+    if types is not None:
+        row.types_json = json.dumps(types)
+    if cmc is not None:
+        row.cmc = cmc
+
+    session.flush()
     return row
 
 
@@ -65,16 +84,41 @@ def get_or_create_deck(session: Session, name: str) -> DeckRow:
 def save_deck_cards(
     session: Session,
     deck: DeckRow,
-    card_effects_list: List[Dict[str, Any]],
+    deck_list: List[Dict[str, Any]],
     overrides: Dict[str, Any],
+    card_effects_list: Optional[List[Dict[str, Any]]] = None,
 ) -> None:
-    """Upsert deck cards with their effect labels and override status."""
-    for entry in card_effects_list:
-        card_name = entry.get("name", "")
+    """Upsert every card in the deck with metadata, effect labels, and overrides.
+
+    ``deck_list`` is the unfiltered card list (lands included) shaped like
+    ``decks/<name>/<name>.json`` -- each entry has ``name``, ``types``,
+    ``cmc``, ``quantity``, and an optional ``commander`` flag. We persist
+    every card here so the runs page can reconstruct deck composition
+    (including land count) entirely from the DB without touching disk.
+
+    ``card_effects_list`` is the nonland-card list built by the config
+    page; if supplied, its ``registry_override`` entries are used to set
+    each card's effect label. Calls that lack it (rare) just persist
+    metadata and overrides.
+    """
+    effects_by_name: Dict[str, Dict[str, Any]] = {}
+    if card_effects_list:
+        for entry in card_effects_list:
+            name = entry.get("name", "")
+            if name:
+                effects_by_name[name] = entry
+
+    for card_dict in deck_list:
+        card_name = card_dict.get("name", "")
         if not card_name:
             continue
 
-        card = get_or_create_card(session, card_name)
+        card = get_or_create_card(
+            session,
+            card_name,
+            types=list(card_dict.get("types", [])),
+            cmc=card_dict.get("cmc"),
+        )
 
         # Determine effect label
         label: Optional[EffectLabelRow] = None
@@ -82,8 +126,13 @@ def save_deck_cards(
         if card_name in overrides and overrides[card_name]:
             label = get_or_create_effect_label(session, overrides[card_name])
             user_edited = True
-        elif entry.get("registry_override"):
-            label = get_or_create_effect_label(session, entry["registry_override"])
+        else:
+            entry = effects_by_name.get(card_name)
+            if entry and entry.get("registry_override"):
+                label = get_or_create_effect_label(session, entry["registry_override"])
+
+        quantity = int(card_dict.get("quantity", 1) or 1)
+        is_commander = bool(card_dict.get("commander", False))
 
         # Upsert deck_card
         existing = session.execute(
@@ -99,10 +148,14 @@ def save_deck_cards(
                 card_id=card.id,
                 label_id=label.id if label else None,
                 user_edited=user_edited,
+                quantity=quantity,
+                is_commander=is_commander,
             ))
         else:
             existing.label_id = label.id if label else None
             existing.user_edited = user_edited
+            existing.quantity = quantity
+            existing.is_commander = is_commander
 
     session.flush()
 
@@ -357,14 +410,18 @@ def persist_completed_job(job: Any) -> None:
 
 def persist_deck_cards(
     deck_name: str,
-    card_effects_list: List[Dict[str, Any]],
+    deck_list: List[Dict[str, Any]],
     overrides: Dict[str, Any],
+    card_effects_list: Optional[List[Dict[str, Any]]] = None,
 ) -> None:
-    """Persist deck card labels to the database.
+    """Persist every card in ``deck_list`` to the DB.
 
-    Called from the config route after building card_effects_list.
+    Lands are included so the runs page can reconstruct full composition
+    (commanders, land count, mana curve, ramp/draw) from the DB alone.
+    ``card_effects_list`` is optional and supplies registry-override
+    effect labels when present.
     """
     with get_session() as session:
         deck = get_or_create_deck(session, deck_name)
-        save_deck_cards(session, deck, card_effects_list, overrides)
+        save_deck_cards(session, deck, deck_list, overrides, card_effects_list)
     logger.info("Persisted deck cards for %s", deck_name)

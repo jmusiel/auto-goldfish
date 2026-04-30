@@ -1,0 +1,106 @@
+{# Server-side renderer for a single run row + its hidden detail row.
+   The JS view-switcher rebuilds equivalent markup from JSON, so the two must
+   stay in sync. #}
+<tr class="run-row" data-run-id="{{ run.id }}">
+    <td>{{ run.deck_name }}</td>
+    <td>{{ run.created_at }}</td>
+    <td>{{ run.turns }}</td>
+    <td>{{ run.sims }}</td>
+    <td>{{ run.optimal_land_count or '—' }}</td>
+    <td class="stat-cell-consistency">{{ run.consistency if run.consistency is not none else '—' }}</td>
+    <td class="stat-cell-acceleration">{{ run.acceleration if run.acceleration is not none else '—' }}</td>
+    <td class="stat-cell-snowball">{{ run.snowball if run.snowball is not none else '—' }}</td>
+    <td class="stat-cell-toughness">{{ run.toughness if run.toughness is not none else '—' }}</td>
+    <td class="stat-cell-efficiency">{{ run.efficiency if run.efficiency is not none else '—' }}</td>
+    <td class="stat-cell-reach">{{ run.reach if run.reach is not none else '—' }}</td>
+    <td><button class="btn-sm" onclick="toggleChart({{ run.id }})">Show</button></td>
+</tr>
+<tr class="chart-row" id="chart-row-{{ run.id }}" style="display:none">
+    <td colspan="12" class="chart-cell">
+        <div class="run-detail-grid">
+            <div class="run-detail-charts">
+                <canvas id="radar-{{ run.id }}" width="320" height="320"></canvas>
+            </div>
+            <div class="run-detail-deck" id="deck-info-{{ run.id }}">
+                {% set bd = run.deck_breakdown %}
+                {% if not bd %}
+                <p class="deck-info-empty">
+                    Deck composition unavailable for this deck.
+                    <a href="#" onclick="event.preventDefault(); navigateToSim('{{ run.deck_name }}')" class="deck-info-link">Open in config</a>
+                    to refresh it from your saved deck.
+                </p>
+                {% else %}
+                <div class="bd-actions">
+                    <a href="#" onclick="event.preventDefault(); navigateToSim('{{ run.deck_name }}')" class="deck-info-link">Open in config</a>
+                </div>
+                <div class="bd-section">
+                    <div class="bd-section-title">Commanders</div>
+                    <div>
+                        {% if bd.commander_names %}
+                            {{ bd.commander_names|join(' & ') }}
+                        {% else %}
+                            <em>None detected</em>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="bd-section">
+                    <div class="bd-section-title">Mana curve <span class="bd-section-meta">(avg CMC {{ bd.avg_cmc }})</span></div>
+                    {% set curve = bd.cmc_distribution %}
+                    {% set curve_keys = curve.keys()|map('int')|list|sort %}
+                    {% set curve_max = (curve.values()|list|max) if curve else 0 %}
+                    <div class="curve-chart">
+                        {% if curve_keys %}
+                            {% for k in curve_keys %}
+                                {% set count = curve[k|string] %}
+                                <div class="curve-bar-wrap">
+                                    <div class="curve-bar-fill" style="height:{{ (count / curve_max * 100) if curve_max > 0 else 0 }}%"></div>
+                                    <span class="curve-bar-count">{{ count }}</span>
+                                    <span class="curve-bar-label">{{ k }}</span>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <span class="bd-sub-empty">no nonland cards</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="bd-section">
+                    <div class="bd-section-title">Lands</div>
+                    <div class="bd-headline">
+                        {{ bd.land_count }}{% if bd.mdfc_count %} <span class="bd-sub-meta">({{ bd.mdfc_count }} MDFC)</span>{% endif %}
+                    </div>
+                </div>
+                <div class="bd-section">
+                    <div class="bd-section-title">Ramp <span class="bd-section-meta">({{ bd.ramp_cards }} total)</span></div>
+                    {% set ramp_keys = bd.ramp_by_cmc.keys()|map('int')|list|sort %}
+                    <ul class="bd-sublist">
+                        {% if ramp_keys %}
+                            {% for k in ramp_keys %}
+                            <li><span class="bd-sub-label">{{ k }} mana ramp</span><span class="bd-sub-count">{{ bd.ramp_by_cmc[k|string] }}</span></li>
+                            {% endfor %}
+                        {% else %}
+                            <li class="bd-sub-empty">none</li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="bd-section">
+                    <div class="bd-section-title">Draw <span class="bd-section-meta">({{ bd.draw_cards }} total)</span></div>
+                    {% set draw_labels = {'cantrip': 'Cantrips', 'instant_draw': 'Instant draw', 'repeatable_draw': 'Repeatable draw'} %}
+                    {% set draw_keys = ['cantrip', 'instant_draw', 'repeatable_draw'] %}
+                    <ul class="bd-sublist">
+                        {% set ns = namespace(any=False) %}
+                        {% for k in draw_keys %}
+                            {% if bd.draw_breakdown.get(k) %}
+                                {% set ns.any = True %}
+                                <li><span class="bd-sub-label">{{ draw_labels[k] }}</span><span class="bd-sub-count">{{ bd.draw_breakdown[k] }}</span></li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if not ns.any %}
+                            <li class="bd-sub-empty">none</li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </td>
+</tr>

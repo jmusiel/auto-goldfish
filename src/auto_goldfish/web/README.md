@@ -12,7 +12,7 @@ web/
 │   ├── decks.py             # Deck import (Archidekt) and card view
 │   ├── simulation.py        # Simulation config page and JSON APIs
 │   ├── mana_model.py        # Hypergeometric land count recommender
-│   └── runs.py              # /runs page: persisted simulation runs + calibration badge
+│   └── runs.py              # /runs page: 20 most recent runs + top/bottom-by-stat views and per-run deck breakdown
 ├── services/
 │   └── simulation_runner.py # SimJob + SimulationRunner (background threads)
 ├── templates/
@@ -55,6 +55,8 @@ All simulation runs client-side via Pyodide (CPython in WebAssembly):
 | POST | `/sim/api/<deck>/results` | Persist client-side simulation results |
 | GET | `/sim/api/wheel` | Latest wheel filename |
 | GET | `/sim/api/wheel/<filename>` | Serve wheel file |
+| GET | `/runs/` | Renders the 20 most recent simulation runs |
+| GET | `/runs/api/data?view=recent\|top\|bottom&stat=<caster>` | Returns up to 20 runs as JSON. `top`/`bottom` rank by the run's optimal-land-count `score_<stat>` and require a stat from the CASTER set; invalid combinations fall back to `recent`. Each run carries a `deck_breakdown` reconstructed from the DB (`CardRow.types_json/cmc` + `DeckCardRow.quantity/is_commander`) -- commanders, mana curve, land count, ramp counts (total + per-CMC bucket), draw counts (cantrip / instant / repeatable). Legacy runs whose deck has no persisted card metadata return `deck_breakdown: null`; the row's "Show" panel exposes an "Open in config" link that re-saves the deck (POST from localStorage or GET from disk) to backfill the metadata. |
 
 ## Configuration
 
