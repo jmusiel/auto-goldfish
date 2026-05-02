@@ -15,15 +15,22 @@ db/
 ## Schema
 
 ```
-CardRow              -- canonical card names (id, name)
+CardRow              -- canonical card names + cached metadata (id, name, types_json, cmc)
 EffectLabelRow       -- deduplicated effect JSON blobs (id, effects_json)
 DeckRow              -- saved decks (id, name, created_at)
-DeckCardRow          -- deck <-> card join with effect label + user_edited flag
+DeckCardRow          -- deck <-> card join: effect label, user_edited, quantity, is_commander
 SimulationRunRow     -- one simulation run (job_id, config params, optimal_land_count)
 SimulationResultRow  -- per-land-count stats (mean_mana, consistency, CIs, percentiles)
 CardPerformanceRow   -- bottom 10 archetype pools with effects at optimal land count (stored against the example card)
 CalibrationCacheRow  -- single-row cache of the most recent CASTER anchors, keyed by simulation_results row count
 ```
+
+`CardRow.types_json` (JSON list, e.g. `["Creature", "Elf"]`) and `CardRow.cmc`
+are populated whenever a deck is opened in the config page. Together with
+`DeckCardRow.quantity` and `DeckCardRow.is_commander`, they let the runs
+page reconstruct full deck composition (commanders, mana curve, land
+count, ramp/draw breakdowns) without reading deck JSON from disk -- which
+matters on Vercel where deck files don't ship to the runtime.
 
 By default `init_db()` runs `Base.metadata.create_all()` plus `_migrate()` at startup so the schema is created on first use. Set `AUTO_GOLDFISH_SKIP_MIGRATE=1` (production / Vercel) to skip both -- migrations are then expected to have already run during the deploy build via `scripts/migrate.py`.
 

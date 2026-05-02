@@ -147,7 +147,9 @@ def config(deck_name: str):
     try:
         from auto_goldfish.db.persistence import persist_deck_cards
 
-        persist_deck_cards(deck_name, card_effects_list, saved_overrides)
+        persist_deck_cards(
+            deck_name, deck_list, saved_overrides, card_effects_list,
+        )
     except Exception:
         logger.exception("Deck card persistence failed for %s", deck_name)
 

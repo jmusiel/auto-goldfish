@@ -24,6 +24,12 @@ class DeckComposition:
     avg_cmc: float = 0.0
     ramp_cards: int = 0
     draw_cards: int = 0
+    # Ramp counts bucketed by CMC (e.g. {0: 1, 1: 2, 2: 5}).
+    ramp_by_cmc: Dict[int, int] = field(default_factory=dict)
+    # Draw counts split by mechanic: cantrip (1-card draw on Instant/Sorcery),
+    # instant_draw (one-shot multi-card draw or non-Instant/Sorcery one-shots),
+    # repeatable_draw (PerTurnDraw or PerCastDraw triggers).
+    draw_breakdown: Dict[str, int] = field(default_factory=dict)
     # Primary commander (first encountered) -- kept for backwards compat.
     commander_cmc: int = 0
     commander_name: str = ""
@@ -53,6 +59,8 @@ def analyze_deck_composition(
     cmc_counts: Counter[int] = Counter()
     ramp_cards = 0
     draw_cards = 0
+    ramp_by_cmc: Counter[int] = Counter()
+    draw_breakdown: Counter[str] = Counter()
     commander_cmcs: List[int] = []
     commander_names: List[str] = []
     total_cmc = 0
@@ -87,8 +95,11 @@ def analyze_deck_composition(
         is_ramp, is_draw = _classify_card(name, registry, overrides)
         if is_ramp:
             ramp_cards += qty
+            ramp_by_cmc[cmc] += qty
         if is_draw:
             draw_cards += qty
+            subcategory = _classify_draw_subcategory(types, name, registry)
+            draw_breakdown[subcategory] += qty
 
     deck_size = land_count + nonland_count
     avg_cmc = total_cmc / nonland_count if nonland_count > 0 else 0.0
@@ -101,6 +112,8 @@ def analyze_deck_composition(
         avg_cmc=round(avg_cmc, 2),
         ramp_cards=ramp_cards,
         draw_cards=draw_cards,
+        ramp_by_cmc=dict(ramp_by_cmc),
+        draw_breakdown=dict(draw_breakdown),
         commander_cmc=commander_cmcs[0] if commander_cmcs else 0,
         commander_name=commander_names[0] if commander_names else "",
         commander_cmcs=commander_cmcs,
@@ -139,3 +152,30 @@ def _classify_card(
             is_draw = effects.draw
 
     return is_ramp, is_draw
+
+
+def _classify_draw_subcategory(
+    types: List[str],
+    name: str,
+    registry: Optional[EffectRegistry],
+) -> str:
+    """Bucket a draw card into ``cantrip``, ``instant_draw``, or ``repeatable_draw``.
+
+    Repeatable: card has any per-turn or cast-trigger draw effects in the
+    registry (e.g. Phyrexian Arena, Rhystic Study). Cantrip: an Instant or
+    Sorcery whose registered ``DrawCards`` effect draws exactly one card --
+    the canonical "incidental draw" shape. Everything else (multi-card
+    one-shots, ETB draw on permanents, draws not represented in the
+    registry) falls into ``instant_draw``.
+    """
+    effects: CardEffects | None = registry.get(name) if registry else None
+    if effects is not None and (effects.per_turn or effects.cast_trigger):
+        return "repeatable_draw"
+
+    is_spell_speed = any(t in types for t in ("Instant", "Sorcery"))
+    if is_spell_speed and effects is not None:
+        for e in effects.on_play:
+            if type(e).__name__ == "DrawCards" and getattr(e, "amount", 0) == 1:
+                return "cantrip"
+
+    return "instant_draw"

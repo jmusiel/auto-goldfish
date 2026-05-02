@@ -90,11 +90,15 @@ class TestGetOrCreateDeck:
 class TestSaveDeckCards:
     def test_inserts_cards(self, db_session: Session):
         deck = get_or_create_deck(db_session, "test-deck")
-        cards = [
-            {"name": "Sol Ring", "cmc": 1, "has_effects": True, "registry_override": {"effects": [{"type": "ramp"}]}},
-            {"name": "Grizzly Bears", "cmc": 2, "has_effects": False, "registry_override": None},
+        deck_list = [
+            {"name": "Sol Ring", "cmc": 1, "types": ["Artifact"], "quantity": 1},
+            {"name": "Grizzly Bears", "cmc": 2, "types": ["Creature"], "quantity": 1},
         ]
-        save_deck_cards(db_session, deck, cards, {})
+        effects_list = [
+            {"name": "Sol Ring", "registry_override": {"effects": [{"type": "ramp"}]}},
+            {"name": "Grizzly Bears", "registry_override": None},
+        ]
+        save_deck_cards(db_session, deck, deck_list, {}, effects_list)
         db_session.commit()
 
         deck_cards = db_session.execute(select(DeckCardRow)).scalars().all()
@@ -102,14 +106,15 @@ class TestSaveDeckCards:
 
     def test_upsert_updates_label(self, db_session: Session):
         deck = get_or_create_deck(db_session, "test-deck")
-        cards = [{"name": "Sol Ring", "cmc": 1, "has_effects": True, "registry_override": {"effects": [{"type": "ramp"}]}}]
+        deck_list = [{"name": "Sol Ring", "cmc": 1, "types": ["Artifact"], "quantity": 1}]
+        effects_list = [{"name": "Sol Ring", "registry_override": {"effects": [{"type": "ramp"}]}}]
 
-        save_deck_cards(db_session, deck, cards, {})
+        save_deck_cards(db_session, deck, deck_list, {}, effects_list)
         db_session.commit()
 
         # Re-save with user override
         overrides = {"Sol Ring": {"effects": [{"type": "draw"}]}}
-        save_deck_cards(db_session, deck, cards, overrides)
+        save_deck_cards(db_session, deck, deck_list, overrides, effects_list)
         db_session.commit()
 
         deck_cards = db_session.execute(select(DeckCardRow)).scalars().all()
@@ -118,8 +123,8 @@ class TestSaveDeckCards:
 
     def test_skips_empty_names(self, db_session: Session):
         deck = get_or_create_deck(db_session, "test-deck")
-        cards = [{"name": "", "cmc": 0}]
-        save_deck_cards(db_session, deck, cards, {})
+        deck_list = [{"name": "", "cmc": 0, "types": [], "quantity": 1}]
+        save_deck_cards(db_session, deck, deck_list, {})
         db_session.commit()
 
         deck_cards = db_session.execute(select(DeckCardRow)).scalars().all()
@@ -127,15 +132,66 @@ class TestSaveDeckCards:
 
     def test_user_override_sets_flag(self, db_session: Session):
         deck = get_or_create_deck(db_session, "test-deck")
-        cards = [{"name": "Sol Ring", "cmc": 1, "has_effects": True, "registry_override": None}]
+        deck_list = [{"name": "Sol Ring", "cmc": 1, "types": ["Artifact"], "quantity": 1}]
         overrides = {"Sol Ring": {"effects": [{"type": "draw"}]}}
 
-        save_deck_cards(db_session, deck, cards, overrides)
+        save_deck_cards(db_session, deck, deck_list, overrides)
         db_session.commit()
 
         dc = db_session.execute(select(DeckCardRow)).scalar_one()
         assert dc.user_edited is True
         assert dc.label_id is not None
+
+    def test_persists_card_metadata(self, db_session: Session):
+        """Cards row gets types_json + cmc; deck_card row gets quantity + is_commander."""
+        import json as _json
+
+        deck = get_or_create_deck(db_session, "test-deck")
+        deck_list = [
+            {"name": "Atraxa, Praetors' Voice", "cmc": 4,
+             "types": ["Legendary", "Creature", "Phyrexian", "Angel", "Horror"],
+             "quantity": 1, "commander": True},
+            {"name": "Forest", "cmc": 0, "types": ["Basic", "Land", "Forest"],
+             "quantity": 5, "commander": False},
+        ]
+        save_deck_cards(db_session, deck, deck_list, {})
+        db_session.commit()
+
+        atraxa = db_session.execute(
+            select(CardRow).where(CardRow.name == "Atraxa, Praetors' Voice")
+        ).scalar_one()
+        assert atraxa.cmc == 4
+        assert "Creature" in _json.loads(atraxa.types_json)
+
+        forest = db_session.execute(
+            select(CardRow).where(CardRow.name == "Forest")
+        ).scalar_one()
+        assert forest.cmc == 0
+        assert "Land" in _json.loads(forest.types_json)
+
+        deck_cards = {
+            db_session.get(CardRow, dc.card_id).name: dc
+            for dc in db_session.execute(select(DeckCardRow)).scalars().all()
+        }
+        assert deck_cards["Atraxa, Praetors' Voice"].quantity == 1
+        assert deck_cards["Atraxa, Praetors' Voice"].is_commander is True
+        assert deck_cards["Forest"].quantity == 5
+        assert deck_cards["Forest"].is_commander is False
+
+    def test_includes_lands(self, db_session: Session):
+        """save_deck_cards persists lands too -- they're needed for composition."""
+        deck = get_or_create_deck(db_session, "test-deck")
+        deck_list = [
+            {"name": "Sol Ring", "cmc": 1, "types": ["Artifact"], "quantity": 1},
+            {"name": "Plains", "cmc": 0, "types": ["Basic", "Land"], "quantity": 10},
+        ]
+        save_deck_cards(db_session, deck, deck_list, {})
+        db_session.commit()
+
+        deck_cards = db_session.execute(select(DeckCardRow)).scalars().all()
+        assert len(deck_cards) == 2
+        names = {db_session.get(CardRow, dc.card_id).name for dc in deck_cards}
+        assert names == {"Sol Ring", "Plains"}
 
 
 # ---------------------------------------------------------------------------

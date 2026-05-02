@@ -140,3 +140,99 @@ class TestAnalyzeDeckComposition:
         assert comp.deck_size == 0
         assert comp.land_count == 0
         assert comp.avg_cmc == 0.0
+
+
+class TestRampByCmc:
+    def test_buckets_ramp_cards_by_cmc(self):
+        registry = EffectRegistry()
+        registry.register("Sol Ring", CardEffects(ramp=True))
+        registry.register("Arcane Signet", CardEffects(ramp=True))
+        registry.register("Cultivate", CardEffects(ramp=True))
+        deck = [_make_land()] * 36
+        deck += [_make_card_dict("Sol Ring", cmc=1, types=["Artifact"])]
+        deck += [_make_card_dict("Arcane Signet", cmc=2, types=["Artifact"])] * 2
+        deck += [_make_card_dict("Cultivate", cmc=3, types=["Sorcery"])]
+        deck += [_make_card_dict("Bear")] * 59
+        comp = analyze_deck_composition(deck, registry=registry)
+        assert comp.ramp_cards == 4
+        assert comp.ramp_by_cmc == {1: 1, 2: 2, 3: 1}
+
+    def test_no_ramp_yields_empty_breakdown(self):
+        deck = [_make_land()] * 36 + [_make_card_dict("Bear")] * 63
+        comp = analyze_deck_composition(deck)
+        assert comp.ramp_cards == 0
+        assert comp.ramp_by_cmc == {}
+
+
+class TestDrawBreakdown:
+    def _make_draw_registry(self):
+        from auto_goldfish.effects.builtin import (
+            DrawCards,
+            PerCastDraw,
+            PerTurnDraw,
+        )
+        registry = EffectRegistry()
+        registry.register(
+            "Opt",
+            CardEffects(on_play=[DrawCards(amount=1)], draw=True),
+        )
+        registry.register(
+            "Concentrate",
+            CardEffects(on_play=[DrawCards(amount=3)], draw=True),
+        )
+        registry.register(
+            "Phyrexian Arena",
+            CardEffects(per_turn=[PerTurnDraw(amount=1)], draw=True),
+        )
+        registry.register(
+            "Rhystic Study",
+            CardEffects(cast_trigger=[PerCastDraw(amount=1, trigger="spell")], draw=True),
+        )
+        return registry
+
+    def test_classifies_cantrip_instant_repeatable(self):
+        registry = self._make_draw_registry()
+        deck = [_make_land()] * 36
+        deck += [_make_card_dict("Opt", cmc=1, types=["Instant"])] * 2
+        deck += [_make_card_dict("Concentrate", cmc=4, types=["Sorcery"])]
+        deck += [_make_card_dict("Phyrexian Arena", cmc=3, types=["Enchantment"])]
+        deck += [_make_card_dict("Rhystic Study", cmc=3, types=["Enchantment"])]
+        deck += [_make_card_dict("Bear")] * 59
+        comp = analyze_deck_composition(deck, registry=registry)
+        assert comp.draw_cards == 5
+        assert comp.draw_breakdown == {
+            "cantrip": 2,
+            "instant_draw": 1,
+            "repeatable_draw": 2,
+        }
+
+    def test_creature_etb_draw_falls_into_instant_draw(self):
+        """Permanent ETB-style 'draw a card on play' is a one-shot, not a cantrip."""
+        from auto_goldfish.effects.builtin import DrawCards
+        registry = EffectRegistry()
+        registry.register(
+            "Elvish Visionary",
+            CardEffects(on_play=[DrawCards(amount=1)], draw=True),
+        )
+        deck = [_make_land()] * 36
+        deck += [_make_card_dict("Elvish Visionary", cmc=2, types=["Creature"])]
+        deck += [_make_card_dict("Bear")] * 62
+        comp = analyze_deck_composition(deck, registry=registry)
+        assert comp.draw_breakdown == {"instant_draw": 1}
+
+    def test_override_draw_without_registry_lands_in_instant_draw(self):
+        overrides = {"Mystery Spell": {"categories": [{"category": "draw"}]}}
+        deck = [_make_land()] * 36
+        deck += [_make_card_dict("Mystery Spell", cmc=3, types=["Sorcery"])]
+        deck += [_make_card_dict("Bear")] * 62
+        comp = analyze_deck_composition(deck, overrides=overrides)
+        assert comp.draw_cards == 1
+        # No registry entry means we cannot detect amount==1, so it defaults
+        # to instant_draw rather than cantrip.
+        assert comp.draw_breakdown == {"instant_draw": 1}
+
+    def test_no_draw_yields_empty_breakdown(self):
+        deck = [_make_land()] * 36 + [_make_card_dict("Bear")] * 63
+        comp = analyze_deck_composition(deck)
+        assert comp.draw_cards == 0
+        assert comp.draw_breakdown == {}
