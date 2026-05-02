@@ -94,7 +94,9 @@ class SimulationResult:
     mean_mana_no_mull: float = 0.0
 
     # Structural snapshot of the decklist (independent of simulation outcomes).
-    # Used by the Toughness stat. Computed once per Goldfisher build.
+    # No longer feeds a CASTER axis directly (Tuning replaced the old
+    # Toughness heuristic) but kept on the result for diagnostics and
+    # downstream consumers.
     mana_source_count: int = 0
     draw_count: int = 0
     early_count: int = 0
@@ -706,7 +708,9 @@ class Goldfisher:
         self.land_count = sum(1 for c in self.decklist if c.land)
         self.original_card_count = len(self.decklist)
 
-        # Structural snapshot of the decklist (used by the Toughness score).
+        # Structural snapshot of the decklist. Surfaced on SimulationResult
+        # for diagnostics; the CASTER Tuning axis now derives from
+        # compute_curve_verdict instead of these counts.
         # Counts mana sources (lands + ramp), card-draw cards, low-CMC plays,
         # and average CMC of non-land cards.
         non_land_cmc = [c.cmc for c in self.decklist if not c.land]

@@ -3,10 +3,16 @@
 For each calibration deck, this script:
   1. Runs a Goldfisher simulation.
   2. Extracts the *raw* inputs that feed each of the six CASTER stat
-     formulas (Consistency, Acceleration, Snowball, Toughness, Efficiency,
+     formulas (Consistency, Acceleration, Snowball, Tuning, Efficiency,
      Reach).
   3. Computes the *scaled* 1-10 score using the current bounds.
   4. Writes one CSV row with both raw and scaled values plus deck metadata.
+
+NOTE: Tuning and Efficiency now derive from compute_curve_verdict, which
+requires the deck_list and registry. This script's raw extractors for
+those two axes return neutral placeholders (0.5) until the script is
+updated to thread deck_list through; the scaled scores will reflect that
+neutral input. Re-run after rewiring to recalibrate.
 
 After all decks run, it prints a per-stat summary (min / p10 / p50 / p90 /
 max for both raw and scaled values) so we can see:
@@ -223,27 +229,19 @@ def _raw_consistency(result: SimulationResult, turns: int) -> Tuple[float, float
     return composite, tail_score, bad_score, std_score
 
 
-def _raw_toughness(result: SimulationResult) -> Tuple[float, float, float, float, float]:
-    """Returns (composite, mana_norm, draw_norm, early_norm, curve_norm)."""
-    mana_norm = min(result.mana_source_count / 45.0, 1.0)
-    draw_norm = min(result.draw_count / 15.0, 1.0)
-    early_norm = min(result.early_count / 30.0, 1.0)
-    curve_norm = max(0.0, 1.0 - max(0.0, result.avg_cmc - 3.0) / 3.0)
-    composite = 0.4 * mana_norm + 0.3 * draw_norm + 0.2 * early_norm + 0.1 * curve_norm
-    return composite, mana_norm, draw_norm, early_norm, curve_norm
+def _raw_tuning(result: SimulationResult) -> float:
+    """Tuning composite -- placeholder until this script threads deck_list
+    + curve_verdict through. Real tuning lives in deck_score._raw_tuning
+    and needs CurveValueResult; the SimulationResult alone can't produce it.
+    """
+    return 0.5
 
 
-def _raw_efficiency(result: SimulationResult, turns: int) -> Tuple[float, float, float]:
-    """Returns (composite, utilization, mid_score)."""
-    land_count = result.mean_lands
-    theoretical_max = sum(min(i + 1, land_count) for i in range(turns))
-    if theoretical_max <= 0:
-        return 0.0, 0.0, 0.0
-    utilization = min(result.mean_mana / theoretical_max, 1.0)
-    max_mid = max(turns * 0.7, 1)
-    mid_score = max(0.0, 1.0 - result.mean_mid_turns / max_mid)
-    composite = 0.6 * utilization + 0.4 * mid_score
-    return composite, utilization, mid_score
+def _raw_efficiency(result: SimulationResult, turns: int) -> float:
+    """Efficiency composite -- placeholder until this script threads
+    curve_value through. Real efficiency is 1 - actual_deficit / N_max
+    from compute_curve_verdict's implied_draw."""
+    return 0.5
 
 
 def _raw_snowball(result: SimulationResult, turns: int) -> Tuple[float, float, float]:
@@ -270,20 +268,17 @@ def _raw_snowball(result: SimulationResult, turns: int) -> Tuple[float, float, f
 CSV_FIELDS = [
     "deck", "source", "archetype", "tier", "lands", "mean_mana", "ceiling_mana",
     "std_mana", "mull_rate", "mean_bad_turns", "mean_mid_turns",
-    # Structural snapshot (feeds Toughness)
+    # Structural snapshot (legacy -- still useful diagnostic columns).
     "mana_source_count", "draw_count", "early_count", "avg_cmc",
     # Raw inputs (un-clipped) for each stat
     "raw_acceleration", "raw_reach",
     "raw_consistency_composite", "raw_consistency_tail",
     "raw_consistency_bad", "raw_consistency_std",
-    "raw_toughness_composite", "raw_toughness_mana_norm",
-    "raw_toughness_draw_norm", "raw_toughness_early_norm",
-    "raw_toughness_curve_norm",
-    "raw_efficiency_composite", "raw_efficiency_utilization",
-    "raw_efficiency_mid",
+    "raw_tuning_composite",
+    "raw_efficiency_composite",
     "raw_snowball_acceleration", "raw_snowball_late_avg_norm",
     # Scaled 1-10 scores (CASTER)
-    "consistency", "acceleration", "snowball", "toughness", "efficiency", "reach",
+    "consistency", "acceleration", "snowball", "tuning", "efficiency", "reach",
 ]
 
 
@@ -291,8 +286,8 @@ def build_row(
     deck: CalibrationDeck, result: SimulationResult, turns: int
 ) -> Dict[str, Any]:
     raw_cons, c_tail, c_bad, c_std = _raw_consistency(result, turns)
-    raw_tough, t_mana, t_draw, t_early, t_curve = _raw_toughness(result)
-    raw_eff, e_util, e_mid = _raw_efficiency(result, turns)
+    raw_tuning = _raw_tuning(result)
+    raw_eff = _raw_efficiency(result, turns)
     raw_snowball_accel, raw_snowball_late, _ = _raw_snowball(result, turns)
     score = compute_deck_score(result, turns=turns)
 
@@ -318,20 +313,14 @@ def build_row(
         "raw_consistency_tail": round(c_tail, 4),
         "raw_consistency_bad": round(c_bad, 4),
         "raw_consistency_std": round(c_std, 4),
-        "raw_toughness_composite": round(raw_tough, 4),
-        "raw_toughness_mana_norm": round(t_mana, 4),
-        "raw_toughness_draw_norm": round(t_draw, 4),
-        "raw_toughness_early_norm": round(t_early, 4),
-        "raw_toughness_curve_norm": round(t_curve, 4),
+        "raw_tuning_composite": round(raw_tuning, 4),
         "raw_efficiency_composite": round(raw_eff, 4),
-        "raw_efficiency_utilization": round(e_util, 4),
-        "raw_efficiency_mid": round(e_mid, 4),
         "raw_snowball_acceleration": round(raw_snowball_accel, 4),
         "raw_snowball_late_avg_norm": round(raw_snowball_late, 4),
         "consistency": score.consistency,
         "acceleration": score.acceleration,
         "snowball": score.snowball,
-        "toughness": score.toughness,
+        "tuning": score.tuning,
         "efficiency": score.efficiency,
         "reach": score.reach,
     }
@@ -376,12 +365,12 @@ def load_or_fetch(deck: CalibrationDeck, skip_fetch: bool, verbose: bool) -> Opt
 
 PERCENTILES = [0, 10, 50, 90, 100]
 
-SCALED_STATS = ["consistency", "acceleration", "snowball", "toughness", "efficiency", "reach"]
+SCALED_STATS = ["consistency", "acceleration", "snowball", "tuning", "efficiency", "reach"]
 RAW_KEYS = [
     ("consistency", "raw_consistency_composite"),
     ("acceleration", "raw_acceleration"),
     ("snowball", "raw_snowball_acceleration"),
-    ("toughness", "raw_toughness_composite"),
+    ("tuning", "raw_tuning_composite"),
     ("efficiency", "raw_efficiency_composite"),
     ("reach", "raw_reach"),
 ]
@@ -555,7 +544,7 @@ def main() -> int:
         rows.append(row)
         print(
             f"  -> C={row['consistency']} A={row['acceleration']} "
-            f"S={row['snowball']} T={row['toughness']} "
+            f"S={row['snowball']} T={row['tuning']} "
             f"E={row['efficiency']} R={row['reach']}  "
             f"({elapsed:.1f}s)"
         )

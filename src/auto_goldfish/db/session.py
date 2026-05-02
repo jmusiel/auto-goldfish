@@ -26,9 +26,9 @@ _SKIP_MIGRATE_ENV = "AUTO_GOLDFISH_SKIP_MIGRATE"
 _REQUIRED_SCHEMA: dict[str, tuple[str, ...]] = {
     "simulation_results": (
         "score_consistency", "score_acceleration", "score_snowball",
-        "score_toughness", "score_efficiency", "score_reach",
+        "score_tuning", "score_efficiency", "score_reach",
         "raw_consistency", "raw_acceleration", "raw_snowball",
-        "raw_toughness", "raw_efficiency", "raw_reach",
+        "raw_tuning", "raw_efficiency", "raw_reach",
         "mean_spells_cast",
     ),
     "card_annotations": ("session_id",),
@@ -157,7 +157,9 @@ def _migrate(engine) -> None:
             ("score_resilience", "score_toughness"),
             ("score_surge", "score_snowball"),
             ("score_momentum", "score_snowball"),
+            ("score_toughness", "score_tuning"),
             ("raw_surge", "raw_snowball"),
+            ("raw_toughness", "raw_tuning"),
         ]
         live_cols = set(cols)
         ops: list[tuple] = []
@@ -189,7 +191,7 @@ def _migrate(engine) -> None:
 
         score_cols = [
             "score_consistency", "score_acceleration", "score_snowball",
-            "score_toughness", "score_efficiency", "score_reach",
+            "score_tuning", "score_efficiency", "score_reach",
         ]
         missing = [c for c in score_cols if c not in cols]
         if missing:
@@ -201,7 +203,7 @@ def _migrate(engine) -> None:
 
         raw_cols = [
             "raw_consistency", "raw_acceleration", "raw_snowball",
-            "raw_toughness", "raw_efficiency", "raw_reach",
+            "raw_tuning", "raw_efficiency", "raw_reach",
         ]
         missing_raw = [c for c in raw_cols if c not in cols]
         if missing_raw:

@@ -39,6 +39,29 @@ IRR_HI = 10.0
 IRR_TOL = 1e-6
 IRR_MAX_ITER = 200
 
+# Legacy IRR-aggregation cap, kept for backwards-compatible tests. The
+# production verdict no longer derives delta from per-piece IRRs.
+DEFAULT_IRR_CAP = 1.0
+
+# Legacy loan-size threshold (B3). Kept for backwards-compatible tests; the
+# production verdict no longer uses loan-based alpha.
+DEFAULT_LOAN_THRESHOLD = 15.0
+
+# Anchor for the verdict's discount factor. delta is fixed (not derived from
+# per-piece IRRs) so cuts to ramp can never accidentally raise A by shifting
+# the median or mean of the IRR distribution. 0.85 calibrated against a mix
+# of real and synthetic decks so well-built decks read mostly coherent/slack
+# while deliberately misbuilt decks (over-ramped + low curve) still flag
+# ramp_over_aggressive at the obvious slot.
+DEFAULT_FIXED_DELTA = 0.85
+
+# Sigmoid scale for the excess-based commitment factor. alpha = 1 - exp(-X/k)
+# where X is the deck's idealized ramp excess (sum of M*(T-c) - c across ramp
+# pieces). k=50 puts heavy decks (rr_connection X~62) near 0.71, low-ramp
+# decks (Edgar X~13) near 0.23, and saturates smoothly -- every ramp cut
+# reduces excess and therefore alpha, monotonically.
+DEFAULT_EXCESS_K = 50.0
+
 
 # ---------------------------------------------------------------------------
 # Datamodels
@@ -115,6 +138,67 @@ class ImpliedSpellValueResult:
 
 
 @dataclass
+class CurveVerdictRow:
+    """Per-CMC reading of A vs. B for a single curve slot."""
+
+    cmc: int
+    n_cards: float
+    mt_per_slot: float
+    a_required: float
+    # b_implicit is None for CMCs with no slots in the deck. Otherwise it is
+    # the deck's implicit valuation: mt_per_slot(baseline) / mt_per_slot(c).
+    b_implicit: Optional[float]
+    # kind is the structured tag the UI translates into prose:
+    #   "baseline"             -> c == baseline_cmc
+    #   "below_baseline"       -> c < baseline_cmc (ratio reported, no verdict)
+    #   "coherent"             -> |a - b| within tolerance
+    #   "ramp_over_aggressive" -> b < a; ramp demands more than the deck implies
+    #   "over_allocated"       -> b > a; deck implies more than the ramp demands
+    #   "no_slots"             -> N(c) == 0; A reported, B undefined
+    kind: str
+    # gap = a / b when ramp_over_aggressive (>1.0); else None.
+    gap: Optional[float] = None
+    # slack = b / a when over_allocated (>1.0); else None.
+    slack: Optional[float] = None
+
+
+@dataclass
+class CurveVerdict:
+    """A vs. B per-CMC reading: required power demand vs. implicit allocation.
+
+    A combines a fixed discount factor (delta = DEFAULT_FIXED_DELTA) with the
+    deck's idealized ramp excess via a sigmoid commitment factor:
+    ``a_eff = 1 + alpha * (a_raw - 1)`` where ``alpha = 1 - exp(-excess/k)``.
+    Because alpha is monotonic in cuts to ramp (every ramp piece has positive
+    excess contribution), cutting any ramp piece always softens A_eff.
+
+    B is the curve-aware play-to-curve simulator's per-slot mana-turn delivery.
+
+    `net_flat` is the total per-CMC delta between with-ramp and no-ramp
+    play-to-curve simulations: positive means ramp net-helps even at flat
+    power; negative means ramp net-loses.
+    """
+
+    delta: float
+    median_irr: float
+    baseline_cmc: int
+    no_ramp: bool
+    T: int
+    net_flat: float
+    # Commitment factor in [0, 1]. Production: excess-based sigmoid (Option C).
+    ramp_share: float = 1.0
+    # Gross mana sunk into ramp pieces (sum of cmc). Informational; not used
+    # in the verdict math under Option C.
+    loan_size: float = 0.0
+    # Net mana the deck's ramp produces over T turns (idealized: each piece
+    # cast on its CMC turn). Drives `ramp_share`/alpha under Option C.
+    idealized_excess: float = 0.0
+    loss_breakdown: Dict[int, float] = field(default_factory=dict)
+    gain_breakdown: Dict[int, float] = field(default_factory=dict)
+    rows: List[CurveVerdictRow] = field(default_factory=list)
+
+
+@dataclass
 class CurveValueResult:
     """Top-level wrapper: both metrics + the inputs used."""
 
@@ -122,6 +206,7 @@ class CurveValueResult:
     deck_size_effective: int
     implied_draw: ImpliedDrawResult
     implied_spell_value: ImpliedSpellValueResult
+    curve_verdict: Optional[CurveVerdict] = None
 
 
 # ---------------------------------------------------------------------------
@@ -435,8 +520,18 @@ def ramp_irr(c: int, M: float, T: int) -> float:
     return solve_irr(cf)
 
 
-def aggregate_deck_irr(ramp_specs: List[RampCardSpec], T: int) -> Dict[str, float]:
-    """Median IRR across the deck's permanent-ramp pieces."""
+def aggregate_deck_irr(
+    ramp_specs: List[RampCardSpec],
+    T: int,
+    irr_cap: Optional[float] = None,
+) -> Dict[str, float]:
+    """Median IRR across the deck's permanent-ramp pieces.
+
+    `irr_cap` clamps each individual piece's IRR before aggregation, defending
+    against single-piece decks where one outlier (e.g. Sol Ring alone) drives
+    the median to a saturated value. Default `None` preserves prior behavior;
+    pass `DEFAULT_IRR_CAP` for the production tuning.
+    """
     irrs: List[float] = []
     for r in ramp_specs:
         if r.mana_per_turn <= 0:
@@ -445,8 +540,11 @@ def aggregate_deck_irr(ramp_specs: List[RampCardSpec], T: int) -> Dict[str, floa
         if math.isnan(rate) or math.isinf(rate):
             # Treat unbounded-positive (always profitable) as IRR_HI; ignore inf-loss.
             if rate == float("inf"):
-                irrs.append(IRR_HI)
-            continue
+                rate = IRR_HI
+            else:
+                continue
+        if irr_cap is not None:
+            rate = min(rate, irr_cap)
         irrs.append(rate)
     if not irrs:
         return {"median_irr": float("nan"), "n_valid": 0}
@@ -480,6 +578,7 @@ def compute_implied_spell_value(
     T: int,
     max_cmc: int = 8,
     baseline_cmc: int = BASELINE_CMC,
+    irr_cap: Optional[float] = DEFAULT_IRR_CAP,
 ) -> ImpliedSpellValueResult:
     """Aggregate to deck-level IRR and derive per-CMC multipliers.
 
@@ -495,7 +594,7 @@ def compute_implied_spell_value(
             irr_per_turn=ramp_irr(r.cmc, r.mana_per_turn, T),
         ))
 
-    agg = aggregate_deck_irr(ramp_specs, T)
+    agg = aggregate_deck_irr(ramp_specs, T, irr_cap=irr_cap)
     median_r = agg.get("median_irr", float("nan"))
     if math.isnan(median_r):
         delta = 1.0
@@ -513,6 +612,373 @@ def compute_implied_spell_value(
         power_multipliers=mults,
         per_card_irrs=per_card,
         no_ramp=no_ramp,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Curve Verdict: Option A (duration-aware) + Option B (curve-aware) combined
+# ---------------------------------------------------------------------------
+
+def power_mults_option_a(
+    delta: float,
+    T: int,
+    baseline_cmc: int = BASELINE_CMC,
+    max_cmc: int = 8,
+) -> Dict[int, float]:
+    """Duration-aware required-power multiplier per CMC.
+
+    v_A(c) = c * (T - c + 1) * delta^c  -- discounted mana-turns of board
+    presence a c-drop cast on turn c provides over the remaining game.
+    Returns multiplier(c) = v_A(baseline) / v_A(c), normalized to 1 at the
+    baseline CMC. Curve-independent (no deck composition input).
+    """
+
+    def v(c: int) -> float:
+        dur = max(0, T - c + 1)
+        return c * dur * (delta ** c)
+
+    base = v(baseline_cmc)
+    out: Dict[int, float] = {}
+    for c in range(1, max_cmc + 1):
+        v_c = v(c)
+        if v_c <= 0:
+            out[c] = float("inf")
+        else:
+            out[c] = base / v_c
+    return out
+
+
+def schedule_ramp(
+    ramp_pieces: List[tuple], T: int
+) -> List[tuple]:
+    """Schedule each ramp piece onto its CMC turn; push conflicts later.
+
+    Inputs: (cmc, mana_per_turn) tuples. Output: (turn, cmc, mana_per_turn)
+    tuples ordered by ramp cmc (and then by scheduled turn). Uncastable
+    pieces (cmc > T or pushed past T) are dropped.
+    """
+    sched: List[tuple] = []
+    used: set = set()
+    for cmc, M in sorted(ramp_pieces, key=lambda x: x[0]):
+        t = int(cmc)
+        while t in used and t <= T:
+            t += 1
+        if t > T:
+            continue
+        sched.append((t, int(cmc), float(M)))
+        used.add(t)
+    return sched
+
+
+def value_mana_per_turn(ramp_schedule: List[tuple], T: int) -> List[float]:
+    """Mana available for value spells at each turn 1..T.
+
+    Lands contribute one drop per turn (idealized). Ramp already in play
+    (cast on a prior turn) contributes its mana_per_turn. Ramp cast this
+    turn deducts its CMC from the value-spell budget.
+    """
+    out: List[float] = []
+    for t in range(1, T + 1):
+        m = float(t)  # idealized one land drop per turn
+        for sched_t, _c, M in ramp_schedule:
+            if sched_t < t:
+                m += M
+        for sched_t, c, _M in ramp_schedule:
+            if sched_t == t:
+                m -= c
+        out.append(max(0.0, m))
+    return out
+
+
+def _allocate_count_proportional(
+    m_t: float, t: int, T: int, counts: Dict[int, float]
+) -> Dict[str, Dict[int, float]]:
+    """Split this turn's value mana proportional to remaining counts at each
+    castable CMC. Returns ``{"cast": {c: cards_cast}, "mt": {c: mana_turns}}``.
+
+    Mana-turns: each card cast on turn t contributes ``c * (T - t)`` of
+    post-cast board presence.
+    """
+    castable = {c: n for c, n in counts.items() if c <= m_t and n > 1e-9}
+    if not castable:
+        return {"cast": {}, "mt": {}}
+    total = sum(castable.values())
+    cast: Dict[int, float] = {}
+    mt: Dict[int, float] = {}
+    for c, n in castable.items():
+        share = m_t * n / total
+        cards = min(share / c, n)
+        cast[c] = cards
+        mt[c] = cards * c * max(0, T - t)
+    return {"cast": cast, "mt": mt}
+
+
+def play_to_curve(
+    curve_counts: Dict[int, float],
+    ramp_pieces: List[tuple],
+    T: int,
+) -> Dict[str, Any]:
+    """Simulate play-to-curve and return total mana-turns per CMC.
+
+    Allocation rule is fixed at count-proportional (the §4 sweep showed it
+    sits cleanly between the optimistic top_loaded and the pessimistic
+    curve_shift rules and matches mana_proportional within ~10-20%).
+    """
+    schedule = schedule_ramp(ramp_pieces, T)
+    mana_stream = value_mana_per_turn(schedule, T)
+    counts_remaining: Dict[int, float] = {int(c): float(n) for c, n in curve_counts.items()}
+    mt_per_cmc: Dict[int, float] = {}
+    for t_idx, m_t in enumerate(mana_stream, start=1):
+        if m_t <= 0:
+            continue
+        result = _allocate_count_proportional(m_t, t_idx, T, counts_remaining)
+        for c, mt_c in result["mt"].items():
+            mt_per_cmc[c] = mt_per_cmc.get(c, 0.0) + mt_c
+        for c, n_cast in result["cast"].items():
+            counts_remaining[c] = max(0.0, counts_remaining.get(c, 0.0) - n_cast)
+    return {
+        "mt_per_cmc": mt_per_cmc,
+        "schedule": schedule,
+        "mana_stream": mana_stream,
+    }
+
+
+def _replace_ramp_with_value(
+    curve_counts: Dict[int, float], ramp_pieces: List[tuple]
+) -> Dict[int, float]:
+    """Counterfactual: each ramp piece becomes a same-cost value spell."""
+    out = dict(curve_counts)
+    for cmc, _M in ramp_pieces:
+        out[int(cmc)] = out.get(int(cmc), 0.0) + 1.0
+    return out
+
+
+def _resolve_baseline_cmc(
+    curve_counts: Dict[int, float], preferred: int = BASELINE_CMC
+) -> Optional[int]:
+    """Pick a baseline CMC. Default is preferred (2) when it has slots; else
+    fall back to the smallest CMC with N(c) > 0. Returns None if the deck
+    has no value spells at all (verdict undefined)."""
+    if curve_counts.get(preferred, 0) > 0:
+        return preferred
+    castable = [c for c, n in curve_counts.items() if n > 0]
+    return min(castable) if castable else None
+
+
+def ramp_share_from_mana(land_mana: float, ramp_excess: float) -> float:
+    """Fraction of total mana over T turns that came from ramp (B2 framing).
+
+    Superseded for production by ``loan_size_alpha`` (B3) — kept because
+    earlier callers and tests still consume it.
+    """
+    excess = max(0.0, ramp_excess)
+    total = land_mana + excess
+    return excess / total if total > 0 else 0.0
+
+
+def loan_size_alpha(
+    ramp_specs: List[RampCardSpec],
+    threshold: float = DEFAULT_LOAN_THRESHOLD,
+) -> float:
+    """Legacy: B3 commitment factor from gross loan size. Kept for tests.
+
+    The production verdict uses ``excess_alpha`` instead, because loan-size
+    alpha saturates above ``threshold`` -- cutting ramp from a heavy deck
+    has no visible effect until the loan crosses below the cliff.
+    """
+    if threshold <= 0:
+        return 0.0
+    loan = sum(s.cmc for s in ramp_specs if s.mana_per_turn > 0)
+    return max(0.0, min(1.0, loan / threshold))
+
+
+def idealized_ramp_excess(ramp_specs: List[RampCardSpec], T: int) -> float:
+    """Net mana the deck's ramp produces over T turns, idealized.
+
+    Per piece: ``M * (T - c) - c`` -- mana produced after cast, minus the
+    cost paid on cast turn. Summed across ramp pieces with ``mana_per_turn
+    > 0`` and ``cmc <= T``. Floored at 0 (a deck with net-negative ramp
+    is rare and shouldn't drag alpha below 0).
+
+    Cutting any positive-NPV ramp piece reduces excess monotonically, so
+    excess-derived alpha shrinks on every cut -- the property the
+    median/mean/portfolio-IRR aggregations don't have.
+    """
+    total = 0.0
+    for s in ramp_specs:
+        if s.mana_per_turn <= 0 or s.cmc > T:
+            continue
+        total += s.mana_per_turn * (T - s.cmc) - s.cmc
+    return max(0.0, total)
+
+
+def excess_alpha(
+    ramp_excess: float,
+    k: float = DEFAULT_EXCESS_K,
+) -> float:
+    """Commitment factor from net ramp excess. Smooth, never saturates.
+
+    ``alpha = 1 - exp(-excess / k)``. Cutting any positive-NPV ramp piece
+    reduces excess and therefore alpha; A_eff = 1 + alpha * (A_raw - 1)
+    drops monotonically on any cut. k=30 puts heavy decks near 0.87 and
+    low-ramp decks near 0.35 -- still distinguishable, no cliff.
+    """
+    if k <= 0:
+        return 0.0
+    return 1.0 - math.exp(-max(0.0, ramp_excess) / k)
+
+
+def compute_curve_verdict(
+    curve_counts: Dict[int, float],
+    ramp_specs: List[RampCardSpec],
+    T: int,
+    baseline_cmc: int = BASELINE_CMC,
+    coherence_tolerance: float = 0.10,
+    ramp_share: Optional[float] = None,
+    irr_cap: Optional[float] = None,
+    delta_override: Optional[float] = None,
+) -> Optional[CurveVerdict]:
+    """Combine A (required) and B (implicit) into a per-CMC verdict.
+    Returns None for decks with no value spells.
+
+    Production (Option C): delta is fixed at ``DEFAULT_FIXED_DELTA`` and the
+    commitment factor alpha is derived from the deck's idealized ramp excess
+    via ``excess_alpha``. This makes A_eff monotonic in ramp cuts (every cut
+    reduces excess and therefore alpha).
+
+    Test overrides:
+      - `ramp_share`: pass an explicit alpha to bypass the excess calc.
+      - `delta_override`: pass an explicit delta to bypass the fixed anchor.
+      - `irr_cap`: legacy hook for callers that still want the median-IRR
+        delta path; only consulted when `delta_override` is also None and
+        callers explicitly want delta from per-piece IRR aggregation.
+    """
+    resolved_baseline = _resolve_baseline_cmc(curve_counts, preferred=baseline_cmc)
+    if resolved_baseline is None:
+        return None
+
+    has_ramp = any(s.mana_per_turn > 0 for s in ramp_specs)
+    excess = idealized_ramp_excess(ramp_specs, T)
+    no_ramp = not has_ramp
+
+    if delta_override is not None:
+        delta = delta_override
+    elif no_ramp:
+        delta = 1.0
+    else:
+        delta = DEFAULT_FIXED_DELTA
+
+    # median_irr is preserved on the result for reporting, even though it no
+    # longer drives the verdict math.
+    agg = aggregate_deck_irr(ramp_specs, T, irr_cap=irr_cap)
+    median_r = agg.get("median_irr", float("nan"))
+
+    max_cmc_for_a = max(list(curve_counts.keys()) + [resolved_baseline])
+    a_req = power_mults_option_a(
+        delta, T=T, baseline_cmc=resolved_baseline, max_cmc=max_cmc_for_a
+    )
+
+    # Option B: with-ramp vs. counterfactual play-to-curve.
+    ramp_pieces = [(r.cmc, r.mana_per_turn) for r in ramp_specs if r.mana_per_turn > 0]
+    with_ramp = play_to_curve(curve_counts, ramp_pieces, T)
+    counterfactual = _replace_ramp_with_value(curve_counts, ramp_pieces)
+    no_ramp_run = play_to_curve(counterfactual, [], T)
+
+    mt_with = with_ramp["mt_per_cmc"]
+    mt_no = no_ramp_run["mt_per_cmc"]
+    all_cmcs = sorted(set(mt_with.keys()) | set(mt_no.keys()) | set(curve_counts.keys()))
+    deltas = {c: mt_with.get(c, 0.0) - mt_no.get(c, 0.0) for c in all_cmcs}
+    net_flat = sum(deltas.values())
+    loss = {c: -d for c, d in deltas.items() if d < -1e-9}
+    gain = {c: d for c, d in deltas.items() if d > 1e-9}
+
+    # B_implicit baseline: mana-turns per slot at the baseline CMC under the
+    # with-ramp run. Undefined if the baseline slot has zero mt (which can
+    # happen for a baseline pushed past T by ramp scheduling, but not in
+    # practice for cmc 2). Fall back to a no-comparison row.
+    baseline_n = curve_counts.get(resolved_baseline, 0)
+    base_mt_per_slot = (
+        mt_with.get(resolved_baseline, 0.0) / baseline_n if baseline_n > 0 else 0.0
+    )
+
+    if ramp_share is None:
+        alpha = excess_alpha(excess) if has_ramp else 0.0
+    else:
+        alpha = max(0.0, min(1.0, ramp_share))
+
+    rows: List[CurveVerdictRow] = []
+    for c in sorted(curve_counts.keys()):
+        n = curve_counts[c]
+        if n <= 0:
+            continue
+        mt_per_slot = mt_with.get(c, 0.0) / n
+        a_raw = a_req.get(c, float("nan"))
+        a_val = (
+            1.0 + alpha * (a_raw - 1.0)
+            if not (math.isnan(a_raw) or math.isinf(a_raw))
+            else a_raw
+        )
+
+        if base_mt_per_slot > 0 and mt_per_slot > 0:
+            b_imp = base_mt_per_slot / mt_per_slot
+        else:
+            b_imp = None
+
+        if c == resolved_baseline:
+            kind = "baseline"
+            gap_v = None
+            slack_v = None
+        elif c < resolved_baseline:
+            kind = "below_baseline"
+            gap_v = None
+            slack_v = None
+        elif math.isnan(a_val) or math.isinf(a_val):
+            # c >= T -> duration term is 0 -> A_raw blows up. The slot is
+            # structurally uncastable in the modeled game length; tag it as
+            # no_slots rather than ramp_over_aggressive with an inf gap.
+            kind = "no_slots"
+            gap_v = None
+            slack_v = None
+        elif b_imp is None:
+            kind = "no_slots"
+            gap_v = None
+            slack_v = None
+        else:
+            ratio = a_val / b_imp if b_imp > 0 else float("inf")
+            if abs(ratio - 1.0) <= coherence_tolerance:
+                kind = "coherent"
+                gap_v = None
+                slack_v = None
+            elif b_imp < a_val:
+                kind = "ramp_over_aggressive"
+                gap_v = ratio
+                slack_v = None
+            else:
+                kind = "over_allocated"
+                gap_v = None
+                slack_v = b_imp / a_val
+
+        rows.append(CurveVerdictRow(
+            cmc=c, n_cards=float(n), mt_per_slot=mt_per_slot,
+            a_required=a_val, b_implicit=b_imp,
+            kind=kind, gap=gap_v, slack=slack_v,
+        ))
+
+    loan = float(sum(s.cmc for s in ramp_specs if s.mana_per_turn > 0))
+
+    return CurveVerdict(
+        delta=delta,
+        median_irr=median_r,
+        baseline_cmc=resolved_baseline,
+        no_ramp=no_ramp,
+        T=T,
+        net_flat=net_flat,
+        ramp_share=alpha,
+        loan_size=loan,
+        idealized_excess=excess,
+        loss_breakdown=loss,
+        gain_breakdown=gain,
+        rows=rows,
     )
 
 
@@ -550,6 +1016,16 @@ def compute_curve_value(
         T=turns,
         max_cmc=max_cmc,
         baseline_cmc=BASELINE_CMC,
+        irr_cap=DEFAULT_IRR_CAP,
+    )
+
+    # Production verdict (Option C): fixed delta + excess-based alpha. The
+    # verdict computes alpha internally when `ramp_share` is None.
+    curve_verdict = compute_curve_verdict(
+        curve_counts={int(c): float(n) for c, n in cls["V_curve"].items()},
+        ramp_specs=cls["ramp_specs"],
+        T=turns,
+        baseline_cmc=BASELINE_CMC,
     )
 
     return CurveValueResult(
@@ -557,4 +1033,5 @@ def compute_curve_value(
         deck_size_effective=cls["D"],
         implied_draw=implied_draw,
         implied_spell_value=implied_spell_value,
+        curve_verdict=curve_verdict,
     )

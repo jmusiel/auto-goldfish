@@ -47,7 +47,7 @@ from auto_goldfish.metrics.reporter import result_to_dict
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE_ROOT = os.path.join(PROJECT_ROOT, "decks")
-STAT_KEYS = ["consistency", "acceleration", "snowball", "toughness", "efficiency", "reach"]
+STAT_KEYS = ["consistency", "acceleration", "snowball", "tuning", "efficiency", "reach"]
 
 
 @dataclass
@@ -133,7 +133,7 @@ def _print_anchor_diff(default, calibrated) -> None:
     print(_fmt_anchor("snowball_late_avg_norm",
                       default.snowball_late_avg_norm,
                       calibrated.snowball_late_avg_norm))
-    print(_fmt_anchor("toughness", default.toughness, calibrated.toughness))
+    print(_fmt_anchor("tuning", default.tuning, calibrated.tuning))
     print(_fmt_anchor("efficiency", default.efficiency, calibrated.efficiency))
     print(_fmt_anchor("reach_norm", default.reach_norm, calibrated.reach_norm))
 

@@ -51,7 +51,7 @@ _STAT_TO_RAW_COL = {
     "consistency": "raw_consistency",
     "acceleration": "raw_acceleration",
     "snowball_ratio": "raw_snowball",
-    "toughness": "raw_toughness",
+    "tuning": "raw_tuning",
     "efficiency": "raw_efficiency",
     "reach_norm": "raw_reach",
 }
@@ -147,7 +147,7 @@ def compute_anchors_from_db(
         acceleration=fields["acceleration"],
         snowball_ratio=fields["snowball_ratio"],
         snowball_late_avg_norm=defaults.snowball_late_avg_norm,
-        toughness=fields["toughness"],
+        tuning=fields["tuning"],
         efficiency=fields["efficiency"],
         reach_norm=fields["reach_norm"],
     )
@@ -239,7 +239,7 @@ _STAT_FIELDS = (
     "acceleration",
     "snowball_ratio",
     "snowball_late_avg_norm",
-    "toughness",
+    "tuning",
     "efficiency",
     "reach_norm",
 )

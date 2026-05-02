@@ -53,7 +53,7 @@ def test_runs_page_calibration_badge_on_when_enabled(client, monkeypatch):
         "acceleration": (3.0, 11.0),
         "snowball_ratio": (1.0, 3.5),
         "snowball_late_avg_norm": (1.0, 8.0),
-        "toughness": (0.6, 1.0),
+        "tuning": (0.6, 1.0),
         "efficiency": (0.2, 0.8),
         "reach_norm": (15.0, 45.0),
     })()
@@ -90,7 +90,7 @@ def test_runs_api_exposes_anchor_pairs(client, monkeypatch):
         "acceleration": (3.5, 11.3),
         "snowball_ratio": (1.0, 3.5),
         "snowball_late_avg_norm": (1.0, 8.0),
-        "toughness": (0.6, 1.0),
+        "tuning": (0.6, 1.0),
         "efficiency": (0.2, 0.8),
         "reach_norm": (15.0, 45.0),
     })()
@@ -129,7 +129,7 @@ def test_load_caster_calibration_returns_default_when_disabled(monkeypatch):
     # All six CASTER fields + the secondary snowball field are present
     assert set(by_name) == {
         "consistency", "acceleration", "snowball_ratio",
-        "snowball_late_avg_norm", "toughness", "efficiency", "reach_norm",
+        "snowball_late_avg_norm", "tuning", "efficiency", "reach_norm",
     }
 
 
@@ -141,7 +141,7 @@ def test_load_caster_calibration_uses_live_meta_when_enabled(monkeypatch):
         "acceleration": (2.0, 10.0),
         "snowball_ratio": (1.0, 3.5),
         "snowball_late_avg_norm": (1.0, 8.0),
-        "toughness": (0.6, 1.0),
+        "tuning": (0.6, 1.0),
         "efficiency": (0.2, 0.8),
         "reach_norm": (15.0, 45.0),
     })()

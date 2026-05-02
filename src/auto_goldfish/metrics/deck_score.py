@@ -8,10 +8,13 @@ profile:
 - **Snowball**: How much advantage compounds over time -- the late-game
   mana curve climbs steeply relative to the early game and lands on a
   high plateau.
-- **Toughness**: Structural redundancy of the decklist (mana sources,
-  card draw, low-cost plays, and a controlled curve). A deck with broad
-  redundancy can absorb a missing piece without falling apart.
-- **Efficiency**: How well the deck uses available mana each turn.
+- **Tuning**: How well the deck's curve composition matches what its
+  ramp's pace demands per CMC slot. Derived from ``compute_curve_verdict``:
+  the share of value-pool slots tagged anything other than
+  ``ramp_over_aggressive`` (i.e. slots where A_required is at or below
+  B_implicit, so the ramp is paying for top-end the deck can leverage).
+- **Efficiency**: Whether the deck draws enough cards to spend the mana
+  it generates. Derived from Implied Draw: ``1 - actual_deficit / N_max``.
 - **Reach**: Peak mana output and ceiling performance.
 
 The 1--10 mapping for each stat is governed by a :class:`StatAnchors`
@@ -23,9 +26,10 @@ or ``score_from_raw`` to override (e.g. for on-the-fly DB calibration).
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 from auto_goldfish.engine.goldfisher import SimulationResult
+from auto_goldfish.optimization.curve_value import CurveValueResult
 
 
 @dataclass(frozen=True)
@@ -38,15 +42,17 @@ class StatAnchors:
     ``turns / 10``) so a single set of anchors works across game lengths.
 
     Defaults derive from a 76-deck Archidekt calibration pool (see
-    ``scripts/calibrate_stat_ranges.py``).
+    ``scripts/calibrate_stat_ranges.py``). The ``tuning`` and
+    ``efficiency`` defaults are starting points for the curve-verdict-
+    based formulas and will be refined by the next calibration pass.
     """
 
     consistency: Tuple[float, float] = (0.0, 1.0)
     acceleration: Tuple[float, float] = (1.0, 14.0)
     snowball_ratio: Tuple[float, float] = (0.5, 4.0)
     snowball_late_avg_norm: Tuple[float, float] = (1.0, 8.0)
-    toughness: Tuple[float, float] = (0.55, 1.00)
-    efficiency: Tuple[float, float] = (0.0, 1.0)
+    tuning: Tuple[float, float] = (0.50, 1.00)
+    efficiency: Tuple[float, float] = (0.30, 1.00)
     reach_norm: Tuple[float, float] = (5.0, 45.0)
 
 
@@ -68,7 +74,7 @@ class DeckRawStats:
     consistency: float
     acceleration: float
     snowball: float                # late/early acceleration ratio
-    toughness: float
+    tuning: float
     efficiency: float
     reach: float                   # turn-factor-normalized
     snowball_late_avg_norm: float  # turn-factor-normalized late-game avg
@@ -86,7 +92,7 @@ class DeckRawStats:
             "consistency": self.consistency,
             "acceleration": self.acceleration,
             "snowball": self.snowball,
-            "toughness": self.toughness,
+            "tuning": self.tuning,
             "efficiency": self.efficiency,
             "reach": self.reach,
             "snowball_late_avg_norm": self.snowball_late_avg_norm,
@@ -100,7 +106,7 @@ class DeckScore:
     consistency: int
     acceleration: int
     snowball: int
-    toughness: int
+    tuning: int
     efficiency: int
     reach: int
 
@@ -109,7 +115,7 @@ class DeckScore:
             "consistency": self.consistency,
             "acceleration": self.acceleration,
             "snowball": self.snowball,
-            "toughness": self.toughness,
+            "tuning": self.tuning,
             "efficiency": self.efficiency,
             "reach": self.reach,
         }
@@ -149,13 +155,25 @@ def compute_deck_score(
     result: SimulationResult,
     turns: int = 10,
     anchors: StatAnchors = DEFAULT_ANCHORS,
+    curve_value: Optional[CurveValueResult] = None,
 ) -> DeckScore:
-    """Derive a :class:`DeckScore` from simulation results."""
-    raw = compute_raw_stats(result, turns)
+    """Derive a :class:`DeckScore` from simulation results.
+
+    ``curve_value`` is the analytical curve-verdict + implied-draw bundle
+    from :func:`auto_goldfish.optimization.curve_value.compute_curve_value`.
+    Tuning and Efficiency need it to compute their raw values; if it's
+    ``None`` (or missing the relevant fields) those axes degrade to a
+    neutral 0.5 raw -> score 5.
+    """
+    raw = compute_raw_stats(result, turns, curve_value=curve_value)
     return score_from_raw(raw, anchors)
 
 
-def compute_raw_stats(result: SimulationResult, turns: int = 10) -> DeckRawStats:
+def compute_raw_stats(
+    result: SimulationResult,
+    turns: int = 10,
+    curve_value: Optional[CurveValueResult] = None,
+) -> DeckRawStats:
     """Compute the six raw composite values that feed the 1--10 scaling.
 
     Independent of any anchor choice -- callers can later apply different
@@ -166,8 +184,8 @@ def compute_raw_stats(result: SimulationResult, turns: int = 10) -> DeckRawStats
         acceleration=_raw_acceleration(result, turns),
         snowball=_raw_snowball_ratio(result),
         snowball_late_avg_norm=_raw_snowball_late_avg_norm(result, turns),
-        toughness=_raw_toughness(result),
-        efficiency=_raw_efficiency(result, turns),
+        tuning=_raw_tuning(curve_value),
+        efficiency=_raw_efficiency(curve_value),
         reach=_raw_reach_norm(result, turns),
     )
 
@@ -185,7 +203,7 @@ def score_from_raw(raw: DeckRawStats, anchors: StatAnchors = DEFAULT_ANCHORS) ->
         consistency=_scale(raw.consistency, *anchors.consistency),
         acceleration=_scale(raw.acceleration, *anchors.acceleration),
         snowball=snowball,
-        toughness=_scale(raw.toughness, *anchors.toughness),
+        tuning=_scale(raw.tuning, *anchors.tuning),
         efficiency=_scale(raw.efficiency, *anchors.efficiency),
         reach=_scale(raw.reach, *anchors.reach_norm),
     )
@@ -244,25 +262,48 @@ def _raw_snowball_late_avg_norm(result: SimulationResult, turns: int) -> float:
     return float(late_avg / turn_factor) if turn_factor > 0 else float(late_avg)
 
 
-def _raw_toughness(result: SimulationResult) -> float:
-    """Structural-redundancy composite of the decklist."""
-    mana_norm = min(result.mana_source_count / 45.0, 1.0)
-    draw_norm = min(result.draw_count / 15.0, 1.0)
-    early_norm = min(result.early_count / 30.0, 1.0)
-    curve_norm = max(0.0, 1.0 - max(0.0, result.avg_cmc - 3.0) / 3.0)
-    return 0.4 * mana_norm + 0.3 * draw_norm + 0.2 * early_norm + 0.1 * curve_norm
+def _raw_tuning(curve_value: Optional[CurveValueResult]) -> float:
+    """Coherence fraction of the deck's value-pool slots.
+
+    Uses the curve verdict's per-CMC kind tags. Slots tagged
+    ``ramp_over_aggressive`` (B_implicit < A_required by more than the
+    coherence tolerance) are the ones penalizing the score; everything
+    else (coherent / over_allocated / baseline / below_baseline) counts
+    as "the curve is keeping up with what the ramp demands."
+
+    Returns 0.5 (neutral) when ``curve_value`` or its verdict is
+    unavailable -- e.g. for decks with no value spells, or when the
+    upstream pipeline didn't compute the verdict.
+    """
+    if curve_value is None or curve_value.curve_verdict is None:
+        return 0.5
+    rows = curve_value.curve_verdict.rows
+    if not rows:
+        return 0.5
+    total_n = sum(r.n_cards for r in rows)
+    if total_n <= 0:
+        return 0.5
+    bad_n = sum(r.n_cards for r in rows if r.kind == "ramp_over_aggressive")
+    return max(0.0, min(1.0, 1.0 - bad_n / total_n))
 
 
-def _raw_efficiency(result: SimulationResult, turns: int) -> float:
-    """Composite of mana utilization and avoided mid-game stalls."""
-    land_count = result.mean_lands
-    theoretical_max = sum(min(i + 1, land_count) for i in range(turns))
-    if theoretical_max <= 0:
-        return 0.0
-    utilization = min(result.mean_mana / theoretical_max, 1.0)
-    max_mid = max(turns * 0.7, 1)
-    mid_score = max(0.0, 1.0 - result.mean_mid_turns / max_mid)
-    return 0.6 * utilization + 0.4 * mid_score
+def _raw_efficiency(curve_value: Optional[CurveValueResult]) -> float:
+    """Draw-alignment ratio: ``1 - actual_deficit / N_max``.
+
+    Closed-form analytical version of the old "did you spend your mana"
+    heuristic. ``actual_deficit`` is how short the MC-measured mean
+    cumulative draws fall of the analytical card-required total at the
+    last turn; dividing by ``N_max`` normalizes it to a 0-1 ratio.
+
+    Returns 0.5 (neutral) when ``curve_value`` is unavailable or the MC
+    didn't produce a draw measurement (``actual_deficit`` is ``None``).
+    """
+    if curve_value is None or curve_value.implied_draw is None:
+        return 0.5
+    id_ = curve_value.implied_draw
+    if id_.actual_deficit is None or id_.N_max is None or id_.N_max <= 0:
+        return 0.5
+    return max(0.0, min(1.0, 1.0 - id_.actual_deficit / id_.N_max))
 
 
 def _raw_reach_norm(result: SimulationResult, turns: int) -> float:
@@ -306,16 +347,12 @@ def _compute_snowball(result: SimulationResult, turns: int) -> int:
     return _clamp(0.5 * accel_score + 0.5 * late_power)
 
 
-def _compute_toughness(result: SimulationResult) -> int:
-    return _scale(_raw_toughness(result), *DEFAULT_ANCHORS.toughness)
+def _compute_tuning(curve_value: Optional[CurveValueResult]) -> int:
+    return _scale(_raw_tuning(curve_value), *DEFAULT_ANCHORS.tuning)
 
 
-def _compute_efficiency(result: SimulationResult, turns: int) -> int:
-    land_count = result.mean_lands
-    theoretical_max = sum(min(i + 1, land_count) for i in range(turns))
-    if theoretical_max <= 0:
-        return 1
-    return _scale(_raw_efficiency(result, turns), *DEFAULT_ANCHORS.efficiency)
+def _compute_efficiency(curve_value: Optional[CurveValueResult]) -> int:
+    return _scale(_raw_efficiency(curve_value), *DEFAULT_ANCHORS.efficiency)
 
 
 def _compute_reach(result: SimulationResult, turns: int) -> int:

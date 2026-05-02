@@ -17,12 +17,12 @@
     ('Snowball', '#8b5cf6', 'How much advantage compounds over time',
      'late game stays flat — the deck does not pull away from its early curve.',
      'late turns dwarf the early game; the deck snowballs hard once it gets going.'),
-    ('Toughness', '#22c55e', 'Structural redundancy of the decklist',
-     'thin/fragile decklist — few mana sources, little draw, or a heavy curve.',
-     'deep redundancy: lots of mana sources, draw, low-cost plays, and a controlled curve.'),
-    ('Efficiency', '#3b82f6', 'Mana utilization per turn',
-     'mana left unused — frequent mid-game stall turns.',
-     'nearly every turn fully utilized; very few wasted mana points.'),
+    ('Tuning', '#22c55e', 'How well the curve composition matches the ramp\'s pace per CMC',
+     'ramp pace is paying for high-CMC slots the deck does not have enough of — most slots are tagged ramp-over-aggressive in the curve verdict.',
+     'every CMC slot delivers what the ramp is paying for — curve and ramp are in sync.'),
+    ('Efficiency', '#3b82f6', 'Whether the deck draws enough cards to spend its mana',
+     'draw rate falls short of the analytical card-required total — much of the mana the deck generates goes unspent.',
+     'draw rate keeps up with mana production; nearly all generated mana gets spent.'),
     ('Reach', '#f97316', 'Peak mana output and ceiling',
      'low ceiling — even the best games never spend that much mana.',
      'explosive peak turns; the top 25% of games spend a huge amount of mana.'),
@@ -75,8 +75,8 @@
             ('Consistency', 'consistency', '#eab308', 'How rarely the deck bricks'),
             ('Acceleration', 'acceleration', '#ef4444', 'Early-game mana deployment'),
             ('Snowball', 'snowball', '#8b5cf6', 'How much advantage compounds over time'),
-            ('Toughness', 'toughness', '#22c55e', 'Structural redundancy of the decklist'),
-            ('Efficiency', 'efficiency', '#3b82f6', 'Mana utilization per turn'),
+            ('Tuning', 'tuning', '#22c55e', 'How well the curve composition matches the ramp\'s pace per CMC'),
+            ('Efficiency', 'efficiency', '#3b82f6', 'Whether the deck draws enough cards to spend its mana'),
             ('Reach', 'reach', '#f97316', 'Peak mana output and ceiling'),
         ] %}
         {% for name, key, color, desc in stat_defs %}
@@ -117,9 +117,15 @@
         </ul>
         <p>The orange line is the cards your deck actually drew on average across the simulation; the dashed grey line is the natural draw rate (no draw spells). The deficit at the rightmost turn is the gap from the top of the stack to the orange line.</p>
         <p>The table under the chart shows the per-turn breakdown explicitly &mdash; it's ground truth, useful for sanity-checking the visualization.</p>
-        <p><strong>Implied Spell Value</strong> &mdash; treats your ramp package like a loan: each ramp piece pays its cost up front and returns mana over the rest of the game. The median per-turn IRR across your ramp pieces gives the deck's revealed time-preference (&delta;). From &delta; we derive how much intrinsically more powerful a c-cost spell needs to be relative to a 2-drop to justify its slot. Higher implied IRR means high-CMC slots have a higher bar.</p>
-        {% if isv.no_ramp %}
-        <p><em>This deck has no permanent ramp, so we fall back to &delta;=1.0 (no time preference). The multipliers reflect per-slot mana efficiency only &mdash; high-CMC spells need less intrinsic power per slot because they spend more mana per slot.</em></p>
+        <p><strong>Implied Spell Value</strong> compares two views of each CMC slot:</p>
+        <ul>
+            <li><strong>A &mdash; Required:</strong> the bar each c-drop must clear. Set by how much extra mana your ramp produces over the game (each piece contributes M&times;remaining&nbsp;turns&nbsp;&minus;&nbsp;cost). More excess = stronger bar. Cutting any ramp piece always softens the bar.</li>
+            <li><strong>B &mdash; Deck implies:</strong> what your curve actually delivers per slot, simulated play-to-curve. Compared to the baseline slot.</li>
+        </ul>
+        <p>When A and B agree, the row is <strong>coherent</strong>. When B &lt; A, the row is <strong>ramp over-aggressive</strong> &mdash; your slot delivers less than the bar; soften the bar by cutting ramp. When B &gt; A, the row has <strong>slack</strong> &mdash; you can use weaker cards there.</p>
+        <p>The headline badge is <em>net mana-turns at flat power</em>: positive means ramp pays for itself even before any high-CMC payoff; negative means high-CMC slots must compensate.</p>
+        {% if verdict and verdict.no_ramp %}
+        <p><em>No permanent ramp, so the bar collapses to 1&times; everywhere &mdash; A is just measuring per-slot mana efficiency.</em></p>
         {% endif %}
     </div>
 </details>
@@ -187,43 +193,91 @@
 
     <div class="curve-value-power">
         <h3>Implied Spell Value</h3>
-        {% if isv.no_ramp %}
-            <p class="cv-rate-line">No ramp investment &rarr; &delta; = 1.00 (per-slot efficiency baseline)</p>
-        {% else %}
-            <p class="cv-rate-line">
-                Median ramp IRR: <strong>{{ "%.0f%%"|format(isv.median_irr * 100) }}/turn</strong>
-                &nbsp;&middot;&nbsp; &delta; = <strong>{{ "%.2f"|format(isv.delta) }}</strong>
-            </p>
-        {% endif %}
-        <table class="cv-power-table">
-            <thead>
-                <tr>
-                    <th>CMC</th>
-                    <th>Required power vs. 2-drop</th>
-                    <th>Multiplier</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% set max_mult = isv.power_multipliers.values()|map('float')|max %}
-                {% set scale_max = [max_mult, 2.0]|max %}
-                {% for cmc, mult in isv.power_multipliers.items()|sort %}
-                {% set is_baseline = cmc == 2 %}
-                {% set width_pct = (mult / scale_max * 100)|round(1) %}
-                <tr class="{{ 'cv-row-baseline' if is_baseline }}">
-                    <td>{{ cmc }}</td>
-                    <td>
-                        <div class="cv-power-bar-track">
-                            <div class="cv-power-bar-fill" style="width:{{ width_pct }}%; background:{{ '#94a3b8' if is_baseline else '#3b82f6' }}"></div>
-                        </div>
-                    </td>
-                    <td>{{ "%.2f"|format(mult) }}&times;</td>
-                </tr>
+        {% set verdict = cv.curve_verdict %}
+        {% if verdict %}
+            {% set baseline = verdict.baseline_cmc %}
+            {% if verdict.no_ramp %}
+                <p class="cv-rate-line">No permanent ramp &mdash; bar collapses to 1&times; everywhere</p>
+            {% else %}
+                <p class="cv-rate-line">
+                    Ramp produces <strong>+{{ "%.0f"|format(verdict.idealized_excess) }} mana</strong> over the game
+                    &nbsp;&middot;&nbsp; bar at <strong>{{ "%.0f%%"|format(verdict.ramp_share * 100) }}</strong> strength
+                </p>
+            {% endif %}
+            {% set net_pos = verdict.net_flat > 0.5 %}
+            {% set net_neg = verdict.net_flat < -0.5 %}
+            <div class="cv-net-badge cv-net-{{ 'pos' if net_pos else ('neg' if net_neg else 'flat') }}">
+                {% if net_pos %}
+                    &check; Ramp is net-positive at flat power: <strong>+{{ "%.0f"|format(verdict.net_flat) }} mana-turns</strong>.
+                    Per-CMC gaps below show where extra power is still required.
+                {% elif net_neg %}
+                    &#9888; Ramp loses <strong>{{ "%.0f"|format(verdict.net_flat|abs) }} mana-turns</strong> at flat power; the gaps below show which slots must compensate.
+                {% else %}
+                    Ramp is roughly self-paying at flat power (net &asymp; 0 mana-turns).
+                {% endif %}
+            </div>
+            <div class="curve-value-power-chart-wrap">
+                <canvas id="curveValuePowerChart"></canvas>
+            </div>
+            <table class="cv-power-table">
+                <thead>
+                    <tr>
+                        <th>CMC</th>
+                        <th>Cards</th>
+                        <th>A &mdash; Required</th>
+                        <th>B &mdash; Deck implies</th>
+                        <th>Reading</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in verdict.rows %}
+                    {% set kind_class = 'cv-row-' + row.kind|replace('_', '-') %}
+                    <tr class="{{ kind_class }}">
+                        <td>{{ row.cmc }}</td>
+                        <td>{{ row.n_cards|round|int }}</td>
+                        <td>
+                            {% if row.a_required is not none %}
+                                {{ "%.2f"|format(row.a_required) }}&times;
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if row.b_implicit is not none %}
+                                {{ "%.2f"|format(row.b_implicit) }}&times;
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td class="cv-reading-cell">
+                            {% if row.kind == 'baseline' %}
+                                <span class="cv-tag cv-tag-base">baseline</span>
+                            {% elif row.kind == 'below_baseline' %}
+                                <span class="cv-tag cv-tag-base">below baseline</span>
+                            {% elif row.kind == 'coherent' %}
+                                <span class="cv-tag cv-tag-ok">&check; coherent</span>
+                                <small class="cv-action">Your {{ row.cmc }}-drops match the bar.</small>
+                            {% elif row.kind == 'ramp_over_aggressive' %}
+                                <span class="cv-tag cv-tag-warn">&#9888; gap {{ "%.1f"|format(row.gap) }}&times;</span>
+                                <small class="cv-action">Your {{ row.cmc }}-drops are {{ "%.1f"|format(row.gap) }}&times; short. Cut a ramp piece to soften the bar &mdash; any cut helps; cutting fast ramp like Sol Ring helps most.</small>
+                            {% elif row.kind == 'over_allocated' %}
+                                <span class="cv-tag cv-tag-slack">&check; slack {{ "%.2f"|format(row.slack) }}&times;</span>
+                                <small class="cv-action">Your {{ row.cmc }}-drops have slack &mdash; these slots can be weaker without hurting coherence.</small>
+                            {% elif row.kind == 'no_slots' %}
+                                <span class="cv-tag cv-tag-base">no slots</span>
+                            {% endif %}
+                        </td>
+                    </tr>
                 {% endfor %}
-            </tbody>
-        </table>
-        <p class="cv-hint">
-            A 6-drop with multiplier <strong>{{ "%.2f"|format(isv.power_multipliers.get(6, 1.0)) }}&times;</strong> means: for this deck's ramp choices to be coherent, each 6-drop needs to be at least that intrinsically more impactful than a 2-drop.
-        </p>
+                </tbody>
+            </table>
+            <p class="cv-hint">
+                <strong>A</strong> = the bar your ramp sets. <strong>B</strong> = what your curve delivers.
+                When B falls short of A, cutting ramp softens the bar; when B exceeds A, you have slack to use weaker cards.
+            </p>
+        {% else %}
+            <p class="cv-hint">No value spells in deck &mdash; verdict undefined.</p>
+        {% endif %}
     </div>
 </div>
 </div>
@@ -670,10 +724,10 @@
                 new Chart(scoreCanvas, {
                     type: 'radar',
                     data: {
-                        labels: ['Consistency', 'Acceleration', 'Snowball', 'Toughness', 'Efficiency', 'Reach'],
+                        labels: ['Consistency', 'Acceleration', 'Snowball', 'Tuning', 'Efficiency', 'Reach'],
                         datasets: [{
                             label: 'CASTER Score',
-                            data: [ds.consistency, ds.acceleration, ds.snowball, ds.toughness, ds.efficiency, ds.reach],
+                            data: [ds.consistency, ds.acceleration, ds.snowball, ds.tuning, ds.efficiency, ds.reach],
                             backgroundColor: 'rgba(59, 130, 246, 0.2)',
                             borderColor: '#3b82f6',
                             borderWidth: 2,
@@ -699,6 +753,8 @@
 
             // Curve value: implied draw vs. actual draw line chart
             renderCurveValueDrawChart(data);
+            // Curve value: A_required vs. B_implicit grouped bar chart
+            renderCurveValuePowerChart(data);
 
             // Replay viewer
             initReplayViewer(data);
@@ -836,6 +892,119 @@
                     y: { title: { display: true, text: 'Cumulative cards' }, beginAtZero: true, stacked: true }
                 }
             }
+        });
+    }
+
+    function renderCurveValuePowerChart(data) {
+        const canvas = document.getElementById('curveValuePowerChart');
+        if (!canvas || !data || data.length === 0) return;
+        const cv = data[data.length - 1].curve_value;
+        if (!cv || !cv.curve_verdict) return;
+        const verdict = cv.curve_verdict;
+        const rows = (verdict.rows || []).filter(function(r) { return r.cmc != null; });
+        if (rows.length === 0) return;
+
+        const labels = rows.map(function(r) { return 'c=' + r.cmc; });
+        const aVals = rows.map(function(r) {
+            const v = r.a_required;
+            return (v == null || !isFinite(v)) ? null : v;
+        });
+        const bVals = rows.map(function(r) {
+            const v = r.b_implicit;
+            return (v == null || !isFinite(v)) ? null : v;
+        });
+
+        // Per-bar gap labels: only annotate ramp_over_aggressive rows.
+        const gapLabels = rows.map(function(r) {
+            return (r.kind === 'ramp_over_aggressive' && r.gap != null) ? ('gap ' + r.gap.toFixed(1) + '×') : '';
+        });
+
+        const existing = Chart.getChart('curveValuePowerChart');
+        if (existing) existing.destroy();
+
+        const gapLabelPlugin = {
+            id: 'gapLabelPlugin',
+            afterDatasetsDraw: function(chart) {
+                const ctx = chart.ctx;
+                const meta0 = chart.getDatasetMeta(0);
+                const meta1 = chart.getDatasetMeta(1);
+                ctx.save();
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillStyle = '#dc2626';
+                ctx.textAlign = 'center';
+                for (let i = 0; i < gapLabels.length; i++) {
+                    const lbl = gapLabels[i];
+                    if (!lbl) continue;
+                    const a = meta0.data[i];
+                    const b = meta1.data[i];
+                    if (!a || !b) continue;
+                    const x = (a.x + b.x) / 2;
+                    const y = Math.min(a.y, b.y) - 6;
+                    ctx.fillText(lbl, x, y);
+                }
+                ctx.restore();
+            }
+        };
+
+        new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'A — required (your ramp\'s pace)',
+                        data: aVals,
+                        backgroundColor: '#3b82f6',
+                        borderColor: '#1d4ed8',
+                        borderWidth: 1,
+                    },
+                    {
+                        label: 'B — what your deck implies',
+                        data: bVals,
+                        backgroundColor: '#f59e0b',
+                        borderColor: '#b45309',
+                        borderWidth: 1,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Required (A) vs. Deck-implied (B) intrinsic-power multiplier per CMC',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            footer: function(items) {
+                                const idx = items[0] ? items[0].dataIndex : 0;
+                                const r = rows[idx];
+                                if (!r) return '';
+                                if (r.kind === 'coherent') return '✓ coherent';
+                                if (r.kind === 'ramp_over_aggressive' && r.gap != null) {
+                                    return '⚠ ramp over-aggressive (gap ' + r.gap.toFixed(2) + '×)';
+                                }
+                                if (r.kind === 'over_allocated' && r.slack != null) {
+                                    return '✓ over-allocated (slack ' + r.slack.toFixed(2) + '×)';
+                                }
+                                if (r.kind === 'baseline') return 'baseline';
+                                if (r.kind === 'below_baseline') return 'below baseline';
+                                return '';
+                            },
+                        },
+                    },
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Spell CMC' } },
+                    y: {
+                        title: { display: true, text: 'Multiplier vs. ' + verdict.baseline_cmc + '-drop' },
+                        beginAtZero: true,
+                    },
+                },
+            },
+            plugins: [gapLabelPlugin],
         });
     }
 
