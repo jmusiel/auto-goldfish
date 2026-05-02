@@ -1675,7 +1675,10 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
             const resp = await fetch(WHEEL_META_URL);
             if (!resp.ok) throw new Error('Wheel not found');
             const meta = await resp.json();
-            resolvedWheelUrl = window.location.origin + WHEEL_META_URL + '/' + meta.filename;
+            // Append mtime as a cache-busting query param so the browser
+            // re-downloads the wheel after every Python rebuild.
+            const cacheBust = meta.mtime ? ('?v=' + meta.mtime) : '';
+            resolvedWheelUrl = window.location.origin + WHEEL_META_URL + '/' + meta.filename + cacheBust;
         } catch (err) {
             jobStatus.innerHTML = '<div class="job-status error"><p>Error: Could not find simulation wheel. Run <code>uv build --wheel</code> first.</p></div>';
             setStickyStatus('Error: simulation wheel not found.', 'error');
@@ -1777,9 +1780,17 @@ const DECK_NAME_FOR_ANNOTATE = {{ deck_name | tojson }};
         } else if (msg.type === 'result') {
             jobStatus.innerHTML = '';
             localResults.innerHTML = '';
-            ClientResults.render(localResults, msg.data, DECK_NAME);
+            try {
+                ClientResults.render(localResults, msg.data, DECK_NAME);
+                setStickyStatusTransient('Done — results below.', 'done', 5000);
+            } catch (e) {
+                console.error('[simulate] render threw:', e);
+                localResults.innerHTML = '<div style="color:red;border:1px solid red;padding:1rem">'
+                    + '<strong>Render failed:</strong> ' + (e.message || e)
+                    + '<pre style="font-size:0.85rem">' + (e.stack || '') + '</pre></div>';
+                setStickyStatus('Error: render failed', 'error');
+            }
             setSimRunning(false);
-            setStickyStatusTransient('Done — results below.', 'done', 5000);
             // Update leaderboard for local decks
             if (IS_LOCAL_DECK && lastConfig) {
                 var storedDeck = DeckStore.getDeck(DECK_NAME);

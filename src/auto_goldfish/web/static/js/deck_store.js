@@ -232,6 +232,15 @@ var Leaderboard = {
 /**
  * Navigate to the simulation page for a local deck.
  * POSTs deck data as JSON, replaces the page with the response.
+ *
+ * NOTE: document.write() re-executes every <script src=...> tag in the new
+ * HTML in the same JS context. Top-level modules declared with `const` will
+ * throw "Identifier 'X' has already been declared" on the second run and
+ * abort the rest of document.write processing, silently breaking the
+ * destination page. New top-level JS modules MUST use the
+ * `var Foo = window.Foo || (...)` idempotent guard pattern -- see
+ * `client_results.js` and the "Adding a new top-level JS module" section in
+ * web/README.md.
  */
 async function navigateToSim(deckName) {
     var deck = DeckStore.getDeck(deckName);
@@ -250,6 +259,8 @@ async function navigateToSim(deckName) {
 /**
  * Navigate to the mana model page for a local deck.
  * POSTs deck data as JSON, replaces the page with the response.
+ *
+ * Same document.write() re-execution caveat as navigateToSim() above.
  */
 async function navigateToManaModel(deckName) {
     var deck = DeckStore.getDeck(deckName);

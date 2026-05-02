@@ -32,7 +32,12 @@ async function initPyodide(wheelUrl) {
         const resp = await fetch(wheelUrl);
         if (!resp.ok) throw new Error("Failed to download wheel: " + resp.status);
         const wheelBytes = new Uint8Array(await resp.arrayBuffer());
-        const wheelFilename = wheelUrl.split("/").pop();
+        // The wheel URL carries a `?v=<mtime>` cache-busting query string
+        // (see `simulation.py::api_wheel`). Strip it before writing the file
+        // to Pyodide's in-memory FS so micropip sees a clean `.whl` name --
+        // micropip uses the extension to decide it's a wheel rather than
+        // a package name to fetch from PyPI.
+        const wheelFilename = wheelUrl.split("/").pop().split("?")[0];
         pyodide.FS.writeFile("/" + wheelFilename, wheelBytes);
 
         postMessage({type: "init_progress", message: "Installing simulation engine..."});

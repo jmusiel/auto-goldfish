@@ -7,12 +7,12 @@
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
     <link rel="icon" href="{{ url_for('static', filename='icon-192.png') }}" type="image/png">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ static_url('style.css') }}">
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-    <script src="{{ url_for('static', filename='js/client_results.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/deck_store.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/labeler_wizard.js') }}"></script>
+    <script src="{{ static_url('js/client_results.js') }}"></script>
+    <script src="{{ static_url('js/deck_store.js') }}"></script>
+    <script src="{{ static_url('js/labeler_wizard.js') }}"></script>
 </head>
 <body>
     <nav class="navbar">

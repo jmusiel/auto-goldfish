@@ -94,6 +94,141 @@
 </div>
 {% endif %}
 
+{% if results[-1].curve_value %}
+{% set cv = results[-1].curve_value %}
+{% set id_ = cv.implied_draw %}
+{% set isv = cv.implied_spell_value %}
+{% set deficit_pos = id_.actual_deficit and id_.actual_deficit > 0.5 %}
+{# Convert the deficit in cards to mana of value spells unspent per game.
+   Each missing card represents (V/D) × V_avg_cmc mana of value-pool
+   spell spending in expectation. #}
+{% set value_per_card = (id_.V_avg_cmc * id_.V / id_.D) if id_.D > 0 else 0 %}
+{% set deficit_mana = (id_.actual_deficit or 0) * value_per_card %}
+<div class="curve-value-section">
+<h2>Curve Value Analysis</h2>
+<details class="curve-value-help">
+    <summary>What does this mean?</summary>
+    <div class="curve-value-help-body">
+        <p><strong>Implied Draw</strong> &mdash; how many cards your deck needs to <em>see</em> during the game to (a) hit its land drops, (b) draw the ramp pieces it commits slots to, and (c) find enough non-ramp non-draw spells (&ldquo;spells&rdquo; below) to spend the mana those lands and ramp pieces produce. The chart breaks the requirement into three stacked bands at each turn; the top of the stack is the analytical cards-required:</p>
+        <ul>
+            <li><strong>Cards you need either way</strong> (grey) &mdash; the smaller of the two requirements, i.e. the cards both constraints demand at this turn. Always visible regardless of which constraint dominates.</li>
+            <li><strong>Extra cards to draw enough lands</strong> (blue, stacked on the floor) &mdash; how many more cards you'd have to draw beyond the floor to reliably hit your land drops. Visible at turns when drawing lands is the limiting constraint (typically early/mid game).</li>
+            <li><strong>Extra cards to draw enough spells</strong> (purple, stacked on the floor) &mdash; how many more cards you'd have to draw beyond the floor to reliably find non-ramp non-draw spells to spend your mana on. Visible at turns when drawing spells is the limiting constraint (typically late game in heavily-ramped decks). Only one of the two coloured caps is non-zero per turn.</li>
+        </ul>
+        <p>The orange line is the cards your deck actually drew on average across the simulation; the dashed grey line is the natural draw rate (no draw spells). The deficit at the rightmost turn is the gap from the top of the stack to the orange line.</p>
+        <p>The table under the chart shows the per-turn breakdown explicitly &mdash; it's ground truth, useful for sanity-checking the visualization.</p>
+        <p><strong>Implied Spell Value</strong> &mdash; treats your ramp package like a loan: each ramp piece pays its cost up front and returns mana over the rest of the game. The median per-turn IRR across your ramp pieces gives the deck's revealed time-preference (&delta;). From &delta; we derive how much intrinsically more powerful a c-cost spell needs to be relative to a 2-drop to justify its slot. Higher implied IRR means high-CMC slots have a higher bar.</p>
+        {% if isv.no_ramp %}
+        <p><em>This deck has no permanent ramp, so we fall back to &delta;=1.0 (no time preference). The multipliers reflect per-slot mana efficiency only &mdash; high-CMC spells need less intrinsic power per slot because they spend more mana per slot.</em></p>
+        {% endif %}
+    </div>
+</details>
+
+<div class="curve-value-grid">
+    <div class="curve-value-draw">
+        <h3>Implied Draw</h3>
+        <div class="curve-value-summary-row">
+            <span class="cv-stat"><span class="cv-label">Cards needed</span> <strong>{{ "%.1f"|format(id_.N_max) }}</strong></span>
+            <span class="cv-stat"><span class="cv-label">Actually drawn</span> <strong>{{ "%.1f"|format(id_.actual_total_draws or 0) }}</strong></span>
+            <span class="cv-stat {{ 'cv-deficit-pos' if deficit_pos else 'cv-deficit-ok' }}">
+                <span class="cv-label">Deficit</span> <strong>{{ "%.1f"|format(id_.actual_deficit or 0) }}</strong>
+            </span>
+        </div>
+        <div class="curve-value-chart-wrap">
+            <canvas id="curveValueDrawChart"></canvas>
+        </div>
+        <details class="cv-breakdown-details">
+            <summary>Per-turn breakdown (ground truth)</summary>
+            <table class="cv-breakdown-table">
+                <thead>
+                    <tr>
+                        <th>Turn</th>
+                        <th>Lands req</th>
+                        <th>Spells req</th>
+                        <th>Required = max</th>
+                        <th>Active</th>
+                        <th>Actual MC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for t in range(id_.per_turn_lands_required|length) %}
+                    {% set L = id_.per_turn_lands_required[t] %}
+                    {% set V = id_.per_turn_value_required[t] %}
+                    {% set req = id_.per_turn_required[t] %}
+                    {% set act = id_.per_turn_actual[t] if id_.per_turn_actual else None %}
+                    {% set dom = 'spells' if V > L else 'lands' %}
+                    <tr>
+                        <td>{{ t + 1 }}</td>
+                        <td>{{ "%.2f"|format(L) }}</td>
+                        <td>{{ "%.2f"|format(V) }}</td>
+                        <td><strong>{{ "%.2f"|format(req) }}</strong></td>
+                        <td class="cv-active-{{ dom }}">{{ dom }}</td>
+                        <td>{{ "%.2f"|format(act) if act is not none else '—' }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </details>
+        <p class="cv-hint">
+            {% if deficit_pos %}
+                <strong>Deficit:</strong> your deck draws ~{{ "%.1f"|format(id_.actual_total_draws or 0) }} cards per game,
+                {{ "%.1f"|format(id_.actual_deficit) }} short of the {{ "%.1f"|format(id_.N_max) }}-card analytical requirement.
+                With your value pool's avg cost of {{ "%.2f"|format(id_.V_avg_cmc) }} mana and {{ id_.V }}/{{ id_.D }} share of the deck,
+                each missing card averages {{ "%.2f"|format(value_per_card) }} mana of value-spell spending
+                ({{ "%.2f"|format(id_.V_avg_cmc) }} &times; {{ id_.V }}/{{ id_.D }}) &mdash;
+                that translates to roughly <strong>{{ "%.1f"|format(deficit_mana) }} mana of value spells going unspent</strong> per game on average.
+            {% else %}
+                Your deck draws ~{{ "%.1f"|format(id_.actual_total_draws or 0) }} cards per game,
+                meeting the {{ "%.1f"|format(id_.N_max) }}-card analytical requirement.
+                Value mana is fully spent in expectation &mdash; no significant late-game waste.
+            {% endif %}
+        </p>
+    </div>
+
+    <div class="curve-value-power">
+        <h3>Implied Spell Value</h3>
+        {% if isv.no_ramp %}
+            <p class="cv-rate-line">No ramp investment &rarr; &delta; = 1.00 (per-slot efficiency baseline)</p>
+        {% else %}
+            <p class="cv-rate-line">
+                Median ramp IRR: <strong>{{ "%.0f%%"|format(isv.median_irr * 100) }}/turn</strong>
+                &nbsp;&middot;&nbsp; &delta; = <strong>{{ "%.2f"|format(isv.delta) }}</strong>
+            </p>
+        {% endif %}
+        <table class="cv-power-table">
+            <thead>
+                <tr>
+                    <th>CMC</th>
+                    <th>Required power vs. 2-drop</th>
+                    <th>Multiplier</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set max_mult = isv.power_multipliers.values()|map('float')|max %}
+                {% set scale_max = [max_mult, 2.0]|max %}
+                {% for cmc, mult in isv.power_multipliers.items()|sort %}
+                {% set is_baseline = cmc == 2 %}
+                {% set width_pct = (mult / scale_max * 100)|round(1) %}
+                <tr class="{{ 'cv-row-baseline' if is_baseline }}">
+                    <td>{{ cmc }}</td>
+                    <td>
+                        <div class="cv-power-bar-track">
+                            <div class="cv-power-bar-fill" style="width:{{ width_pct }}%; background:{{ '#94a3b8' if is_baseline else '#3b82f6' }}"></div>
+                        </div>
+                    </td>
+                    <td>{{ "%.2f"|format(mult) }}&times;</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p class="cv-hint">
+            A 6-drop with multiplier <strong>{{ "%.2f"|format(isv.power_multipliers.get(6, 1.0)) }}&times;</strong> means: for this deck's ramp choices to be coherent, each 6-drop needs to be at least that intrinsically more impactful than a 2-drop.
+        </p>
+    </div>
+</div>
+</div>
+{% endif %}
+
 <h2>Summary Statistics</h2>
 <details class="metric-descriptions">
     <summary>Metric Definitions</summary>
@@ -562,9 +697,147 @@
                 });
             }
 
+            // Curve value: implied draw vs. actual draw line chart
+            renderCurveValueDrawChart(data);
+
             // Replay viewer
             initReplayViewer(data);
         });
+
+    function renderCurveValueDrawChart(data) {
+        const canvas = document.getElementById('curveValueDrawChart');
+        if (!canvas || !data || data.length === 0) return;
+        const cv = data[data.length - 1].curve_value;
+        if (!cv || !cv.implied_draw) return;
+        const id_ = cv.implied_draw;
+        const lands = id_.per_turn_lands_required || [];
+        const value = id_.per_turn_value_required || [];
+        const actual = id_.per_turn_actual || [];
+        const natural = id_.per_turn_natural || [];
+        const turns = lands.length;
+        const labels = [];
+        for (let t = 1; t <= turns; t++) labels.push('T' + t);
+
+        // Stacked decomposition: at each turn,
+        //   floor    = min(lands, value)  -- both bottlenecks require this
+        //   lands_ex = max(0, lands - value)  -- extra from land constraint
+        //   value_ex = max(0, value - lands)  -- extra from value constraint
+        // Exactly one of lands_ex / value_ex is non-zero per turn, so the
+        // stack always sums to max(lands, value) = per_turn_required and
+        // both bottlenecks remain individually visible (the smaller as the
+        // floor, the larger as a colored cap on top).
+        const floor = lands.map((l, i) => Math.min(l, value[i] || 0));
+        const lands_ex = lands.map((l, i) => Math.max(0, l - (value[i] || 0)));
+        const value_ex = value.map((v, i) => Math.max(0, v - (lands[i] || 0)));
+
+        const existing = Chart.getChart('curveValueDrawChart');
+        if (existing) existing.destroy();
+
+        new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Cards you need either way',
+                        data: floor,
+                        borderColor: '#64748b',
+                        backgroundColor: 'rgba(148, 163, 184, 0.25)',
+                        borderWidth: 1,
+                        fill: 'origin',
+                        tension: 0.2,
+                        pointRadius: 0,
+                        stack: 'required',
+                    },
+                    {
+                        label: 'Extra cards to draw enough lands',
+                        data: lands_ex,
+                        borderColor: '#1d4ed8',
+                        backgroundColor: 'rgba(37, 99, 235, 0.65)',
+                        borderWidth: 1,
+                        fill: '-1',
+                        tension: 0.2,
+                        pointRadius: 0,
+                        stack: 'required',
+                    },
+                    {
+                        label: 'Extra cards to draw enough spells',
+                        data: value_ex,
+                        borderColor: '#7e22ce',
+                        backgroundColor: 'rgba(168, 85, 247, 0.65)',
+                        borderWidth: 1,
+                        fill: '-1',
+                        tension: 0.2,
+                        pointRadius: 0,
+                        stack: 'required',
+                    },
+                    {
+                        label: 'Natural draw (no draw spells)',
+                        data: natural,
+                        borderColor: '#94a3b8',
+                        backgroundColor: '#94a3b8',
+                        borderWidth: 1,
+                        borderDash: [3, 3],
+                        fill: false,
+                        tension: 0,
+                        pointRadius: 0,
+                        stack: 'natural',
+                        order: 2,
+                    },
+                    {
+                        label: 'Actual cards drawn (MC avg)',
+                        data: actual,
+                        borderColor: '#f59e0b',
+                        backgroundColor: '#f59e0b',
+                        borderWidth: 2.5,
+                        fill: false,
+                        tension: 0.2,
+                        pointRadius: 3,
+                        stack: 'actual',
+                        order: 1,
+                    },
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    title: { display: true, text: 'Cumulative cards: needed (lands & value bottlenecks) vs. drawn' },
+                    tooltip: {
+                        callbacks: {
+                            footer: function(items) {
+                                // Pull out the original (un-stacked) lands/spells/actual values.
+                                const idx = items[0] ? items[0].dataIndex : 0;
+                                const landsVal = lands[idx] || 0;
+                                const spellsVal = value[idx] || 0;
+                                const actualVal = actual[idx];
+                                const required = Math.max(landsVal, spellsVal);
+                                const dominant = spellsVal > landsVal ? 'spells' : 'lands';
+                                let footer = 'Lands need: ' + landsVal.toFixed(2)
+                                    + '   Spells need: ' + spellsVal.toFixed(2)
+                                    + '\nRequired = max = ' + required.toFixed(2)
+                                    + ' (' + dominant + ' dominates)';
+                                if (actualVal != null) {
+                                    const diff = required - actualVal;
+                                    const sign = diff > 0 ? '+' : '';
+                                    footer += '\nDeficit vs actual: ' + sign + diff.toFixed(2);
+                                }
+                                return footer;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Turn' } },
+                    // stacked:true lets the three 'required' datasets sum to
+                    // max(lands, value); actual + natural sit in their own
+                    // stack groups so they aren't summed with anything.
+                    y: { title: { display: true, text: 'Cumulative cards' }, beginAtZero: true, stacked: true }
+                }
+            }
+        });
+    }
 
     function initReplayViewer(data) {
         const viewer = document.getElementById('replay-viewer');

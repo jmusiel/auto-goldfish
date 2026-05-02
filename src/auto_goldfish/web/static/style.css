@@ -1660,3 +1660,160 @@ h2 { font-size: 1.15rem; margin-bottom: 0.75rem; }
 .adv-sub-cols > div { flex: 1; min-width: 180px; }
 .adv-sub-cols strong { display: block; font-size: 0.85rem; margin-bottom: 0.3rem; color: #334155; }
 
+/* Curve Value Analysis panel (Implied Draw + Implied Spell Value) */
+.curve-value-section {
+    margin: 1.5rem 0;
+    padding: 1rem 1.25rem;
+    background: #f8fafb;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+.curve-value-section h2 { margin-top: 0; }
+.curve-value-section h3 { margin: 0 0 0.5rem; font-size: 1rem; color: #1e293b; }
+.curve-value-help {
+    margin: 0 0 1rem;
+    padding: 0.5rem 0.85rem;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    color: #334155;
+}
+.curve-value-help summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #1e293b;
+}
+.curve-value-help[open] summary { margin-bottom: 0.5rem; }
+.curve-value-help-body p { margin: 0.4rem 0; line-height: 1.45; }
+.curve-value-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+@media (max-width: 900px) {
+    .curve-value-grid { grid-template-columns: 1fr; }
+}
+.curve-value-summary-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 0.4rem 0 0.6rem;
+}
+.cv-stat {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.cv-stat .cv-label {
+    color: #64748b;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.cv-stat strong { color: #0f172a; }
+.cv-deficit-pos { border-color: #fca5a5; background: #fef2f2; }
+.cv-deficit-pos strong { color: #b91c1c; }
+.cv-deficit-ok { border-color: #86efac; background: #f0fdf4; }
+.cv-deficit-ok strong { color: #15803d; }
+.curve-value-chart-wrap {
+    height: 240px;
+    position: relative;
+    margin-top: 0.4rem;
+}
+.cv-rate-line {
+    margin: 0.4rem 0 0.6rem;
+    font-size: 0.95rem;
+    color: #334155;
+}
+.cv-power-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.cv-power-table th, .cv-power-table td {
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+.cv-power-table th {
+    background: #f1f5f9;
+    text-align: left;
+    font-weight: 600;
+    color: #475569;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.cv-power-table td:first-child, .cv-power-table th:first-child { width: 50px; text-align: center; }
+.cv-power-table td:last-child, .cv-power-table th:last-child { width: 70px; text-align: right; font-variant-numeric: tabular-nums; }
+.cv-power-table tr:last-child td { border-bottom: none; }
+.cv-row-baseline { background: #f8fafc; }
+.cv-row-baseline td { font-weight: 600; }
+.cv-power-bar-track {
+    height: 14px;
+    background: #e2e8f0;
+    border-radius: 7px;
+    overflow: hidden;
+    min-width: 100px;
+}
+.cv-power-bar-fill {
+    height: 100%;
+    border-radius: 7px;
+    transition: width 0.4s ease;
+}
+.cv-hint {
+    margin: 0.5rem 0 0;
+    font-size: 0.82rem;
+    color: #64748b;
+    line-height: 1.4;
+}
+.cv-breakdown-details {
+    margin: 0.5rem 0 0;
+    font-size: 0.82rem;
+    color: #334155;
+}
+.cv-breakdown-details summary {
+    cursor: pointer;
+    color: #475569;
+}
+.cv-breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.5rem 0 0;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+    font-variant-numeric: tabular-nums;
+}
+.cv-breakdown-table th, .cv-breakdown-table td {
+    padding: 0.25rem 0.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: right;
+}
+.cv-breakdown-table th {
+    background: #f8fafc;
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #475569;
+}
+.cv-breakdown-table th:first-child, .cv-breakdown-table td:first-child {
+    text-align: center;
+    font-weight: 600;
+    color: #64748b;
+}
+.cv-breakdown-table tr:last-child td { border-bottom: none; }
+.cv-active-lands { color: #1d4ed8; font-weight: 600; }
+.cv-active-spells { color: #7e22ce; font-weight: 600; }
+

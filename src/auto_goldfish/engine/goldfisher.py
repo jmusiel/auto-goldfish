@@ -84,6 +84,8 @@ class SimulationResult:
     # Per-turn averages (index 0 = turn 1)
     mean_mana_per_turn: List[float] = field(default_factory=list)
     mean_spells_per_turn: List[float] = field(default_factory=list)
+    # Cumulative cards drawn by end of each turn (index 0 = turn 1)
+    mean_cumulative_draws_per_turn: List[float] = field(default_factory=list)
 
     # Extra aggregates for deck scoring
     std_mana: float = 0.0
@@ -427,6 +429,7 @@ def _worker_run_batch(
     # Per-turn accumulators (index = turn number)
     mana_per_turn_sum = [0] * turns
     spells_per_turn_sum = [0] * turns
+    cumulative_draws_per_turn_sum = [0.0] * turns
 
     # Unclassified replay snapshots: list of (total_mana, replay_dict)
     raw_replays: list[tuple[int, dict]] = []
@@ -500,6 +503,7 @@ def _worker_run_batch(
             game_spells_cast += spells_played
             mana_per_turn_sum[i] += turn_mana
             spells_per_turn_sum[i] += spells_played
+            cumulative_draws_per_turn_sum[i] += state.draws
             if spells_played == 0 and state.deck:
                 game_bad += 1
             if spells_played < 2 and state.deck and turn_mana < i + 1:
@@ -582,6 +586,7 @@ def _worker_run_batch(
         "drawn_cards_per_game": drawn_cards_per_game,
         "mana_per_turn_sum": mana_per_turn_sum,
         "spells_per_turn_sum": spells_per_turn_sum,
+        "cumulative_draws_per_turn_sum": cumulative_draws_per_turn_sum,
         "n_games": n_games,
     }
     if capture_replays:
@@ -718,6 +723,13 @@ class Goldfisher:
 
         # Save original state for optimizer restore
         self._original_decklist_dicts = list(non_commander_dicts)
+        # Full input deck dicts (commanders included). Stored so the
+        # optimization paths can pass them to ``metrics.reporter.result_to_dict``
+        # without having to reconstruct dicts from the mutated ``self.decklist``
+        # of Card objects -- without this, the optimizer-rendered results have
+        # no ``curve_value`` block (since the Card list reflects post-swap
+        # state and isn't the right shape for the analytical classifier).
+        self._original_full_decklist_dicts = list(decklist_dicts)
         self._original_registry = self.registry
         self._original_land_count = self.land_count
 
@@ -1441,6 +1453,7 @@ class Goldfisher:
         all_raw_replays: list[tuple[int, dict]] = []
         mana_per_turn_sum = [0] * self.turns
         spells_per_turn_sum = [0] * self.turns
+        cumulative_draws_per_turn_sum = [0.0] * self.turns
 
         for future in futures:
             batch = future.result()
@@ -1458,11 +1471,15 @@ class Goldfisher:
             for t in range(self.turns):
                 mana_per_turn_sum[t] += batch["mana_per_turn_sum"][t]
                 spells_per_turn_sum[t] += batch["spells_per_turn_sum"][t]
+                cumulative_draws_per_turn_sum[t] += batch.get(
+                    "cumulative_draws_per_turn_sum", [0.0] * self.turns
+                )[t]
 
         merged["card_cast_turns"] = card_cast_turns
         merged["card_mana_spent_list"] = card_mana_spent
         merged["mana_per_turn_sum"] = mana_per_turn_sum
         merged["spells_per_turn_sum"] = spells_per_turn_sum
+        merged["cumulative_draws_per_turn_sum"] = cumulative_draws_per_turn_sum
 
         # Classify pooled replays using the primary mana distribution
         replay_buckets: dict[str, list] = {"top": [], "mid": [], "low": []}
@@ -1641,8 +1658,14 @@ class Goldfisher:
         # Per-turn averages
         mana_per_turn_sum = raw.get("mana_per_turn_sum", [0] * self.turns)
         spells_per_turn_sum = raw.get("spells_per_turn_sum", [0] * self.turns)
+        cumulative_draws_per_turn_sum = raw.get(
+            "cumulative_draws_per_turn_sum", [0.0] * self.turns
+        )
         mean_mana_per_turn = [s / n for s in mana_per_turn_sum] if n > 0 else []
         mean_spells_per_turn = [s / n for s in spells_per_turn_sum] if n > 0 else []
+        mean_cumulative_draws_per_turn = (
+            [s / n for s in cumulative_draws_per_turn_sum] if n > 0 else []
+        )
 
         # Scoring aggregates
         std_mana = float(np.std(mana_spent_list, ddof=1)) if n > 1 else 0.0
@@ -1681,6 +1704,7 @@ class Goldfisher:
             con_threshold=con_threshold,
             mean_mana_per_turn=mean_mana_per_turn,
             mean_spells_per_turn=mean_spells_per_turn,
+            mean_cumulative_draws_per_turn=mean_cumulative_draws_per_turn,
             std_mana=std_mana,
             mull_rate=mull_rate,
             mean_mana_with_mull=mean_mana_with_mull,
@@ -1738,6 +1762,7 @@ class Goldfisher:
         mid_turns_list = []
         mana_per_turn_sum = [0] * self.turns
         spells_per_turn_sum = [0] * self.turns
+        cumulative_draws_per_turn_sum = [0.0] * self.turns
         card_cast_turn_list: list[list] = [[] for _ in self.decklist]
         card_mana_spent_list: list[list] = [[] for _ in self.decklist]
         played_cards_per_game: list[set] = []
@@ -1818,6 +1843,7 @@ class Goldfisher:
                 total_spells_cast += spells_played
                 mana_per_turn_sum[i] += mana_spent
                 spells_per_turn_sum[i] += spells_played
+                cumulative_draws_per_turn_sum[i] += state.draws
                 if spells_played == 0 and state.deck:
                     bad_turns += 1
                 if spells_played < 2 and state.deck and mana_spent < i + 1:
@@ -2091,6 +2117,9 @@ class Goldfisher:
         # Per-turn averages
         mean_mana_per_turn = [s / n for s in mana_per_turn_sum] if n > 0 else []
         mean_spells_per_turn = [s / n for s in spells_per_turn_sum] if n > 0 else []
+        mean_cumulative_draws_per_turn = (
+            [s / n for s in cumulative_draws_per_turn_sum] if n > 0 else []
+        )
 
         # Scoring aggregates
         std_mana = float(np.std(mana_spent_list, ddof=1)) if n > 1 else 0.0
@@ -2129,6 +2158,7 @@ class Goldfisher:
             con_threshold=con_threshold,
             mean_mana_per_turn=mean_mana_per_turn,
             mean_spells_per_turn=mean_spells_per_turn,
+            mean_cumulative_draws_per_turn=mean_cumulative_draws_per_turn,
             std_mana=std_mana,
             mull_rate=mull_rate,
             mean_mana_with_mull=mean_mana_with_mull,

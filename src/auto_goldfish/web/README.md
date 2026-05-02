@@ -53,8 +53,43 @@ All simulation runs client-side via Pyodide (CPython in WebAssembly):
 | GET | `/sim/api/<deck>/deck` | Deck card list (JSON) |
 | GET | `/sim/api/<deck>/effects` | Merged effect overrides + registry (JSON) |
 | POST | `/sim/api/<deck>/results` | Persist client-side simulation results |
-| GET | `/sim/api/wheel` | Latest wheel filename |
+| GET | `/sim/api/wheel` | Latest wheel filename + mtime (for cache-busting) |
 | GET | `/sim/api/wheel/<filename>` | Serve wheel file |
+
+## Asset pipeline + static caching
+
+The Pyodide wheel and the static JS/CSS files are all cache-busted via mtime
+query strings so editing source on disk is immediately visible in the browser
+without a hard refresh:
+
+- **Pyodide wheel** -- `/sim/api/wheel` returns `{filename, mtime}`. The simulate page builds the download URL as `<filename>?v=<mtime>`. `pyodide_worker.js` strips the `?v=...` query string before writing the file to its in-memory FS so micropip still sees a clean `.whl`. Each `uv build --wheel` rebuild bumps the mtime, so the browser refetches.
+- **Static JS / CSS** -- `web/__init__.py` registers a `static_url(filename)` Jinja helper that wraps `url_for('static', ...)` and appends `?v=<mtime>`. **Use `static_url` everywhere instead of `url_for('static', ...)`** -- otherwise edits to JS/CSS won't reach the browser without manually clearing cache.
+
+`scripts/start_flask.sh` runs `uv build --wheel --quiet` on every start, so the wheel is always fresh after a server restart. **Editing Python source while the server is running** is auto-reloaded by Flask `--debug`, but the *Pyodide wheel* is only rebuilt on the next `start_flask.sh` invocation. Restart the script to push Python changes into the in-browser runtime.
+
+## Adding a new top-level JS module
+
+Both `simulate.html` (via inline `<script>`) and `deck_store.js` (via
+`navigateToSim` / `navigateToManaModel`) load pages by calling
+`document.write(html)`. The new HTML re-runs every `<script src=...>` tag in
+`base.html`, so any global declarations in those scripts execute **twice** in
+the same JS context.
+
+`const Foo = ...` will throw `Identifier 'Foo' has already been declared` on
+the second run, aborting the rest of `document.write` processing and leaving
+the page non-functional. The canonical pattern is the idempotent guard used in
+`client_results.js`:
+
+```js
+var Foo = window.Foo || (function() {
+    'use strict';
+    // ... module body ...
+    return {publicMethod1, publicMethod2};
+})();
+if (typeof window !== 'undefined') { window.Foo = Foo; }
+```
+
+This makes the second execution a no-op rather than a fatal redeclaration.
 
 ## Configuration
 
