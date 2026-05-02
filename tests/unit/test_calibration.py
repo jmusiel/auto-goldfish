@@ -91,7 +91,7 @@ def _add_run(
             "raw_consistency": 0.5,
             "raw_acceleration": 7.0,
             "raw_snowball": 2.0,
-            "raw_toughness": 0.7,
+            "raw_tuning": 0.7,
             "raw_efficiency": 0.5,
             "raw_reach": 20.0,
         }
@@ -469,11 +469,11 @@ class TestPersistenceReScoring:
             "percentile_50": 7.5, "percentile_75": 9.0,
             "deck_score": {
                 "consistency": 7, "acceleration": 7, "snowball": 5,
-                "toughness": 6, "efficiency": 6, "reach": 6,
+                "tuning": 6, "efficiency": 6, "reach": 6,
             },
             "deck_raw": {
                 "consistency": 0.62, "acceleration": 7.5, "snowball": 1.8,
-                "toughness": 0.81, "efficiency": 0.55, "reach": 22.0,
+                "tuning": 0.81, "efficiency": 0.55, "reach": 22.0,
                 "snowball_late_avg_norm": 4.0,
             },
             "card_performance": {"low_performing": [], "high_performing": []},
@@ -512,7 +512,7 @@ class TestPersistenceReScoring:
             "percentile_50": 7.5, "percentile_75": 9.0,
             "deck_score": {
                 "consistency": 7, "acceleration": 5, "snowball": 5,
-                "toughness": 6, "efficiency": 6, "reach": 6,
+                "tuning": 6, "efficiency": 6, "reach": 6,
             },
             # No deck_raw key -- e.g., a result dict from before Phase 0.
             "card_performance": {"low_performing": [], "high_performing": []},

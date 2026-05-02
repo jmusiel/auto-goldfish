@@ -139,10 +139,29 @@ def result_to_dict(
     overrides : optional dict
         User-provided card-effect overrides; merged on top of the registry.
     """
+    from dataclasses import asdict
     from auto_goldfish.metrics.calibration import get_active_anchors
     from auto_goldfish.metrics.deck_score import compute_raw_stats, score_from_raw
 
-    raw = compute_raw_stats(result, turns)
+    # Curve value is computed first so the score can fold its verdict
+    # into the Tuning and Efficiency raw inputs.
+    curve_value_obj = None
+    if deck_list is not None:
+        try:
+            curve_value_obj = _compute_curve_value(
+                deck_list=deck_list,
+                registry=registry,
+                overrides=overrides,
+                turns=turns,
+                result=result,
+            )
+        except Exception:
+            # Curve value is decorative for the panel and degrades to
+            # neutral 0.5 raws for Tuning / Efficiency -- never break the response.
+            curve_value_obj = None
+    curve_value_dict = _sanitize_for_json(asdict(curve_value_obj)) if curve_value_obj is not None else None
+
+    raw = compute_raw_stats(result, turns, curve_value=curve_value_obj)
     anchors, calibration_meta = get_active_anchors()
     score = score_from_raw(raw, anchors)
     calibration_dict = (
@@ -156,19 +175,6 @@ def result_to_dict(
         if calibration_meta is not None
         else None
     )
-    curve_value_dict = None
-    if deck_list is not None:
-        try:
-            curve_value_dict = _compute_curve_value_dict(
-                deck_list=deck_list,
-                registry=registry,
-                overrides=overrides,
-                turns=turns,
-                result=result,
-            )
-        except Exception:
-            # Curve value is decorative — never break the response.
-            curve_value_dict = None
     return {
         "deck_score": score.as_dict(),
         "deck_raw": raw.as_dict(),
@@ -217,20 +223,19 @@ def result_to_dict(
     }
 
 
-def _compute_curve_value_dict(
+def _compute_curve_value(
     deck_list: list,
     registry,
     overrides: dict | None,
     turns: int,
     result: SimulationResult,
-) -> Dict[str, Any]:
-    """Compute analytical curve_value and serialize to dict.
+):
+    """Compute analytical curve_value as a typed object.
 
     Pulls per-turn cumulative draws from the SimulationResult so the UI can
     plot actual vs. implied draw side by side. Falls back to DEFAULT_REGISTRY
     when the caller didn't pass a registry (matches Goldfisher's behavior).
     """
-    from dataclasses import asdict
     from auto_goldfish.optimization.curve_value import compute_curve_value
     from auto_goldfish.effects.card_database import DEFAULT_REGISTRY
 
@@ -242,7 +247,7 @@ def _compute_curve_value_dict(
         if result.mean_cumulative_draws_per_turn
         else None
     )
-    cv = compute_curve_value(
+    return compute_curve_value(
         deck_list=deck_list,
         registry=registry,
         overrides=overrides,
@@ -250,4 +255,21 @@ def _compute_curve_value_dict(
         actual_total_draws=float(result.mean_draws) if result.mean_draws else None,
         actual_per_turn_cumulative_draws=actual_per_turn,
     )
-    return asdict(cv)
+
+
+def _sanitize_for_json(obj):
+    """Recursively replace non-finite floats (inf, -inf, NaN) with None.
+
+    Stock JSON has no representation for Infinity/NaN -- Python's json.dumps
+    emits bare ``Infinity`` literals which JS JSON.parse rejects. The verdict
+    can produce inf at slots where c >= T (duration goes to 0 -> A_raw blows
+    up); replace those with None so the UI just renders an em-dash.
+    """
+    import math
+    if isinstance(obj, float):
+        return None if not math.isfinite(obj) else obj
+    if isinstance(obj, dict):
+        return {k: _sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_for_json(v) for v in obj]
+    return obj

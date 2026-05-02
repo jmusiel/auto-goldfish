@@ -169,13 +169,13 @@ def save_simulation_run(
         deck_raw = r.get("deck_raw", {})
         if all(deck_raw.get(k) is not None for k in (
             "consistency", "acceleration", "snowball",
-            "toughness", "efficiency", "reach",
+            "tuning", "efficiency", "reach",
         )):
             raw_obj = DeckRawStats(
                 consistency=deck_raw["consistency"],
                 acceleration=deck_raw["acceleration"],
                 snowball=deck_raw["snowball"],
-                toughness=deck_raw["toughness"],
+                tuning=deck_raw["tuning"],
                 efficiency=deck_raw["efficiency"],
                 reach=deck_raw["reach"],
                 # Secondary snowball input ships in the dict (not the DB)
@@ -205,13 +205,13 @@ def save_simulation_run(
             score_consistency=deck_score.get("consistency"),
             score_acceleration=deck_score.get("acceleration"),
             score_snowball=deck_score.get("snowball"),
-            score_toughness=deck_score.get("toughness"),
+            score_tuning=deck_score.get("tuning"),
             score_efficiency=deck_score.get("efficiency"),
             score_reach=deck_score.get("reach"),
             raw_consistency=deck_raw.get("consistency"),
             raw_acceleration=deck_raw.get("acceleration"),
             raw_snowball=deck_raw.get("snowball"),
-            raw_toughness=deck_raw.get("toughness"),
+            raw_tuning=deck_raw.get("tuning"),
             raw_efficiency=deck_raw.get("efficiency"),
             raw_reach=deck_raw.get("reach"),
         ))

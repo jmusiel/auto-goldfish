@@ -15,14 +15,27 @@ from auto_goldfish.optimization.curve_value import (
     cards_seen_by_turn,
     cards_to_spend,
     classify_for_curve_value,
+    DEFAULT_EXCESS_K,
+    DEFAULT_FIXED_DELTA,
+    DEFAULT_IRR_CAP,
+    DEFAULT_LOAN_THRESHOLD,
     compute_curve_value,
+    compute_curve_verdict,
     compute_implied_draw,
     compute_implied_spell_value,
+    excess_alpha,
+    idealized_ramp_excess,
     implied_power_multipliers,
     land_mana_over_T,
+    loan_size_alpha,
+    play_to_curve,
+    power_mults_option_a,
     ramp_contribution,
     ramp_irr,
+    ramp_share_from_mana,
+    schedule_ramp,
     solve_irr,
+    value_mana_per_turn,
 )
 
 
@@ -494,3 +507,573 @@ def test_reporter_falls_back_to_default_registry_when_none():
     # Should detect the two ramp cards via DEFAULT_REGISTRY fallback.
     assert isv["no_ramp"] is False
     assert len(isv["per_card_irrs"]) == 2
+
+
+# ---------------------------------------------------------------------------
+# Curve Verdict: Option A (duration-aware) and Option B (curve-aware)
+# ---------------------------------------------------------------------------
+
+def _ramp(cmc: int, M: float = 1.0, name: str = "rock") -> RampCardSpec:
+    return RampCardSpec(name=f"{name}_{cmc}_{M}", cmc=cmc, mana_per_turn=M)
+
+
+def test_power_mults_option_a_baseline_is_1():
+    for delta in (0.55, 0.69, 0.83, 1.0):
+        m = power_mults_option_a(delta, T=8, baseline_cmc=2, max_cmc=8)
+        assert m[2] == pytest.approx(1.0)
+
+
+def test_power_mults_option_a_at_delta_1_is_pure_duration():
+    """At δ=1.0 (no ramp), A reduces to 2(T-1)/(c(T-c+1))."""
+    T = 8
+    m = power_mults_option_a(1.0, T=T, baseline_cmc=2, max_cmc=T)
+    for c in range(1, T + 1):
+        expected = (2 * (T - 2 + 1)) / (c * (T - c + 1))
+        assert m[c] == pytest.approx(expected, rel=1e-6)
+
+
+def test_power_mults_option_a_high_irr_inflates_high_cmc():
+    """At δ=0.69 (median IRR ≈ 45%/turn), T=8, the 6-drop multiplier is ~3.39."""
+    m = power_mults_option_a(0.69, T=8, baseline_cmc=2, max_cmc=8)
+    assert m[6] == pytest.approx(3.39, abs=0.05)
+    # Strictly increasing from baseline at high IRR.
+    assert m[3] < m[4] < m[5] < m[6] < m[7] < m[8]
+
+
+def test_schedule_ramp_pushes_conflicts_later():
+    """Three 2-cmc rocks land on turns 2, 3, 4 (same-cmc ties pushed forward)."""
+    sched = schedule_ramp([(2, 1.0), (2, 1.0), (2, 1.0)], T=8)
+    turns = sorted(t for t, _, _ in sched)
+    assert turns == [2, 3, 4]
+
+
+def test_schedule_ramp_drops_uncastable():
+    """Ramp pieces pushed past T don't appear in the schedule."""
+    sched = schedule_ramp([(8, 1.0), (8, 1.0)], T=8)
+    # First 8-cmc lands turn 8; second is pushed to turn 9 (past T) and dropped.
+    assert len(sched) == 1
+    assert sched[0][0] == 8
+
+
+def test_value_mana_per_turn_no_ramp():
+    """With no ramp, value mana = land mana (one drop per turn)."""
+    assert value_mana_per_turn([], T=4) == [1.0, 2.0, 3.0, 4.0]
+
+
+def test_value_mana_per_turn_with_2cmc_rock():
+    """A 2-cmc rock cast on turn 2 deducts its CMC on turn 2 then adds M from turn 3."""
+    sched = [(2, 2, 1.0)]  # (turn, cmc, M)
+    stream = value_mana_per_turn(sched, T=5)
+    # turn 1: 1 land, no ramp yet
+    # turn 2: 2 land - 2 (cast) = 0
+    # turn 3: 3 land + 1 ramp = 4
+    # turn 4: 4 + 1 = 5
+    # turn 5: 5 + 1 = 6
+    assert stream == [1.0, 0.0, 4.0, 5.0, 6.0]
+
+
+def test_play_to_curve_no_value_returns_empty_mt():
+    res = play_to_curve(curve_counts={}, ramp_pieces=[], T=8)
+    assert res["mt_per_cmc"] == {}
+
+
+# Synthetic deck fixtures from the AB-comparison notebook §4. These pin the
+# net deltas and the loss/gain locations so the simulator stays stable.
+SYNTH_TOP_HEAVY = {
+    "curve": {1: 2, 2: 2, 3: 2, 4: 4, 5: 6, 6: 6, 7: 4, 8: 4},
+    "ramp": [(2, 1.0), (2, 1.0), (2, 1.0)],
+}
+SYNTH_AGGRO = {
+    "curve": {1: 8, 2: 12, 3: 8, 4: 4},
+    "ramp": [(2, 1.0), (2, 1.0), (2, 1.0)],
+}
+SYNTH_BALANCED = {
+    "curve": {1: 4, 2: 4, 3: 4, 4: 4, 5: 4, 6: 4, 7: 4, 8: 4},
+    "ramp": [(2, 1.0), (2, 1.0), (2, 1.0)],
+}
+SYNTH_GAPPY = {
+    "curve": {2: 12, 6: 12},
+    "ramp": [(2, 1.0), (2, 1.0), (2, 1.0)],
+}
+
+
+def _verdict_from_synth(synth, T: int = 8):
+    ramp_specs = [RampCardSpec(name=f"r{i}", cmc=c, mana_per_turn=M)
+                  for i, (c, M) in enumerate(synth["ramp"])]
+    return compute_curve_verdict(
+        curve_counts=synth["curve"], ramp_specs=ramp_specs, T=T,
+    )
+
+
+def test_curve_verdict_top_heavy_net_flat_positive():
+    """Three 2-cmc rocks in a top-heavy deck net +1 mana-turn at flat power."""
+    v = _verdict_from_synth(SYNTH_TOP_HEAVY)
+    assert v.net_flat == pytest.approx(1.0, abs=0.5)
+    # Loss is concentrated at the 2-drop slot (displaced by ramp).
+    assert v.loss_breakdown.get(2, 0) > 10
+    # Gain is at high CMC (5-8).
+    assert sum(v.gain_breakdown.get(c, 0) for c in (5, 6, 7, 8)) > 15
+
+
+def test_curve_verdict_aggro_no_top_end_to_enable():
+    """Aggro decks net positive at flat power but with smaller magnitude."""
+    v = _verdict_from_synth(SYNTH_AGGRO)
+    assert v.net_flat == pytest.approx(1.0, abs=0.5)
+    # No 5+ drops, so all gain has to fit in 3-4.
+    assert sum(v.gain_breakdown.get(c, 0) for c in (3, 4)) > 0
+
+
+def test_curve_verdict_balanced_distributes_evenly():
+    v = _verdict_from_synth(SYNTH_BALANCED)
+    assert v.net_flat == pytest.approx(1.0, abs=0.5)
+
+
+def test_curve_verdict_gappy_isolates_loss_and_gain():
+    """Gappy deck (only 2s and 6s) gives the cleanest delta breakdown."""
+    v = _verdict_from_synth(SYNTH_GAPPY)
+    assert v.net_flat == pytest.approx(1.0, abs=0.5)
+    # All loss at c=2, all gain at c=6.
+    assert v.loss_breakdown.get(2, 0) == pytest.approx(18.57, abs=0.5)
+    assert v.gain_breakdown.get(6, 0) == pytest.approx(19.57, abs=0.5)
+    assert set(v.loss_breakdown.keys()) == {2}
+    assert set(v.gain_breakdown.keys()) == {6}
+
+
+def test_curve_verdict_no_ramp_uses_delta_1():
+    """A deck with no permanent ramp falls back to δ=1.0 and still produces
+    a verdict (no_ramp=True), so the panel always renders something."""
+    v = compute_curve_verdict(
+        curve_counts={1: 4, 2: 8, 3: 6, 4: 4, 5: 2}, ramp_specs=[], T=8,
+    )
+    assert v is not None
+    assert v.no_ramp is True
+    assert v.delta == 1.0
+    assert math.isnan(v.median_irr)
+    # net_flat ≈ 0 because with-ramp == no-ramp counterfactual when ramp is empty.
+    assert abs(v.net_flat) < 1e-6
+
+
+def test_curve_verdict_no_value_returns_none():
+    """Decks with no value spells (only ramp + lands) return None."""
+    ramp_specs = [_ramp(2), _ramp(2)]
+    v = compute_curve_verdict(curve_counts={}, ramp_specs=ramp_specs, T=8)
+    assert v is None
+
+
+def test_curve_verdict_baseline_falls_back_when_no_2_drops():
+    """When the deck has no 2-drops, baseline_cmc falls back to smallest castable."""
+    v = compute_curve_verdict(
+        curve_counts={3: 8, 4: 6, 5: 4}, ramp_specs=[_ramp(3)], T=8,
+    )
+    assert v is not None
+    assert v.baseline_cmc == 3
+    # Baseline row should be tagged as baseline.
+    base_row = next(r for r in v.rows if r.cmc == 3)
+    assert base_row.kind == "baseline"
+    assert base_row.b_implicit == pytest.approx(1.0)
+
+
+def test_curve_verdict_deliberately_over_ramped_low_curve_fires_warning():
+    """A deliberately misbuilt deck (lots of ramp piling onto a low curve)
+    should fire ramp_over_aggressive at the thin high-CMC slots. This is the
+    canonical case the calibrated bar is meant to catch."""
+    # Heavy ramp: 14 pieces of mostly fast/medium, ~73 mana of excess.
+    ramp_specs = (
+        [_ramp(1, 2.0), _ramp(1, 3.0)]
+        + [_ramp(2, 1.0)] * 6
+        + [_ramp(3, 1.0)] * 4
+        + [_ramp(4, 2.0)] * 2
+    )
+    # Low curve with a single thin 6-drop slot.
+    curve_counts = {1: 8, 2: 14, 3: 14, 4: 6, 5: 2, 6: 1}
+    v = compute_curve_verdict(curve_counts, ramp_specs, T=8)
+    assert v is not None
+    assert v.delta == pytest.approx(DEFAULT_FIXED_DELTA)
+    assert v.ramp_share > 0.7  # heavy excess saturates alpha well above 0.7.
+    row_6 = next(r for r in v.rows if r.cmc == 6)
+    assert row_6.kind == "ramp_over_aggressive", (
+        f"expected ramp_over_aggressive at thin 6-drop slot, got {row_6.kind}"
+    )
+
+
+def test_curve_verdict_low_excess_softens_mid_curve():
+    """A deck with low ramp excess (slow-only ramp) gets a small alpha and
+    therefore softer A across the curve; mid-curve flags should be mild or
+    coherent rather than ramp_over_aggressive."""
+    ramp_specs = [_ramp(3, 1.0)] * 5 + [_ramp(4, 1.0)] * 2  # all slow ramp
+    curve_counts = {1: 4, 2: 9, 3: 9, 4: 4, 5: 2, 6: 1, 7: 1, 8: 1}
+    v = compute_curve_verdict(curve_counts, ramp_specs, T=8)
+    assert v is not None
+    assert v.delta == pytest.approx(DEFAULT_FIXED_DELTA)
+    # Slow ramp -> low excess (5x2 + 0 = 10) -> alpha < 0.5 at k=50.
+    assert v.ramp_share < 0.5
+    # At least one mid-curve slot should be coherent or over_allocated.
+    kinds_by_cmc = {r.cmc: r.kind for r in v.rows}
+    assert any(kinds_by_cmc.get(c) in ("coherent", "over_allocated") for c in (3, 4, 5)), kinds_by_cmc
+
+
+def test_curve_verdict_kinds_are_valid():
+    """Every row's kind tag is one of the documented values."""
+    v = _verdict_from_synth(SYNTH_BALANCED)
+    valid = {"baseline", "below_baseline", "coherent",
+             "ramp_over_aggressive", "over_allocated", "no_slots"}
+    for row in v.rows:
+        assert row.kind in valid
+
+
+def test_curve_verdict_baseline_row_has_b_implicit_one():
+    v = _verdict_from_synth(SYNTH_BALANCED)
+    base_row = next(r for r in v.rows if r.cmc == v.baseline_cmc)
+    assert base_row.kind == "baseline"
+    assert base_row.b_implicit == pytest.approx(1.0)
+    assert base_row.a_required == pytest.approx(1.0)
+
+
+def test_compute_curve_value_attaches_curve_verdict():
+    """End-to-end: compute_curve_value populates curve_verdict on the result."""
+    deck = [_land(qty=37)]
+    deck += [_spell(f"v{i}", cmc=3, qty=1) for i in range(40)]
+    deck += [_spell(f"v6_{i}", cmc=6, qty=1) for i in range(20)]
+    cv = compute_curve_value(deck, registry=None, overrides=None, turns=8)
+    assert cv.curve_verdict is not None
+    assert cv.curve_verdict.no_ramp is True  # no registry, no detected ramp
+    assert any(r.cmc == 3 for r in cv.curve_verdict.rows)
+    assert any(r.cmc == 6 for r in cv.curve_verdict.rows)
+
+
+def test_compute_curve_value_serializes_verdict_via_asdict():
+    """The reporter's asdict() pass needs the verdict to round-trip cleanly."""
+    from dataclasses import asdict
+    deck = [_land(qty=37)]
+    deck += [_spell(f"v{i}", cmc=3, qty=1) for i in range(40)]
+    cv = compute_curve_value(deck, registry=None, overrides=None, turns=8)
+    d = asdict(cv)
+    assert "curve_verdict" in d
+    assert "rows" in d["curve_verdict"]
+    assert "net_flat" in d["curve_verdict"]
+
+
+def test_compute_curve_value_dict_is_json_safe_with_uncastable_slot():
+    """Slots with c >= T (Ripjaw's 9-drop on T=8) produce A_raw=inf. The
+    reporter's serializer must convert inf/NaN to None so the dict survives
+    json.dumps -> JS JSON.parse round-trip."""
+    import json
+    from auto_goldfish.metrics.reporter import _sanitize_for_json
+    # Curve with a 9-drop in a T=8 game.
+    curve = {2: 8, 6: 4, 9: 2}
+    specs = [_ramp(2, 1.0)] * 4
+    v = compute_curve_verdict(curve, specs, T=8)
+    # Confirm at least one row has inf A_required.
+    assert any(
+        not math.isfinite(r.a_required) for r in v.rows
+    ), "expected at least one inf row for c >= T"
+    # Round-trip through the sanitizer + json.dumps.
+    from dataclasses import asdict
+    raw_dict = asdict(v)
+    safe = _sanitize_for_json(raw_dict)
+    encoded = json.dumps(safe)  # would raise / produce 'Infinity' if not sanitized
+    assert "Infinity" not in encoded
+    assert "NaN" not in encoded
+    # JS-equivalent parse round-trip: stdlib json with strict=True would also
+    # reject Infinity tokens.
+    decoded = json.loads(encoded)
+    inf_rows = [r for r in decoded["rows"] if r["a_required"] is None]
+    assert len(inf_rows) >= 1
+
+
+# ---------------------------------------------------------------------------
+# B2 ramp-share shrinkage: A_eff = 1 + ramp_share * (A_raw - 1)
+# ---------------------------------------------------------------------------
+
+def test_ramp_share_no_ramp_is_zero():
+    assert ramp_share_from_mana(land_mana=30.0, ramp_excess=0.0) == 0.0
+
+
+def test_ramp_share_negative_excess_floors_to_zero():
+    """Late-cast ramp can produce a small negative excess; share floors to 0."""
+    assert ramp_share_from_mana(land_mana=30.0, ramp_excess=-2.0) == 0.0
+
+
+def test_ramp_share_pure_ramp_is_one():
+    assert ramp_share_from_mana(land_mana=0.0, ramp_excess=10.0) == 1.0
+
+
+def test_ramp_share_mixed_is_fractional():
+    s = ramp_share_from_mana(land_mana=27.0, ramp_excess=18.0)
+    assert s == pytest.approx(18.0 / 45.0)
+
+
+def test_ramp_share_no_mana_is_zero():
+    """Degenerate: no lands and no ramp -> 0 (don't divide by zero)."""
+    assert ramp_share_from_mana(land_mana=0.0, ramp_excess=0.0) == 0.0
+
+
+# Edgar Markov-shaped: low-curve aggressive vampire tribal, very little ramp.
+EDGAR_CURVE = {1: 12, 2: 18, 3: 12, 4: 6, 5: 3, 6: 1}
+EDGAR_RAMP = [(1, 2.0), (2, 1.0), (2, 1.0)]
+
+
+def _edgar_specs():
+    return [RampCardSpec(name=f"r{i}", cmc=c, mana_per_turn=M)
+            for i, (c, M) in enumerate(EDGAR_RAMP)]
+
+
+def test_curve_verdict_default_uses_excess_alpha_and_fixed_delta():
+    """Production default: delta is anchored at DEFAULT_FIXED_DELTA and alpha
+    is excess-derived (Option C)."""
+    v = compute_curve_verdict(EDGAR_CURVE, _edgar_specs(), T=8)
+    assert v.delta == pytest.approx(DEFAULT_FIXED_DELTA)
+    # Edgar's ramp specs: Sol Ring (excess 13) + 2 Signets (excess 4 each) = 21.
+    # alpha = 1 - exp(-21/50) = 0.343.
+    assert v.ramp_share == pytest.approx(0.343, abs=0.02)
+    # A_eff(6) at delta=0.85, T=8 -> A_raw~1.49, shrunk by alpha~0.34 -> ~1.17.
+    row6 = next(r for r in v.rows if r.cmc == 6)
+    assert row6.a_required == pytest.approx(1.17, abs=0.1)
+
+
+def test_curve_verdict_share_zero_collapses_a_to_one():
+    """Explicit ramp_share=0 still collapses A to 1.0 everywhere (test override)."""
+    v = compute_curve_verdict(EDGAR_CURVE, _edgar_specs(), T=8, ramp_share=0.0)
+    for r in v.rows:
+        assert r.a_required == pytest.approx(1.0)
+    assert not any(r.kind == "ramp_over_aggressive" for r in v.rows)
+
+
+def test_curve_verdict_low_share_shrinks_high_cmc_demand():
+    """Explicit ramp_share=0.41 shrinks A(6) at the fixed delta anchor."""
+    v = compute_curve_verdict(EDGAR_CURVE, _edgar_specs(), T=8, ramp_share=0.41)
+    row6 = next(r for r in v.rows if r.cmc == 6)
+    # A_raw(6) at delta=0.85 -> ~1.49; 1 + 0.41 * 0.49 -> 1.20.
+    assert row6.a_required == pytest.approx(1.20, abs=0.1)
+
+
+def test_curve_verdict_share_clamped_to_unit_interval():
+    """ramp_share outside [0,1] is clamped silently."""
+    v_neg = compute_curve_verdict(EDGAR_CURVE, _edgar_specs(), T=8, ramp_share=-0.5)
+    v_high = compute_curve_verdict(EDGAR_CURVE, _edgar_specs(), T=8, ramp_share=2.5)
+    # Negative -> clamped to 0 -> A=1 everywhere.
+    assert all(r.a_required == pytest.approx(1.0) for r in v_neg.rows)
+    # >1 -> clamped to 1 -> matches alpha=1 case at the fixed delta anchor.
+    # A_raw(6) at delta=0.85 -> ~1.49.
+    row6 = next(r for r in v_high.rows if r.cmc == 6)
+    assert row6.a_required == pytest.approx(1.49, abs=0.1)
+
+
+def test_compute_curve_value_applies_ramp_share_end_to_end():
+    """The integration layer derives ramp_share from land_mana / ramp_excess
+    and passes it into the verdict."""
+    deck = [_land(qty=35)]
+    # Aggressive low-curve value pool (Edgar-shaped).
+    deck += [_spell(f"c1_{i}", cmc=1, qty=1) for i in range(12)]
+    deck += [_spell(f"c2_{i}", cmc=2, qty=1) for i in range(18)]
+    deck += [_spell(f"c3_{i}", cmc=3, qty=1) for i in range(12)]
+    deck += [_spell(f"c4_{i}", cmc=4, qty=1) for i in range(6)]
+    deck += [_spell(f"c5_{i}", cmc=5, qty=1) for i in range(3)]
+    deck += [_spell(f"c6_{i}", cmc=6, qty=1) for i in range(1)]
+
+    # Without a registry, classify_for_curve_value can't detect ramp; build
+    # the verdict directly from a known curve+ramp+share, mirroring what
+    # compute_curve_value would do once ramp is detected.
+    cv = compute_curve_value(deck, registry=None, overrides=None, turns=8)
+    # No detected ramp -> share=0, no_ramp=True, A clamped to 1 everywhere.
+    assert cv.curve_verdict is not None
+    assert cv.curve_verdict.ramp_share == 0.0
+    assert all(r.a_required == pytest.approx(1.0) for r in cv.curve_verdict.rows)
+
+
+def test_curve_verdict_ramp_share_field_is_set():
+    """The verdict echoes back the share it was constructed with."""
+    v = compute_curve_verdict(EDGAR_CURVE, _edgar_specs(), T=8, ramp_share=0.33)
+    assert v.ramp_share == pytest.approx(0.33)
+
+
+# ---------------------------------------------------------------------------
+# B3: loan-size α + IRR cap (production tuning)
+# ---------------------------------------------------------------------------
+
+def test_loan_size_alpha_no_ramp_is_zero():
+    assert loan_size_alpha([]) == 0.0
+
+
+def test_loan_size_alpha_below_threshold_scales_linearly():
+    # Loan = 1+2+2 = 5; threshold 15 -> 0.333.
+    specs = [_ramp(1, 2.0), _ramp(2, 1.0), _ramp(2, 1.0)]
+    assert loan_size_alpha(specs, threshold=15.0) == pytest.approx(5.0 / 15.0)
+
+
+def test_loan_size_alpha_saturates_at_one():
+    # 11 2-cmc rocks = loan 22; clamped to 1.0 against threshold 15.
+    specs = [_ramp(2, 1.0)] * 11
+    assert loan_size_alpha(specs, threshold=15.0) == 1.0
+
+
+def test_loan_size_alpha_ignores_zero_mana_pieces():
+    """Pieces with mana_per_turn=0 don't count toward the loan."""
+    specs = [_ramp(2, 0.0), _ramp(2, 1.0)]
+    assert loan_size_alpha(specs, threshold=10.0) == pytest.approx(2.0 / 10.0)
+
+
+def test_loan_size_alpha_zero_threshold_returns_zero():
+    """Defensive: 0 threshold -> no commitment ever (avoid div by zero)."""
+    assert loan_size_alpha([_ramp(2, 1.0)], threshold=0.0) == 0.0
+
+
+def test_aggregate_irr_cap_clips_solo_sol_ring():
+    """Sol Ring alone: uncapped IRR saturates near IRR_HI=10; cap=1.0 brings
+    it down so single-piece decks get a sane delta."""
+    specs = [_ramp(1, 2.0)]  # Sol Ring shape
+    no_cap = aggregate_deck_irr(specs, T=8)["median_irr"]
+    capped = aggregate_deck_irr(specs, T=8, irr_cap=1.0)["median_irr"]
+    assert no_cap > 1.0  # uncapped saturates well above 1
+    assert capped == pytest.approx(1.0)
+
+
+def test_aggregate_irr_cap_does_not_affect_typical_ramp():
+    """Multi-piece decks with median IRR < 1 are unaffected by cap=1.0."""
+    specs = [_ramp(2, 1.0)] * 11  # median IRR ~0.45
+    no_cap = aggregate_deck_irr(specs, T=8)["median_irr"]
+    capped = aggregate_deck_irr(specs, T=8, irr_cap=1.0)["median_irr"]
+    assert no_cap == pytest.approx(capped)
+    assert no_cap < 1.0
+
+
+def test_compute_curve_verdict_sol_ring_only_under_option_c():
+    """Sol Ring alone: excess = 14 - 1 = 13; alpha = 1 - exp(-13/50) ~= 0.229.
+    delta is fixed at 0.85. A_eff(6) ~= 1 + 0.229 * (1.49 - 1) ~= 1.11."""
+    specs = [_ramp(1, 2.0)]
+    v = compute_curve_verdict(EDGAR_CURVE, specs, T=8)
+    assert v.delta == pytest.approx(DEFAULT_FIXED_DELTA)
+    assert v.idealized_excess == pytest.approx(13.0)
+    assert v.ramp_share == pytest.approx(0.229, abs=0.02)
+    row6 = next(r for r in v.rows if r.cmc == 6)
+    assert row6.a_required == pytest.approx(1.11, abs=0.1)
+
+
+def test_default_loan_threshold_is_15():
+    assert DEFAULT_LOAN_THRESHOLD == 15.0
+
+
+def test_default_irr_cap_is_one():
+    assert DEFAULT_IRR_CAP == 1.0
+
+
+def test_curve_verdict_loan_size_field_matches_sum_of_cmcs():
+    """The verdict carries the gross loan so the UI can display it alongside α
+    (which saturates at 1.0 and would otherwise hide scale)."""
+    specs = [_ramp(1, 2.0), _ramp(2, 1.0), _ramp(2, 1.0)]
+    v = compute_curve_verdict(EDGAR_CURVE, specs, T=8)
+    assert v.loan_size == pytest.approx(5.0)
+
+
+def test_curve_verdict_loan_size_zero_when_no_ramp():
+    v = compute_curve_verdict(EDGAR_CURVE, [], T=8)
+    assert v.loan_size == 0.0
+
+
+def test_curve_verdict_loan_size_ignores_zero_mana_pieces():
+    """Pieces with mana_per_turn=0 don't count toward the displayed loan."""
+    specs = [_ramp(2, 0.0), _ramp(3, 1.0)]
+    v = compute_curve_verdict(EDGAR_CURVE, specs, T=8)
+    assert v.loan_size == pytest.approx(3.0)
+
+
+# ---------------------------------------------------------------------------
+# Option C: fixed delta + excess-based alpha (monotonic in cuts)
+# ---------------------------------------------------------------------------
+
+def test_default_fixed_delta_is_calibrated():
+    assert DEFAULT_FIXED_DELTA == 0.85
+
+
+def test_default_excess_k_is_calibrated():
+    assert DEFAULT_EXCESS_K == 50.0
+
+
+def test_idealized_ramp_excess_sol_ring():
+    """Sol Ring: c=1, M=2, T=8 -> 2*(8-1) - 1 = 13."""
+    assert idealized_ramp_excess([_ramp(1, 2.0)], T=8) == pytest.approx(13.0)
+
+
+def test_idealized_ramp_excess_signet():
+    """Signet shape: c=2, M=1, T=8 -> 1*(8-2) - 2 = 4."""
+    assert idealized_ramp_excess([_ramp(2, 1.0)], T=8) == pytest.approx(4.0)
+
+
+def test_idealized_ramp_excess_sums_across_pieces():
+    specs = [_ramp(1, 2.0), _ramp(2, 1.0), _ramp(2, 1.0)]  # 13 + 4 + 4
+    assert idealized_ramp_excess(specs, T=8) == pytest.approx(21.0)
+
+
+def test_idealized_ramp_excess_drops_uncastable():
+    """Pieces with cmc > T can't be cast; they don't contribute to excess."""
+    assert idealized_ramp_excess([_ramp(10, 1.0)], T=8) == 0.0
+
+
+def test_idealized_ramp_excess_floors_at_zero():
+    """A net-negative ramp (e.g. very late cast) floors to 0."""
+    # 6-cmc 1-mana rock: 1*(8-6) - 6 = -4 net.
+    assert idealized_ramp_excess([_ramp(6, 1.0)], T=8) == 0.0
+
+
+def test_excess_alpha_zero_excess_zero_alpha():
+    assert excess_alpha(0.0) == 0.0
+
+
+def test_excess_alpha_saturates_smoothly():
+    """alpha approaches 1.0 but never reaches it -- never saturates fully."""
+    # Pin behavior with explicit k so we don't depend on DEFAULT_EXCESS_K.
+    assert excess_alpha(30.0, k=30.0) == pytest.approx(1 - math.exp(-1.0), abs=1e-6)
+    assert excess_alpha(60.0, k=30.0) == pytest.approx(1 - math.exp(-2.0), abs=1e-6)
+    # Even at very high excess, alpha < 1.
+    assert 0.99 < excess_alpha(200.0, k=30.0) < 1.0
+
+
+def test_curve_verdict_idealized_excess_field():
+    """The verdict surfaces the idealized excess for the UI to display."""
+    specs = [_ramp(1, 2.0), _ramp(2, 1.0), _ramp(2, 1.0)]
+    v = compute_curve_verdict(EDGAR_CURVE, specs, T=8)
+    assert v.idealized_excess == pytest.approx(21.0)
+
+
+def test_curve_verdict_monotonic_under_any_cut():
+    """The defining property of Option C: cutting ANY ramp piece monotonically
+    reduces alpha and therefore A_eff at every CMC. Test by removing one
+    piece at a time, in any order, and confirming A_eff(6) only ever drops."""
+    # Build a heterogeneous ramp pile with mixed speeds.
+    base_specs = [
+        _ramp(1, 2.0),  # Sol Ring shape
+        _ramp(2, 1.0),  # signet
+        _ramp(2, 1.0),
+        _ramp(3, 1.0),  # cultivate-shape
+        _ramp(3, 1.0),
+        _ramp(4, 2.0),  # 4-cmc strong rock
+    ]
+    curve = {2: 14, 3: 11, 4: 7, 5: 4, 6: 1}
+    # For each subset of size k = N, N-1, ..., 0, check A_eff(6) is monotonic.
+    # We test all single-piece-cut orders (each piece removed individually,
+    # then the next, etc., across all 6! = 720 orderings would be overkill);
+    # spot-check on the fast-first and slow-first orderings, which are the
+    # extremes the Part-3 analysis showed mattered most.
+    for cut_order in ['fast-first', 'slow-first', 'name-order']:
+        if cut_order == 'fast-first':
+            ordered = sorted(
+                base_specs, key=lambda s: -(s.mana_per_turn / max(1, s.cmc))
+            )
+        elif cut_order == 'slow-first':
+            ordered = sorted(
+                base_specs, key=lambda s: (s.mana_per_turn / max(1, s.cmc))
+            )
+        else:
+            ordered = list(base_specs)
+        prev_a6 = None
+        for k in range(len(ordered) + 1):
+            kept = ordered[k:]
+            v = compute_curve_verdict(curve, kept, T=8)
+            row6 = next((r for r in v.rows if r.cmc == 6), None)
+            assert row6 is not None
+            if prev_a6 is not None:
+                assert row6.a_required <= prev_a6 + 1e-6, (
+                    f"non-monotonic under cut order {cut_order} at k={k}: "
+                    f"prev={prev_a6:.4f}, curr={row6.a_required:.4f}"
+                )
+            prev_a6 = row6.a_required

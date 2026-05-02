@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 bp = Blueprint("runs", __name__, url_prefix="/runs")
 
-STAT_KEYS = ["consistency", "acceleration", "snowball", "toughness", "efficiency", "reach"]
+STAT_KEYS = ["consistency", "acceleration", "snowball", "tuning", "efficiency", "reach"]
 
 
 def _load_runs() -> list[dict]:
@@ -57,7 +57,7 @@ def _load_runs() -> list[dict]:
                             "consistency": r.score_consistency,
                             "acceleration": r.score_acceleration,
                             "snowball": r.score_snowball,
-                            "toughness": r.score_toughness,
+                            "tuning": r.score_tuning,
                             "efficiency": r.score_efficiency,
                             "reach": r.score_reach,
                         }
@@ -92,7 +92,7 @@ _ANCHOR_FIELDS = (
     "acceleration",
     "snowball_ratio",
     "snowball_late_avg_norm",
-    "toughness",
+    "tuning",
     "efficiency",
     "reach_norm",
 )

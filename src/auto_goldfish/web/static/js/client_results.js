@@ -106,14 +106,14 @@ var ClientResults = window.ClientResults || (function() {
          desc: 'How much advantage compounds over time',
          lowMeaning: 'late game stays flat — the deck does not pull away from its early curve.',
          highMeaning: 'late turns dwarf the early game; the deck snowballs hard once it gets going.'},
-        {name: 'Toughness', key: 'toughness', color: '#22c55e',
-         desc: 'Structural redundancy of the decklist',
-         lowMeaning: 'thin/fragile decklist — few mana sources, little draw, or a heavy curve.',
-         highMeaning: 'deep redundancy: lots of mana sources, draw, low-cost plays, and a controlled curve.'},
+        {name: 'Tuning', key: 'tuning', color: '#22c55e',
+         desc: 'How well the curve composition matches the ramp\'s pace per CMC',
+         lowMeaning: 'ramp pace is paying for high-CMC slots the deck does not have enough of.',
+         highMeaning: 'every CMC slot delivers what the ramp is paying for — curve and ramp are in sync.'},
         {name: 'Efficiency', key: 'efficiency', color: '#3b82f6',
-         desc: 'Mana utilization per turn',
-         lowMeaning: 'mana left unused — frequent mid-game stall turns.',
-         highMeaning: 'nearly every turn fully utilized; very few wasted mana points.'},
+         desc: 'Whether the deck draws enough cards to spend its mana',
+         lowMeaning: 'draw rate falls short of what is needed to spend the mana the deck generates.',
+         highMeaning: 'draw rate keeps up with mana production; nearly all generated mana gets spent.'},
         {name: 'Reach', key: 'reach', color: '#f97316',
          desc: 'Peak mana output and ceiling',
          lowMeaning: 'low ceiling — even the best games never spend that much mana.',
@@ -215,9 +215,18 @@ var ClientResults = window.ClientResults || (function() {
         html += '</ul>';
         html += '<p>The orange line is the cards your deck actually drew on average across the simulation; the dashed grey line is the natural draw rate (no draw spells). The deficit at the rightmost turn is the gap from the top of the stack to the orange line.</p>';
         html += '<p>The table under the chart shows the per-turn breakdown explicitly &mdash; it\'s ground truth, useful for sanity-checking the visualization.</p>';
-        html += '<p><strong>Implied Spell Value</strong> &mdash; treats your ramp package like a loan: each ramp piece pays its cost up front and returns mana over the rest of the game. The median per-turn IRR across your ramp pieces gives the deck\'s revealed time-preference (&delta;). From &delta; we derive how much intrinsically more powerful a c-cost spell needs to be relative to a 2-drop to justify its slot.</p>';
-        if (noRamp) {
-            html += '<p><em>This deck has no permanent ramp, so we fall back to &delta;=1.0 (no time preference). The multipliers reflect per-slot mana efficiency only.</em></p>';
+        const verdictForHelp = cv.curve_verdict;
+        const helpBaseline = verdictForHelp ? verdictForHelp.baseline_cmc : 2;
+        const helpNoRamp = !!(verdictForHelp && verdictForHelp.no_ramp);
+        html += '<p><strong>Implied Spell Value</strong> compares two views of each CMC slot:</p>';
+        html += '<ul>';
+        html += '<li><strong>A &mdash; Required:</strong> the bar each c-drop must clear. Set by how much extra mana your ramp produces over the game (each piece contributes M&times;remaining&nbsp;turns&nbsp;&minus;&nbsp;cost). More excess = stronger bar. Cutting any ramp piece always softens the bar.</li>';
+        html += '<li><strong>B &mdash; Deck implies:</strong> what your curve actually delivers per slot, simulated play-to-curve. Compared to the baseline slot.</li>';
+        html += '</ul>';
+        html += '<p>When A and B agree, the row is <strong>coherent</strong>. When B &lt; A, the row is <strong>ramp over-aggressive</strong> &mdash; your slot delivers less than the bar; soften the bar by cutting ramp. When B &gt; A, the row has <strong>slack</strong> &mdash; you can use weaker cards there.</p>';
+        html += '<p>The headline badge is <em>net mana-turns at flat power</em>: positive means ramp pays for itself even before any high-CMC payoff; negative means high-CMC slots must compensate.</p>';
+        if (helpNoRamp) {
+            html += '<p><em>No permanent ramp, so the bar collapses to 1&times; everywhere &mdash; A is just measuring per-slot mana efficiency.</em></p>';
         }
         html += '</div></details>';
 
@@ -284,41 +293,82 @@ var ClientResults = window.ClientResults || (function() {
         }
         html += '</div>';
 
-        // Implied Spell Value
+        // Implied Spell Value (A vs B verdict)
         html += '<div class="curve-value-power">';
         html += '<h3>Implied Spell Value</h3>';
-        if (noRamp) {
-            html += '<p class="cv-rate-line">No ramp investment &rarr; &delta; = 1.00 (per-slot efficiency baseline)</p>';
+        const verdict = cv.curve_verdict;
+        if (verdict) {
+            const baseline = verdict.baseline_cmc;
+            if (verdict.no_ramp) {
+                html += '<p class="cv-rate-line">No permanent ramp &mdash; bar collapses to 1&times; everywhere</p>';
+            } else {
+                const excess = (verdict.idealized_excess != null ? verdict.idealized_excess : 0).toFixed(0);
+                const strength = ((verdict.ramp_share || 0) * 100).toFixed(0);
+                html += '<p class="cv-rate-line">Ramp produces <strong>+' + excess + ' mana</strong> over the game';
+                html += ' &nbsp;&middot;&nbsp; bar at <strong>' + strength + '%</strong> strength</p>';
+            }
+
+            const netFlat = verdict.net_flat || 0;
+            const netPos = netFlat > 0.5;
+            const netNeg = netFlat < -0.5;
+            const netClass = netPos ? 'pos' : (netNeg ? 'neg' : 'flat');
+            html += '<div class="cv-net-badge cv-net-' + netClass + '">';
+            if (netPos) {
+                html += '&check; Ramp is net-positive at flat power: <strong>+' + netFlat.toFixed(0) + ' mana-turns</strong>. ';
+                html += 'Per-CMC gaps below show where extra power is still required.';
+            } else if (netNeg) {
+                html += '&#9888; Ramp loses <strong>' + Math.abs(netFlat).toFixed(0) + ' mana-turns</strong> at flat power; the gaps below show which slots must compensate.';
+            } else {
+                html += 'Ramp is roughly self-paying at flat power (net &asymp; 0 mana-turns).';
+            }
+            html += '</div>';
+
+            html += '<div class="curve-value-power-chart-wrap"><canvas id="curveValuePowerChart"></canvas></div>';
+
+            html += '<table class="cv-power-table"><thead><tr>';
+            html += '<th>CMC</th><th>Cards</th><th>A &mdash; Required</th><th>B &mdash; Deck implies</th><th>Reading</th>';
+            html += '</tr></thead><tbody>';
+            const rows = verdict.rows || [];
+            for (const row of rows) {
+                const kindClass = 'cv-row-' + (row.kind || '').replace(/_/g, '-');
+                const aTxt = (row.a_required != null && isFinite(row.a_required)) ? (fmt(row.a_required, 2) + '&times;') : '—';
+                const bTxt = (row.b_implicit != null && isFinite(row.b_implicit)) ? (fmt(row.b_implicit, 2) + '&times;') : '—';
+                html += '<tr class="' + kindClass + '">';
+                html += '<td>' + row.cmc + '</td>';
+                html += '<td>' + Math.round(row.n_cards || 0) + '</td>';
+                html += '<td>' + aTxt + '</td>';
+                html += '<td>' + bTxt + '</td>';
+                html += '<td class="cv-reading-cell">';
+                if (row.kind === 'baseline') {
+                    html += '<span class="cv-tag cv-tag-base">baseline</span>';
+                } else if (row.kind === 'below_baseline') {
+                    html += '<span class="cv-tag cv-tag-base">below baseline</span>';
+                } else if (row.kind === 'coherent') {
+                    html += '<span class="cv-tag cv-tag-ok">&check; coherent</span>';
+                    html += '<small class="cv-action">Your ' + row.cmc + '-drops match the bar.</small>';
+                } else if (row.kind === 'ramp_over_aggressive') {
+                    const gap = row.gap || 1;
+                    html += '<span class="cv-tag cv-tag-warn">&#9888; gap ' + gap.toFixed(1) + '&times;</span>';
+                    html += '<small class="cv-action">Your ' + row.cmc + '-drops are ' + gap.toFixed(1) + '&times; short. Cut a ramp piece to soften the bar &mdash; any cut helps; cutting fast ramp like Sol Ring helps most.</small>';
+                } else if (row.kind === 'over_allocated') {
+                    const slack = row.slack || 1;
+                    html += '<span class="cv-tag cv-tag-slack">&check; slack ' + fmt(slack, 2) + '&times;</span>';
+                    html += '<small class="cv-action">Your ' + row.cmc + '-drops have slack &mdash; these slots can be weaker without hurting coherence.</small>';
+                } else if (row.kind === 'no_slots') {
+                    html += '<span class="cv-tag cv-tag-base">no slots</span>';
+                }
+                html += '</td>';
+                html += '</tr>';
+            }
+            html += '</tbody></table>';
+
+            html += '<p class="cv-hint">';
+            html += '<strong>A</strong> = the bar your ramp sets. <strong>B</strong> = what your curve delivers. ';
+            html += 'When B falls short of A, cutting ramp softens the bar; when B exceeds A, you have slack to use weaker cards.';
+            html += '</p>';
         } else {
-            const irrPct = (isv.median_irr * 100).toFixed(0);
-            html += '<p class="cv-rate-line">Median ramp IRR: <strong>' + irrPct + '%/turn</strong>';
-            html += ' &nbsp;&middot;&nbsp; &delta; = <strong>' + fmt(isv.delta, 2) + '</strong></p>';
+            html += '<p class="cv-hint">No value spells in deck &mdash; verdict undefined.</p>';
         }
-
-        const mults = isv.power_multipliers || {};
-        const cmcs = Object.keys(mults).map(Number).sort((a, b) => a - b);
-        const maxMult = Math.max.apply(null, cmcs.map(c => mults[c]).concat([0]));
-        const scaleMax = Math.max(maxMult, 2.0);
-
-        html += '<table class="cv-power-table"><thead><tr>';
-        html += '<th>CMC</th><th>Required power vs. 2-drop</th><th>Multiplier</th>';
-        html += '</tr></thead><tbody>';
-        for (const c of cmcs) {
-            const m = mults[c];
-            const isBaseline = c === 2;
-            const widthPct = (m / scaleMax * 100).toFixed(1);
-            const color = isBaseline ? '#94a3b8' : '#3b82f6';
-            const rowClass = isBaseline ? 'cv-row-baseline' : '';
-            html += '<tr class="' + rowClass + '">';
-            html += '<td>' + c + '</td>';
-            html += '<td><div class="cv-power-bar-track"><div class="cv-power-bar-fill" style="width:' + widthPct + '%; background:' + color + '"></div></div></td>';
-            html += '<td>' + fmt(m, 2) + '&times;</td>';
-            html += '</tr>';
-        }
-        html += '</tbody></table>';
-
-        const sixDropMult = mults[6] || 1.0;
-        html += '<p class="cv-hint">A 6-drop with multiplier <strong>' + fmt(sixDropMult, 2) + '&times;</strong> means: for this deck\'s ramp choices to be coherent, each 6-drop needs to be at least that intrinsically more impactful than a 2-drop.</p>';
         html += '</div>';  // power
 
         html += '</div></div>';  // grid, section
@@ -457,6 +507,119 @@ var ClientResults = window.ClientResults || (function() {
         });
     }
 
+    function renderCurveValuePowerChart(results) {
+        const canvas = document.getElementById('curveValuePowerChart');
+        if (!canvas) return;
+        const r = results[results.length - 1];
+        const cv = r && r.curve_value;
+        if (!cv || !cv.curve_verdict) return;
+        const verdict = cv.curve_verdict;
+        const rows = (verdict.rows || []).filter(function(row) { return row.cmc != null; });
+        if (rows.length === 0) return;
+
+        const labels = rows.map(function(row) { return 'c=' + row.cmc; });
+        const aVals = rows.map(function(row) {
+            const v = row.a_required;
+            return (v == null || !isFinite(v)) ? null : v;
+        });
+        const bVals = rows.map(function(row) {
+            const v = row.b_implicit;
+            return (v == null || !isFinite(v)) ? null : v;
+        });
+        const gapLabels = rows.map(function(row) {
+            return (row.kind === 'ramp_over_aggressive' && row.gap != null)
+                ? ('gap ' + row.gap.toFixed(1) + '×') : '';
+        });
+
+        const existing = Chart.getChart('curveValuePowerChart');
+        if (existing) existing.destroy();
+
+        const gapLabelPlugin = {
+            id: 'gapLabelPlugin',
+            afterDatasetsDraw: function(chart) {
+                const ctx = chart.ctx;
+                const meta0 = chart.getDatasetMeta(0);
+                const meta1 = chart.getDatasetMeta(1);
+                ctx.save();
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillStyle = '#dc2626';
+                ctx.textAlign = 'center';
+                for (let i = 0; i < gapLabels.length; i++) {
+                    const lbl = gapLabels[i];
+                    if (!lbl) continue;
+                    const a = meta0.data[i];
+                    const b = meta1.data[i];
+                    if (!a || !b) continue;
+                    const x = (a.x + b.x) / 2;
+                    const y = Math.min(a.y, b.y) - 6;
+                    ctx.fillText(lbl, x, y);
+                }
+                ctx.restore();
+            }
+        };
+
+        new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'A — required (your ramp\'s pace)',
+                        data: aVals,
+                        backgroundColor: '#3b82f6',
+                        borderColor: '#1d4ed8',
+                        borderWidth: 1,
+                    },
+                    {
+                        label: 'B — what your deck implies',
+                        data: bVals,
+                        backgroundColor: '#f59e0b',
+                        borderColor: '#b45309',
+                        borderWidth: 1,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Required (A) vs. Deck-implied (B) intrinsic-power multiplier per CMC',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            footer: function(items) {
+                                const idx = items[0] ? items[0].dataIndex : 0;
+                                const row = rows[idx];
+                                if (!row) return '';
+                                if (row.kind === 'coherent') return '✓ coherent';
+                                if (row.kind === 'ramp_over_aggressive' && row.gap != null) {
+                                    return '⚠ ramp over-aggressive (gap ' + row.gap.toFixed(2) + '×)';
+                                }
+                                if (row.kind === 'over_allocated' && row.slack != null) {
+                                    return '✓ over-allocated (slack ' + row.slack.toFixed(2) + '×)';
+                                }
+                                if (row.kind === 'baseline') return 'baseline';
+                                if (row.kind === 'below_baseline') return 'below baseline';
+                                return '';
+                            },
+                        },
+                    },
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Spell CMC' } },
+                    y: {
+                        title: { display: true, text: 'Multiplier vs. ' + verdict.baseline_cmc + '-drop' },
+                        beginAtZero: true,
+                    },
+                },
+            },
+            plugins: [gapLabelPlugin],
+        });
+    }
+
     function renderDeckScoreChart(results) {
         const r = results[results.length - 1];
         const score = r.deck_score;
@@ -465,8 +628,8 @@ var ClientResults = window.ClientResults || (function() {
         const canvas = document.getElementById('deckScoreRadar');
         if (!canvas) return;
 
-        const labels = ['Consistency', 'Acceleration', 'Snowball', 'Toughness', 'Efficiency', 'Reach'];
-        const values = [score.consistency, score.acceleration, score.snowball, score.toughness, score.efficiency, score.reach];
+        const labels = ['Consistency', 'Acceleration', 'Snowball', 'Tuning', 'Efficiency', 'Reach'];
+        const values = [score.consistency, score.acceleration, score.snowball, score.tuning, score.efficiency, score.reach];
 
         new Chart(canvas, {
             type: 'radar',
@@ -1174,6 +1337,7 @@ var ClientResults = window.ClientResults || (function() {
         // Render interactive components after DOM is updated
         renderDeckScoreChart(results);
         renderCurveValueChart(results);
+        renderCurveValuePowerChart(results);
         if (!isOptimization) {
             renderCharts(results);
         }

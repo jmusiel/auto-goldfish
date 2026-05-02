@@ -103,7 +103,7 @@ class SimulationResultRow(Base):
     score_consistency: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     score_acceleration: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     score_snowball: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    score_toughness: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    score_tuning: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     score_efficiency: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     score_reach: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     # Raw (unscaled) composite values for each CASTER stat. Persisted so
@@ -113,7 +113,7 @@ class SimulationResultRow(Base):
     raw_consistency: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     raw_acceleration: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     raw_snowball: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    raw_toughness: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    raw_tuning: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     raw_efficiency: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     raw_reach: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
