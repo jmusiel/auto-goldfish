@@ -73,6 +73,25 @@
       }
     },
     {
+      "group": "Repeatable Mana Producers (4 mana)",
+      "defaults": {
+        "categories": [
+          {
+            "category": "ramp",
+            "immediate": false,
+            "producer": {
+              "mana_amount": 4
+            }
+          }
+        ]
+      },
+      "cards": {
+        "Smothering Tithe": {
+          "priority": 2
+        }
+      }
+    },
+    {
       "group": "Scaling Mana Producers (approx as repeatable 1)",
       "defaults": {
         "priority": 2,
@@ -89,7 +108,6 @@
       "cards": {
         "As Foretold": {},
         "S\u00e9ance Board": {},
-        "Smothering Tithe": {},
         "Gyre Sage": {},
         "Kami of Whispered Hopes": {},
         "Heronblade Elite": {},

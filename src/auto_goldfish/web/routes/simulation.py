@@ -303,15 +303,19 @@ def _find_dist_dir():
 
 @bp.route("/api/wheel")
 def api_wheel():
-    """Return the wheel filename so the client can build the download URL."""
+    """Return the wheel filename + a cache-busting mtime token so the client
+    builds a unique URL every time the wheel is rebuilt. Without this token,
+    browsers serve a 12-hour-cached stale wheel after edits to Python source."""
     dist_dir = _find_dist_dir()
     if not dist_dir:
         abort(404)
     wheels = sorted(glob.glob(os.path.join(dist_dir, "auto_goldfish-*.whl")))
     if not wheels:
         abort(404)
-    filename = os.path.basename(wheels[-1])
-    return jsonify({"filename": filename})
+    wheel_path = wheels[-1]
+    filename = os.path.basename(wheel_path)
+    mtime = int(os.path.getmtime(wheel_path))
+    return jsonify({"filename": filename, "mtime": mtime})
 
 
 @bp.route("/api/wheel/<filename>")

@@ -128,7 +128,13 @@ class SimulationRunner:
                 for i in range(min_lands, max_lands + 1):
                     goldfisher.set_lands(i, cuts=job.config.get("cuts", []))
                     result = goldfisher.simulate()
-                    result_dict = result_to_dict(result, turns=job.config.get("turns", 10))
+                    result_dict = result_to_dict(
+                        result,
+                        turns=job.config.get("turns", 10),
+                        deck_list=deck_list,
+                        registry=registry,
+                        overrides=effect_overrides or None,
+                    )
 
                     with self._lock:
                         job.results.append(result_dict)

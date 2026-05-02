@@ -6,7 +6,11 @@
  * run client-side via Pyodide.
  */
 
-const ClientResults = (function() {
+// Use `var` + idempotent guard because deck_store.js's navigateToSim() does
+// document.write(html) which re-executes this script; `const` would throw
+// "Identifier 'ClientResults' has already been declared" and abort the whole
+// page bootstrap, leaving the simulate page non-functional.
+var ClientResults = window.ClientResults || (function() {
     'use strict';
 
     // -- Tooltip management (shared with server-side rendering) --
@@ -185,6 +189,272 @@ const ClientResults = (function() {
         }
         html += '</div></div></div>';
         return html;
+    }
+
+    function renderCurveValue(results) {
+        const r = results[results.length - 1];
+        const cv = r && r.curve_value;
+        if (!cv || !cv.implied_draw) return '';
+        const id_ = cv.implied_draw;
+        const isv = cv.implied_spell_value || {};
+        const deficit = id_.actual_deficit || 0;
+        const deficitPos = deficit > 0.5;
+        const noRamp = !!isv.no_ramp;
+
+        let html = '<div class="curve-value-section">';
+        html += '<h2>Curve Value Analysis</h2>';
+
+        // Help block
+        html += '<details class="curve-value-help"><summary>What does this mean?</summary>';
+        html += '<div class="curve-value-help-body">';
+        html += '<p><strong>Implied Draw</strong> &mdash; how many cards your deck needs to <em>see</em> during the game to (a) hit its land drops, (b) draw the ramp pieces it commits slots to, and (c) find enough non-ramp non-draw spells (&ldquo;spells&rdquo; below) to spend the mana those lands and ramp pieces produce. The chart breaks the requirement into three stacked bands at each turn; the top of the stack is the analytical cards-required:</p>';
+        html += '<ul>';
+        html += '<li><strong>Cards you need either way</strong> (grey) &mdash; the smaller of the two requirements, i.e. the cards both constraints demand at this turn. Always visible regardless of which constraint dominates.</li>';
+        html += '<li><strong>Extra cards to draw enough lands</strong> (blue, stacked on the floor) &mdash; how many more cards you\'d have to draw beyond the floor to reliably hit your land drops. Visible at turns when drawing lands is the limiting constraint (typically early/mid game).</li>';
+        html += '<li><strong>Extra cards to draw enough spells</strong> (purple, stacked on the floor) &mdash; how many more cards you\'d have to draw beyond the floor to reliably find non-ramp non-draw spells to spend your mana on. Visible at turns when drawing spells is the limiting constraint (typically late game in heavily-ramped decks). Only one of the two coloured caps is non-zero per turn.</li>';
+        html += '</ul>';
+        html += '<p>The orange line is the cards your deck actually drew on average across the simulation; the dashed grey line is the natural draw rate (no draw spells). The deficit at the rightmost turn is the gap from the top of the stack to the orange line.</p>';
+        html += '<p>The table under the chart shows the per-turn breakdown explicitly &mdash; it\'s ground truth, useful for sanity-checking the visualization.</p>';
+        html += '<p><strong>Implied Spell Value</strong> &mdash; treats your ramp package like a loan: each ramp piece pays its cost up front and returns mana over the rest of the game. The median per-turn IRR across your ramp pieces gives the deck\'s revealed time-preference (&delta;). From &delta; we derive how much intrinsically more powerful a c-cost spell needs to be relative to a 2-drop to justify its slot.</p>';
+        if (noRamp) {
+            html += '<p><em>This deck has no permanent ramp, so we fall back to &delta;=1.0 (no time preference). The multipliers reflect per-slot mana efficiency only.</em></p>';
+        }
+        html += '</div></details>';
+
+        html += '<div class="curve-value-grid">';
+
+        // Implied Draw
+        html += '<div class="curve-value-draw">';
+        html += '<h3>Implied Draw</h3>';
+        html += '<div class="curve-value-summary-row">';
+        html += '<span class="cv-stat"><span class="cv-label">Cards needed</span> <strong>' + fmt(id_.N_max, 1) + '</strong></span>';
+        html += '<span class="cv-stat"><span class="cv-label">Actually drawn</span> <strong>' + fmt(id_.actual_total_draws || 0, 1) + '</strong></span>';
+        const deficitClass = deficitPos ? 'cv-deficit-pos' : 'cv-deficit-ok';
+        html += '<span class="cv-stat ' + deficitClass + '"><span class="cv-label">Deficit</span> <strong>' + fmt(deficit, 1) + '</strong></span>';
+        html += '</div>';
+        html += '<div class="curve-value-chart-wrap"><canvas id="curveValueDrawChart"></canvas></div>';
+        // Per-turn breakdown table (ground truth for the chart).
+        const idLands = id_.per_turn_lands_required || [];
+        const idValue = id_.per_turn_value_required || [];
+        const idReq = id_.per_turn_required || [];
+        const idActual = id_.per_turn_actual || [];
+        if (idLands.length > 0) {
+            html += '<details class="cv-breakdown-details">';
+            html += '<summary>Per-turn breakdown (ground truth)</summary>';
+            html += '<table class="cv-breakdown-table"><thead><tr>';
+            html += '<th>Turn</th><th>Lands req</th><th>Spells req</th><th>Required = max</th><th>Active</th><th>Actual MC</th>';
+            html += '</tr></thead><tbody>';
+            for (let t = 0; t < idLands.length; t++) {
+                const L = idLands[t] || 0;
+                const V = idValue[t] || 0;
+                const req = idReq[t] || Math.max(L, V);
+                const dom = V > L ? 'spells' : 'lands';
+                const act = idActual[t];
+                html += '<tr>';
+                html += '<td>' + (t + 1) + '</td>';
+                html += '<td>' + fmt(L, 2) + '</td>';
+                html += '<td>' + fmt(V, 2) + '</td>';
+                html += '<td><strong>' + fmt(req, 2) + '</strong></td>';
+                html += '<td class="cv-active-' + dom + '">' + dom + '</td>';
+                html += '<td>' + (act != null ? fmt(act, 2) : '—') + '</td>';
+                html += '</tr>';
+            }
+            html += '</tbody></table></details>';
+        }
+        // Convert deficit in cards to mana of value spells unspent.
+        // Each missing card averages (V/D) × V_avg_cmc mana of value spending.
+        const valuePerCard = id_.D > 0 ? (id_.V_avg_cmc * id_.V / id_.D) : 0;
+        const deficitMana = deficit * valuePerCard;
+        const actualDraws = id_.actual_total_draws || 0;
+        if (deficitPos) {
+            html += '<p class="cv-hint">';
+            html += '<strong>Deficit:</strong> your deck draws ~' + fmt(actualDraws, 1) + ' cards per game, ';
+            html += fmt(deficit, 1) + ' short of the ' + fmt(id_.N_max, 1) + '-card analytical requirement. ';
+            html += 'With your value pool\'s avg cost of ' + fmt(id_.V_avg_cmc, 2) + ' mana and ' + id_.V + '/' + id_.D + ' share of the deck, ';
+            html += 'each missing card averages ' + fmt(valuePerCard, 2) + ' mana of value-spell spending ';
+            html += '(' + fmt(id_.V_avg_cmc, 2) + ' &times; ' + id_.V + '/' + id_.D + ') &mdash; ';
+            html += 'that translates to roughly <strong>' + fmt(deficitMana, 1) + ' mana of value spells going unspent</strong> per game on average.';
+            html += '</p>';
+        } else {
+            html += '<p class="cv-hint">';
+            html += 'Your deck draws ~' + fmt(actualDraws, 1) + ' cards per game, ';
+            html += 'meeting the ' + fmt(id_.N_max, 1) + '-card analytical requirement. ';
+            html += 'Value mana is fully spent in expectation &mdash; no significant late-game waste.';
+            html += '</p>';
+        }
+        html += '</div>';
+
+        // Implied Spell Value
+        html += '<div class="curve-value-power">';
+        html += '<h3>Implied Spell Value</h3>';
+        if (noRamp) {
+            html += '<p class="cv-rate-line">No ramp investment &rarr; &delta; = 1.00 (per-slot efficiency baseline)</p>';
+        } else {
+            const irrPct = (isv.median_irr * 100).toFixed(0);
+            html += '<p class="cv-rate-line">Median ramp IRR: <strong>' + irrPct + '%/turn</strong>';
+            html += ' &nbsp;&middot;&nbsp; &delta; = <strong>' + fmt(isv.delta, 2) + '</strong></p>';
+        }
+
+        const mults = isv.power_multipliers || {};
+        const cmcs = Object.keys(mults).map(Number).sort((a, b) => a - b);
+        const maxMult = Math.max.apply(null, cmcs.map(c => mults[c]).concat([0]));
+        const scaleMax = Math.max(maxMult, 2.0);
+
+        html += '<table class="cv-power-table"><thead><tr>';
+        html += '<th>CMC</th><th>Required power vs. 2-drop</th><th>Multiplier</th>';
+        html += '</tr></thead><tbody>';
+        for (const c of cmcs) {
+            const m = mults[c];
+            const isBaseline = c === 2;
+            const widthPct = (m / scaleMax * 100).toFixed(1);
+            const color = isBaseline ? '#94a3b8' : '#3b82f6';
+            const rowClass = isBaseline ? 'cv-row-baseline' : '';
+            html += '<tr class="' + rowClass + '">';
+            html += '<td>' + c + '</td>';
+            html += '<td><div class="cv-power-bar-track"><div class="cv-power-bar-fill" style="width:' + widthPct + '%; background:' + color + '"></div></div></td>';
+            html += '<td>' + fmt(m, 2) + '&times;</td>';
+            html += '</tr>';
+        }
+        html += '</tbody></table>';
+
+        const sixDropMult = mults[6] || 1.0;
+        html += '<p class="cv-hint">A 6-drop with multiplier <strong>' + fmt(sixDropMult, 2) + '&times;</strong> means: for this deck\'s ramp choices to be coherent, each 6-drop needs to be at least that intrinsically more impactful than a 2-drop.</p>';
+        html += '</div>';  // power
+
+        html += '</div></div>';  // grid, section
+        return html;
+    }
+
+    function renderCurveValueChart(results) {
+        const canvas = document.getElementById('curveValueDrawChart');
+        if (!canvas) return;
+        const r = results[results.length - 1];
+        const cv = r && r.curve_value;
+        if (!cv || !cv.implied_draw) return;
+        const id_ = cv.implied_draw;
+        const lands = id_.per_turn_lands_required || [];
+        const value = id_.per_turn_value_required || [];
+        const actual = id_.per_turn_actual || [];
+        const natural = id_.per_turn_natural || [];
+        const turns = lands.length;
+        const labels = [];
+        for (let t = 1; t <= turns; t++) labels.push('T' + t);
+
+        // Stacked decomposition: at each turn,
+        //   floor    = min(lands, value)  -- both bottlenecks require this
+        //   lands_ex = max(0, lands - value)  -- extra from land constraint
+        //   value_ex = max(0, value - lands)  -- extra from value constraint
+        // Exactly one of lands_ex / value_ex is non-zero per turn, so the
+        // stack always sums to max(lands, value) = per_turn_required and
+        // both bottlenecks remain individually visible (smaller as floor,
+        // larger as a colored cap on top).
+        const floor = lands.map((l, i) => Math.min(l, value[i] || 0));
+        const lands_ex = lands.map((l, i) => Math.max(0, l - (value[i] || 0)));
+        const value_ex = value.map((v, i) => Math.max(0, v - (lands[i] || 0)));
+
+        const existing = Chart.getChart('curveValueDrawChart');
+        if (existing) existing.destroy();
+
+        new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Cards you need either way',
+                        data: floor,
+                        borderColor: '#64748b',
+                        backgroundColor: 'rgba(148, 163, 184, 0.25)',
+                        borderWidth: 1,
+                        fill: 'origin',
+                        tension: 0.2,
+                        pointRadius: 0,
+                        stack: 'required',
+                    },
+                    {
+                        label: 'Extra cards to draw enough lands',
+                        data: lands_ex,
+                        borderColor: '#1d4ed8',
+                        backgroundColor: 'rgba(37, 99, 235, 0.65)',
+                        borderWidth: 1,
+                        fill: '-1',
+                        tension: 0.2,
+                        pointRadius: 0,
+                        stack: 'required',
+                    },
+                    {
+                        label: 'Extra cards to draw enough spells',
+                        data: value_ex,
+                        borderColor: '#7e22ce',
+                        backgroundColor: 'rgba(168, 85, 247, 0.65)',
+                        borderWidth: 1,
+                        fill: '-1',
+                        tension: 0.2,
+                        pointRadius: 0,
+                        stack: 'required',
+                    },
+                    {
+                        label: 'Natural draw (no draw spells)',
+                        data: natural,
+                        borderColor: '#94a3b8',
+                        backgroundColor: '#94a3b8',
+                        borderWidth: 1,
+                        borderDash: [3, 3],
+                        fill: false,
+                        tension: 0,
+                        pointRadius: 0,
+                        stack: 'natural',
+                        order: 2,
+                    },
+                    {
+                        label: 'Actual cards drawn (MC avg)',
+                        data: actual,
+                        borderColor: '#f59e0b',
+                        backgroundColor: '#f59e0b',
+                        borderWidth: 2.5,
+                        fill: false,
+                        tension: 0.2,
+                        pointRadius: 3,
+                        stack: 'actual',
+                        order: 1,
+                    },
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    title: { display: true, text: 'Cumulative cards: needed (lands & value bottlenecks) vs. drawn' },
+                    tooltip: {
+                        callbacks: {
+                            footer: function(items) {
+                                const idx = items[0] ? items[0].dataIndex : 0;
+                                const landsVal = lands[idx] || 0;
+                                const spellsVal = value[idx] || 0;
+                                const actualVal = actual[idx];
+                                const required = Math.max(landsVal, spellsVal);
+                                const dominant = spellsVal > landsVal ? 'spells' : 'lands';
+                                let footer = 'Lands need: ' + landsVal.toFixed(2)
+                                    + '   Spells need: ' + spellsVal.toFixed(2)
+                                    + '\nRequired = max = ' + required.toFixed(2)
+                                    + ' (' + dominant + ' dominates)';
+                                if (actualVal != null) {
+                                    const diff = required - actualVal;
+                                    const sign = diff > 0 ? '+' : '';
+                                    footer += '\nDeficit vs actual: ' + sign + diff.toFixed(2);
+                                }
+                                return footer;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Turn' } },
+                    y: { title: { display: true, text: 'Cumulative cards' }, beginAtZero: true, stacked: true }
+                }
+            }
+        });
     }
 
     function renderDeckScoreChart(results) {
@@ -884,6 +1154,10 @@ const ClientResults = (function() {
         html += '<h1>Results: ' + escapeHtml(deckName) + '</h1>';
 
         html += renderDeckScore(results);
+        // Render curve_value panel for both simulation and optimization paths.
+        // For optimization runs the panel reflects the baseline (input) deck
+        // composition, since per-config curve_value would be heavyweight.
+        html += renderCurveValue(results);
         if (isOptimization) {
             html += renderFeatureAnalysis(results);
         }
@@ -899,6 +1173,7 @@ const ClientResults = (function() {
 
         // Render interactive components after DOM is updated
         renderDeckScoreChart(results);
+        renderCurveValueChart(results);
         if (!isOptimization) {
             renderCharts(results);
         }
@@ -909,3 +1184,5 @@ const ClientResults = (function() {
 
     return {render, rebindTooltips, renderCharts, initReplayViewer};
 })();
+// Make this idempotent across document.write() reloads (see top of file).
+if (typeof window !== 'undefined') { window.ClientResults = ClientResults; }

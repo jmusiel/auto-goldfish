@@ -231,7 +231,12 @@ class FactoredOptimizer:
             apply_config(self.goldfisher, config, self.candidates, self.swap_mode)
             result = self.goldfisher.simulate()
             self.total_sims += final_sims
-            result_dict = result_to_dict(result, turns=self.goldfisher.turns)
+            result_dict = result_to_dict(
+                result,
+                turns=self.goldfisher.turns,
+                deck_list=self.goldfisher._original_full_decklist_dicts,
+                registry=self.goldfisher.registry,
+            )
             results.append((config, result_dict))
             if eval_progress is not None:
                 eval_progress(j + 1, len(eval_configs))

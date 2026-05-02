@@ -104,11 +104,40 @@ def save_report(
                 f.write("\n")
 
 
-def result_to_dict(result: SimulationResult, turns: int = 10) -> Dict[str, Any]:
+def result_to_dict(
+    result: SimulationResult,
+    turns: int = 10,
+    deck_list: list | None = None,
+    registry=None,
+    overrides: dict | None = None,
+) -> Dict[str, Any]:
     """Convert SimulationResult to a JSON-serializable dict.
 
     Scores are computed against the active calibrated anchors when a DB
     session is available, otherwise the historical defaults.
+
+    Parameters
+    ----------
+    deck_list : optional list of card dicts
+        When provided, computes the analytical ``curve_value`` block (Implied
+        Draw + Implied Spell Value) and includes it in the returned dict
+        under ``"curve_value"``. **Omitting this silently sets
+        ``curve_value=None``**, which makes the simulate-page panel
+        disappear -- so all callers that surface this dict to a user should
+        pass the deck. Current callers:
+
+        - ``pyodide_runner.run_simulation``
+        - ``web.services.simulation_runner._run_simulation``
+        - ``optimization.optimizer`` (passes
+          ``goldfisher._original_full_decklist_dicts``)
+        - ``optimization.factored_optimizer`` (same)
+        - ``optimization.fast_optimizer`` (same)
+    registry : optional EffectRegistry
+        Falls back to ``DEFAULT_REGISTRY`` when ``None``. Required to detect
+        ramp / draw / mana-per-turn from card text; without it, every deck
+        looks ramp-less and the curve_value panel renders as ``no_ramp=True``.
+    overrides : optional dict
+        User-provided card-effect overrides; merged on top of the registry.
     """
     from auto_goldfish.metrics.calibration import get_active_anchors
     from auto_goldfish.metrics.deck_score import compute_raw_stats, score_from_raw
@@ -127,10 +156,24 @@ def result_to_dict(result: SimulationResult, turns: int = 10) -> Dict[str, Any]:
         if calibration_meta is not None
         else None
     )
+    curve_value_dict = None
+    if deck_list is not None:
+        try:
+            curve_value_dict = _compute_curve_value_dict(
+                deck_list=deck_list,
+                registry=registry,
+                overrides=overrides,
+                turns=turns,
+                result=result,
+            )
+        except Exception:
+            # Curve value is decorative — never break the response.
+            curve_value_dict = None
     return {
         "deck_score": score.as_dict(),
         "deck_raw": raw.as_dict(),
         "calibration": calibration_dict,
+        "curve_value": curve_value_dict,
         "land_count": result.land_count,
         "mean_mana": result.mean_mana,
         "mean_mana_value": result.mean_mana_value,
@@ -166,8 +209,45 @@ def result_to_dict(result: SimulationResult, turns: int = 10) -> Dict[str, Any]:
         "ci_mean_bad_turns": list(result.ci_mean_bad_turns),
         "mean_mana_per_turn": result.mean_mana_per_turn,
         "mean_spells_per_turn": result.mean_spells_per_turn,
+        "mean_cumulative_draws_per_turn": result.mean_cumulative_draws_per_turn,
         "std_mana": result.std_mana,
         "mull_rate": result.mull_rate,
         "mean_mana_with_mull": result.mean_mana_with_mull,
         "mean_mana_no_mull": result.mean_mana_no_mull,
     }
+
+
+def _compute_curve_value_dict(
+    deck_list: list,
+    registry,
+    overrides: dict | None,
+    turns: int,
+    result: SimulationResult,
+) -> Dict[str, Any]:
+    """Compute analytical curve_value and serialize to dict.
+
+    Pulls per-turn cumulative draws from the SimulationResult so the UI can
+    plot actual vs. implied draw side by side. Falls back to DEFAULT_REGISTRY
+    when the caller didn't pass a registry (matches Goldfisher's behavior).
+    """
+    from dataclasses import asdict
+    from auto_goldfish.optimization.curve_value import compute_curve_value
+    from auto_goldfish.effects.card_database import DEFAULT_REGISTRY
+
+    if registry is None:
+        registry = DEFAULT_REGISTRY
+
+    actual_per_turn = (
+        list(result.mean_cumulative_draws_per_turn)
+        if result.mean_cumulative_draws_per_turn
+        else None
+    )
+    cv = compute_curve_value(
+        deck_list=deck_list,
+        registry=registry,
+        overrides=overrides,
+        turns=turns,
+        actual_total_draws=float(result.mean_draws) if result.mean_draws else None,
+        actual_per_turn_cumulative_draws=actual_per_turn,
+    )
+    return asdict(cv)
